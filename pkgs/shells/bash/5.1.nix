@@ -4,6 +4,7 @@
 , binutils ? null
 , bison
 , util-linux
+, autoconf
 
   # patch for cygwin requires readline support
 , interactive ? stdenv.isCygwin
