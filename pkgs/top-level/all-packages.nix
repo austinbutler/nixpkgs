@@ -22809,6 +22809,8 @@ in
 
   gauche = callPackage ../development/interpreters/gauche { };
 
+  gaupol = callPackage ../applications/video/gaupol { };
+
   gcal = callPackage ../applications/misc/gcal { };
 
   gcstar = callPackage ../applications/misc/gcstar { };
