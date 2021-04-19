@@ -4,7 +4,7 @@
 }:
 
 let
-  version = "0.54.0";
+  version = "unstable-2020-03-07";
 in
 
 stdenv.mkDerivation {
@@ -12,10 +12,11 @@ stdenv.mkDerivation {
   inherit version;
 
   src = fetchFromGitHub {
-    owner = "kitone";
+    # https://github.com/kitone/subtitleeditor/pull/36
+    owner = "xhaakon";
     repo = "subtitleeditor";
-    rev = version;
-    sha256 = "0vxcscc9m6gymgj173ahk2g9hlk9588z5fdaavmkpyriqdlhwm11";
+    rev = "2f208a3092d43a5cec4b7ad92591366647ab9d46";
+    sha256 = "1jbgkby6s5bp5g76prvyqifxr5svmjl9lwy5li18720q6jazbzjx";
   };
 
   nativeBuildInputs =  [
