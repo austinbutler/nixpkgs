@@ -1,6 +1,6 @@
 { lib, fetchFromGitHub
 , makeWrapper, makeDesktopItem, mkYarnPackage
-, electron, element-web
+, electron, element-web, callPackage
 }:
 # Notes for maintainers:
 # * versions of `element-web` and `element-desktop` should be kept in sync.
@@ -15,6 +15,7 @@ let
     rev = "v${version}";
     sha256 = "sha256-q8hVmTLt/GdLc6NSldLggogObQcPFp+lAeS3wmO0qPo=";
   };
+  seshat = callPackage ./seshat.nix { };
 in mkYarnPackage rec {
   name = "element-desktop-${version}";
   inherit version src;
@@ -22,7 +23,11 @@ in mkYarnPackage rec {
   packageJSON = ./element-desktop-package.json;
   yarnNix = ./element-desktop-yarndeps.nix;
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [ makeWrapper seshat ];
+  buildInputs = [ seshat ];
+  #buildPhase = ''
+  #  yarn run build:native
+  #'';
 
   installPhase = ''
     # resources
