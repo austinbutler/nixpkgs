@@ -25,9 +25,9 @@ in mkYarnPackage rec {
 
   nativeBuildInputs = [ makeWrapper seshat ];
   buildInputs = [ seshat ];
-  #buildPhase = ''
-  #  yarn run build:native
-  #'';
+  buildPhase = ''
+    yarn run electron-build-env -- --electron 6.1.1 -- neon build matrix-seshat --release
+  '';
 
   installPhase = ''
     # resources
