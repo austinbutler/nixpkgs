@@ -1,6 +1,6 @@
 { lib, fetchFromGitHub
 , makeWrapper, makeDesktopItem, mkYarnPackage
-, electron, element-web, callPackage
+, electron, element-web, callPackage, nodePackages, cargo
 }:
 # Notes for maintainers:
 # * versions of `element-web` and `element-desktop` should be kept in sync.
@@ -23,10 +23,11 @@ in mkYarnPackage rec {
   packageJSON = ./element-desktop-package.json;
   yarnNix = ./element-desktop-yarndeps.nix;
 
-  nativeBuildInputs = [ makeWrapper seshat ];
-  buildInputs = [ seshat ];
-  buildPhase = ''
-    yarn run electron-build-env -- --electron 6.1.1 -- neon build matrix-seshat --release
+  nativeBuildInputs = [ cargo makeWrapper seshat electron nodePackages.electron-build-env nodePackages.neon-cli ];
+  buildInputs = [ cargo seshat electron nodePackages.electron-build-env ];
+  preBuild = ''
+    electron --version
+    neon build matrix-seshat --release
   '';
 
   installPhase = ''

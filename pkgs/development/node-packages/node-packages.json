@@ -161,6 +161,7 @@
 , "mirakurun"
 , "mocha"
 , "multi-file-swagger"
+, "neon-cli"
 , "neovim"
 , "netlify-cli"
 , "nijs"
