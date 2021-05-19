@@ -1,17 +1,17 @@
 { lib, fetchFromGitHub, appstream-glib, desktop-file-utils, glib
-, gobject-introspection, gst_all_1, gtk3, libhandy, librsvg, meson, ninja
+, gobject-introspection, gst_all_1, gtk4, libadwaita, librsvg, meson, ninja
 , pkg-config, python3, wrapGAppsHook }:
 
 python3.pkgs.buildPythonApplication rec {
   pname = "kooha";
-  version = "1.1.3";
+  version = "1.2.0";
   format = "other";
 
   src = fetchFromGitHub {
     owner = "SeaDve";
     repo = "Kooha";
     rev = "v${version}";
-    sha256 = "14lrx6wplvlk3cg3wij88h4ydp3m69pw7lvvzrq3j9qnh431bs36";
+    sha256 = "0f8y4xxracpxyh49hz4d37lchbxh1sksyh4di662fg3q9cyfsmkq";
   };
 
   buildInputs = [
@@ -19,8 +19,8 @@ python3.pkgs.buildPythonApplication rec {
     gobject-introspection
     gst_all_1.gstreamer
     gst_all_1.gst-plugins-base
-    gtk3
-    libhandy
+    gtk4
+    libadwaita
     librsvg
   ];
 
