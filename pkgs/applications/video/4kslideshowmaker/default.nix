@@ -1,6 +1,6 @@
-{ stdenv, lib, fetchurl, mkDerivation, openssl_1_0_2, qtbase, qtremoteobjects
-, qtvirtualkeyboard, qtwayland, gtk3, alsaLib, makeWrapper, autoPatchelfHook
-, wrapQtAppsHook }:
+{ stdenv, lib, fetchurl, mkDerivation, ffmpeg, libexif, libjpeg_original
+, openssl_1_0_2, portaudio, qtbase, qtremoteobjects, qtvirtualkeyboard, qtwayland, gtk3
+, alsaLib, makeWrapper, autoPatchelfHook, wrapQtAppsHook }:
 
 mkDerivation rec {
   pname = "4kslideshowmaker";
@@ -16,7 +16,19 @@ mkDerivation rec {
   };
 
   nativeBuildInputs = [ autoPatchelfHook wrapQtAppsHook ];
-  buildInputs = [ alsaLib gtk3 openssl_1_0_2 qtbase qtvirtualkeyboard qtremoteobjects qtwayland ];
+  buildInputs = [
+    alsaLib
+    ffmpeg
+    gtk3
+    libexif
+    libjpeg_original
+    openssl_1_0_2
+    portaudio
+    qtbase
+    qtvirtualkeyboard
+    qtremoteobjects
+    qtwayland
+  ];
 
   installPhase = ''
     mkdir -p "$out/bin" "$out/lib"
