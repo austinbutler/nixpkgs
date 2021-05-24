@@ -285,6 +285,14 @@ in {
           to a realm in <literal>krb5.realms</literal>.
         '';
       };
+
+      pamIntegration = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Whether to configure Kerberos module <literal>pam_krb5</literal> for PAM.
+        '';
+      };
     };
   };
 

@@ -379,7 +379,7 @@ let
               "account sufficient ${pkgs.sssd}/lib/security/pam_sss.so"}
           ${optionalString (config.services.sssd.enable && cfg.sssdStrictAccess)
               "account [default=bad success=ok user_unknown=ignore] ${pkgs.sssd}/lib/security/pam_sss.so"}
-          ${optionalString config.krb5.enable
+          ${optionalString (config.krb5.enable && config.krb5.pamIntegration)
               "account sufficient ${pam_krb5}/lib/security/pam_krb5.so"}
           ${optionalString cfg.googleOsLoginAccountVerification ''
             account [success=ok ignore=ignore default=die] ${pkgs.google-compute-engine-oslogin}/lib/pam_oslogin_login.so
@@ -451,7 +451,7 @@ let
               "auth sufficient ${pam_ldap}/lib/security/pam_ldap.so use_first_pass"}
           ${optionalString config.services.sssd.enable
               "auth sufficient ${pkgs.sssd}/lib/security/pam_sss.so use_first_pass"}
-          ${optionalString config.krb5.enable ''
+          ${optionalString (config.krb5.enable && config.krb5.pamIntegration) ''
             auth [default=ignore success=1 service_err=reset] ${pam_krb5}/lib/security/pam_krb5.so use_first_pass
             auth [default=die success=done] ${pam_ccreds}/lib/security/pam_ccreds.so action=validate use_first_pass
             auth sufficient ${pam_ccreds}/lib/security/pam_ccreds.so action=store use_first_pass
@@ -468,7 +468,7 @@ let
               "password sufficient ${pam_ldap}/lib/security/pam_ldap.so"}
           ${optionalString config.services.sssd.enable
               "password sufficient ${pkgs.sssd}/lib/security/pam_sss.so use_authtok"}
-          ${optionalString config.krb5.enable
+          ${optionalString (config.krb5.enable && config.krb5.pamIntegration)
               "password sufficient ${pam_krb5}/lib/security/pam_krb5.so use_first_pass"}
           ${optionalString cfg.enableGnomeKeyring
               "password optional ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so use_authtok"}
@@ -494,7 +494,7 @@ let
               "session optional ${pam_ldap}/lib/security/pam_ldap.so"}
           ${optionalString config.services.sssd.enable
               "session optional ${pkgs.sssd}/lib/security/pam_sss.so"}
-          ${optionalString config.krb5.enable
+          ${optionalString (config.krb5.enable && config.krb5.pamIntegration)
               "session optional ${pam_krb5}/lib/security/pam_krb5.so"}
           ${optionalString cfg.otpwAuth
               "session optional ${pkgs.otpw}/lib/security/pam_otpw.so"}
@@ -849,7 +849,7 @@ in
       [ pkgs.pam ]
       ++ optional config.users.ldap.enable pam_ldap
       ++ optional config.services.sssd.enable pkgs.sssd
-      ++ optionals config.krb5.enable [pam_krb5 pam_ccreds]
+      ++ optionals (config.krb5.enable && config.krb5.pamIntegration) [pam_krb5 pam_ccreds]
       ++ optionals config.security.pam.enableOTPW [ pkgs.otpw ]
       ++ optionals config.security.pam.oath.enable [ pkgs.oathToolkit ]
       ++ optionals config.security.pam.p11.enable [ pkgs.pam_p11 ]
