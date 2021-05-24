@@ -1,4 +1,4 @@
-{ lib, stdenv, callPackage, fetchurl }:
+{ lib, stdenv, callPackage, fetchurl, nixosTests }:
 
 let
   inherit (stdenv.hostPlatform) system;
@@ -13,10 +13,10 @@ let
   archive_fmt = if system == "x86_64-darwin" then "zip" else "tar.gz";
 
   sha256 = {
-    x86_64-linux = "1ckg279vvg8h1n8ippa9vlyw4vk3frinb6fvvi47zggs31168m7b";
-    x86_64-darwin = "168g34v2b8r1pdbnqrs0c0k9aa60n5rspixziywnq7m61i23nlgd";
-    aarch64-linux = "1cd4sg6k7sqmj3yzmprq1rz928bvc3zrch8agfd8zfap1d6nfaal";
-    armv7l-linux = "0f8z4lws027dyqhcrkzm9rvifwid5m0icprg0xk01l7y18n3q923";
+    x86_64-linux = "1gw2273ab0gdyav6mz7wk7d6g6cwcdvx0xaghvm610m1pvkbvxkz";
+    x86_64-darwin = "1zfzsr8gybmpmxc3jlfj6sx3m6ny6hc3dxvpgffni7k5zgv651df";
+    aarch64-linux = "079bp48h0qfpsbyir2qg3w1f43dc68ngmxqdqb3jnkx721affjzs";
+    armv7l-linux = "1d9243hk07xawv44909lk6y6bnvy0wjhy8xl13n3a11pg3djn5bm";
   }.${system};
 
   sourceRoot = {
@@ -33,7 +33,7 @@ in
 
     # Please backport all compatible updates to the stable release.
     # This is important for the extension ecosystem.
-    version = "1.52.1";
+    version = "1.56.2";
     pname = "vscodium";
 
     executableName = "codium";
@@ -44,6 +44,8 @@ in
       url = "https://github.com/VSCodium/vscodium/releases/download/${version}/VSCodium-${plat}-${version}.${archive_fmt}";
       inherit sha256;
     };
+
+    tests = nixosTests.vscodium;
 
     meta = with lib; {
       description = ''

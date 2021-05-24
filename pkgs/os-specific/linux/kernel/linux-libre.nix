@@ -1,8 +1,8 @@
 { stdenv, lib, fetchsvn, linux
 , scripts ? fetchsvn {
     url = "https://www.fsfla.org/svn/fsfla/software/linux-libre/releases/branches/";
-    rev = "17812";
-    sha256 = "150rh6qakyfzr6afzchf7c05z0dvc39gj0rpfb4ggr7xqpzhxrcc";
+    rev = "18063";
+    sha256 = "1mmijqra6sq2pcc8yhh8m4k6x0dvhnq4xxzm1qs7kdznj2zwr8is";
   }
 , ...
 }:
@@ -34,6 +34,8 @@ in linux.override {
         cp -r . "$out"
       '';
     };
+
+    extraMeta.broken = true;
 
     passthru.updateScript = ./update-libre.sh;
 

@@ -1,6 +1,7 @@
 { lib
 , buildPythonPackage
 , fetchPypi
+, pythonOlder
 , pyyaml
 , prance
 , marshmallow
@@ -11,16 +12,20 @@
 
 buildPythonPackage rec {
   pname = "apispec";
-  version = "4.0.0";
+  version = "4.4.1";
+  disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "360e28e5e84a4d7023b16de2b897327fe3da63ddc8e01f9165b9113b7fe1c48a";
+    sha256 = "sha256-qt7UrkUXUsWLcOV5kj2Nt9rwtx9i3vjI/noqUr18BqI=";
   };
 
-  checkInputs = [
+  propagatedBuildInputs = [
     pyyaml
     prance
+  ];
+
+  checkInputs = [
     openapi-spec-validator
     marshmallow
     mock

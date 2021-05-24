@@ -8,7 +8,7 @@ let
   cfg = xcfg.desktopManager.plasma5;
 
   libsForQt5 = pkgs.plasma5Packages;
-  inherit (libsForQt5) kdeApplications kdeFrameworks plasma5;
+  inherit (libsForQt5) kdeGear kdeFrameworks plasma5;
   inherit (pkgs) writeText;
 
   pulseaudio = config.hardware.pulseaudio;
@@ -184,12 +184,11 @@ in
   config = mkMerge [
     (mkIf cfg.enable {
       # Seed our configuration into nixos-generate-config
-      system.nixos-generate-config.desktopConfiguration = ''
+      system.nixos-generate-config.desktopConfiguration = [''
         # Enable the Plasma 5 Desktop Environment.
-        services.xserver.enable = true;
         services.xserver.displayManager.sddm.enable = true;
         services.xserver.desktopManager.plasma5.enable = true;
-      '';
+      ''];
 
       services.xserver.desktopManager.session = singleton {
         name = "plasma5";
@@ -214,7 +213,7 @@ in
 
       environment.systemPackages =
         with libsForQt5;
-        with plasma5; with kdeApplications; with kdeFrameworks;
+        with plasma5; with kdeGear; with kdeFrameworks;
         [
           frameworkintegration
           kactivities
@@ -317,6 +316,7 @@ in
         ++ lib.optionals config.hardware.bluetooth.enable [ bluedevil bluez-qt pkgs.openobex pkgs.obexftp ]
         ++ lib.optional config.networking.networkmanager.enable plasma-nm
         ++ lib.optional config.hardware.pulseaudio.enable plasma-pa
+        ++ lib.optional config.services.pipewire.pulse.enable plasma-pa
         ++ lib.optional config.powerManagement.enable powerdevil
         ++ lib.optional config.services.colord.enable pkgs.colord-kde
         ++ lib.optionals config.services.samba.enable [ kdenetwork-filesharing pkgs.samba ]

@@ -2,7 +2,7 @@
 
 buildGoModule rec {
   pname = "grafana";
-  version = "7.3.7";
+  version = "7.5.7";
 
   excludedPackages = [ "release_publisher" ];
 
@@ -10,25 +10,32 @@ buildGoModule rec {
     rev = "v${version}";
     owner = "grafana";
     repo = "grafana";
-    sha256 = "134x2jqrczp5qfa2rmqc7jikv3w258kks532jp1qi65qk7w7jhb9";
+    sha256 = "sha256-GTQK02zxOBTE+93vT0zLMhAeZ7F3Cq/0lbvbzwB2QZA=";
   };
 
   srcStatic = fetchurl {
     url = "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz";
-    sha256 = "052r9gajggd9jlwnl82hq0jflhlz7cbdflkjapq4nx3rpnfscqgp";
+    sha256 = "sha256-IQ7aAuUrNa+bSh5ld6IttujM8AgKUSlu8H7pwzDi164=";
   };
 
-  vendorSha256 = "0474d5y40q7i7k1gm1k7ac1dqhizvqql8w9nn44qxb7g2w2bfqiv";
+  vendorSha256 = "sha256-AsPRaRLomp090XAKLXLXKm40ESPO4im9qi6VLpLYRQU=";
 
+  # grafana-aws-sdk is specified with two versions which causes a problem later:
+  # go: inconsistent vendoring in /build/source:
+  #  github.com/grafana/grafana-aws-sdk@v0.3.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+  # Remove the older one here to fix this.
   postPatch = ''
+    substituteInPlace go.mod \
+      --replace 'github.com/grafana/grafana-aws-sdk v0.3.0' ""
+
     substituteInPlace pkg/cmd/grafana-server/main.go \
       --replace 'var version = "5.0.0"'  'var version = "${version}"'
   '';
 
-  # fixes build failure with go 1.15:
   # main module (github.com/grafana/grafana) does not contain package github.com/grafana/grafana/scripts/go
+  # main module (github.com/grafana/grafana) does not contain package github.com/grafana/grafana/dashboard-schemas
   preBuild = ''
-    rm -rf scripts/go
+    rm -r dashboard-schemas scripts/go
   '';
 
   postInstall = ''

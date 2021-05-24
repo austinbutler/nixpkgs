@@ -1,5 +1,4 @@
 { lib
-, stdenv
 , mkDerivation
 , fetchurl
 , poppler_utils
@@ -20,52 +19,40 @@
 , python3Packages
 , libusb1
 , libmtp
-, xdg_utils
-, makeDesktopItem
+, xdg-utils
 , removeReferencesTo
 }:
 
 mkDerivation rec {
   pname = "calibre";
-  version = "5.10.1";
+  version = "5.17.0";
 
   src = fetchurl {
     url = "https://download.calibre-ebook.com/${version}/${pname}-${version}.tar.xz";
-    sha256 = "18pnqxdyvgmw12yarxhvsgs4jk6c5hp05gf8khybcd78330954v9";
+    hash = "sha256-rdiBL3Y3q/0wFfWGE4jGkWakgV8hA9HjDcKXso6tVrs=";
   };
 
   patches = [
-    # Patches from Debian that:
-    # - disable plugin installation (very insecure)
+    # Plugin installation (very insecure) disabled (from Debian)
     ./disable_plugins.patch
-    # - switches the version update from enabled to disabled by default
+    # Automatic version update disabled by default (from Debian)
     ./no_updates_dialog.patch
-    # the unrar patch is not from debian
-  ] ++ lib.optional (!unrarSupport) ./dont_build_unrar_plugin.patch;
+  ]
+  ++ lib.optional (!unrarSupport) ./dont_build_unrar_plugin.patch;
 
   escaped_pyqt5_dir = builtins.replaceStrings ["/"] ["\\/"] (toString python3Packages.pyqt5);
-  platform_tag =
-    if stdenv.hostPlatform.isDarwin then
-      "WS_MACX"
-    else if stdenv.hostPlatform.isWindows then
-      "WS_WIN"
-    else
-      "WS_X11";
 
   prePatch = ''
     sed -i "s/\[tool.sip.project\]/[tool.sip.project]\nsip-include-dirs = [\"${escaped_pyqt5_dir}\/share\/sip\/PyQt5\"]/g" \
       setup/build.py
-    sed -i "s/\[tool.sip.bindings.pictureflow\]/[tool.sip.bindings.pictureflow]\ntags = [\"${platform_tag}\"]/g" \
+    sed -i "s/\[tool.sip.bindings.pictureflow\]/[tool.sip.bindings.pictureflow]\ntags = [\"${python3Packages.sip.platform_tag}\"]/g" \
       setup/build.py
 
     # Remove unneeded files and libs
-    rm -rf resources/calibre-portable.* \
-           src/odf
+    rm -rf src/odf resources/calibre-portable.*
   '';
 
   dontUseQmakeConfigure = true;
-
-  enableParallelBuilding = true;
 
   nativeBuildInputs = [ pkg-config qmake removeReferencesTo ];
 
@@ -84,11 +71,12 @@ mkDerivation rec {
     poppler_utils
     qtbase
     sqlite
-    xdg_utils
+    xdg-utils
   ] ++ (
     with python3Packages; [
       apsw
       beautifulsoup4
+      cchardet
       css-parser
       cssselect
       dateutil
@@ -107,7 +95,7 @@ mkDerivation rec {
       pyqtwebengine
       python
       regex
-      sip_5
+      sip
       zeroconf
       # the following are distributed with calibre, but we use upstream instead
       odfpy
@@ -126,7 +114,6 @@ mkDerivation rec {
     export FC_LIB_DIR=${fontconfig.lib}/lib
     export PODOFO_INC_DIR=${podofo.dev}/include/podofo
     export PODOFO_LIB_DIR=${podofo.lib}/lib
-    export SIP_BIN=${python3Packages.sip}/bin/sip
     export XDG_DATA_HOME=$out/share
     export XDG_UTILS_INSTALL_MODE="user"
 
@@ -173,11 +160,16 @@ mkDerivation rec {
   disallowedReferences = [ podofo.dev ];
 
   meta = with lib; {
-    description = "Comprehensive e-book software";
     homepage = "https://calibre-ebook.com";
-    license = with licenses; if unrarSupport then unfreeRedistributable else gpl3;
-    maintainers = with maintainers; [ domenkozar pSub AndersonTorres ];
+    description = "Comprehensive e-book software";
+    longDescription = ''
+      calibre is a powerful and easy to use e-book manager. Users say it’s
+      outstanding and a must-have. It’ll allow you to do nearly everything and
+      it takes things a step beyond normal e-book software. It’s also completely
+      free and open source and great for both casual users and computer experts.
+    '';
+    license = with licenses; if unrarSupport then unfreeRedistributable else gpl3Plus;
+    maintainers = with maintainers; [ pSub AndersonTorres ];
     platforms = platforms.linux;
-    inherit version;
   };
 }

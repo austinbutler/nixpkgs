@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchFromGitHub, autoreconfHook, wxGTK30, libav, lua5_1, curl
+{ lib, stdenv, fetchFromGitHub, autoreconfHook, wxGTK30, ffmpeg, lua5_1, curl
 , libpng, xorg, pkg-config, flam3, libgtop, boost, tinyxml, freeglut, libGLU, libGL
 , glee }:
 
@@ -16,7 +16,7 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ autoreconfHook pkg-config ];
 
   buildInputs = [
-    wxGTK30 libav lua5_1 curl libpng xorg.libXrender
+    wxGTK30 ffmpeg lua5_1 curl libpng xorg.libXrender
     flam3 libgtop boost tinyxml freeglut libGLU libGL glee
   ];
 
@@ -40,7 +40,7 @@ stdenv.mkDerivation rec {
   meta = with lib; {
     description = "Electric Sheep, a distributed screen saver for evolving artificial organisms";
     homepage = "https://electricsheep.org/";
-    maintainers = with maintainers; [ nand0p fpletz ];
+    maintainers = with maintainers; [ fpletz ];
     platforms = platforms.linux;
     license = licenses.gpl1;
   };

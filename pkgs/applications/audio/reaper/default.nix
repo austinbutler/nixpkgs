@@ -8,6 +8,8 @@
 , lame
 , ffmpeg
 , vlc
+, xdg-utils
+, which
 
 , jackSupport ? true, libjack2
 , pulseaudioSupport ? config.pulseaudio or true, libpulseaudio
@@ -15,14 +17,19 @@
 
 stdenv.mkDerivation rec {
   pname = "reaper";
-  version = "6.21";
+  version = "6.28";
 
   src = fetchurl {
     url = "https://www.reaper.fm/files/${lib.versions.major version}.x/reaper${builtins.replaceStrings ["."] [""] version}_linux_x86_64.tar.xz";
-    sha256 = "11nvfjfrri9y0k7n7psz3yk1l7mxp9f6yi69pq7hvn9d4n26p5vd";
+    hash = "sha256-38HSjR+rQWPzMOjq1abLn/MP3DCz5YzBg0v2kBsQmR4=";
   };
 
-  nativeBuildInputs = [ autoPatchelfHook makeWrapper ];
+  nativeBuildInputs = [
+    autoPatchelfHook
+    makeWrapper
+    xdg-utils # Required for desktop integration
+    which
+  ];
 
   buildInputs = [
     alsaLib
@@ -39,7 +46,9 @@ stdenv.mkDerivation rec {
   dontBuild = true;
 
   installPhase = ''
-    XDG_DATA_HOME="$out/share" ./install-reaper.sh \
+    runHook preInstall
+
+    HOME="$out/share" XDG_DATA_HOME="$out/share" ./install-reaper.sh \
       --install $out/opt \
       --integrate-user-desktop
     rm $out/opt/REAPER/uninstall-reaper.sh
@@ -57,6 +66,8 @@ stdenv.mkDerivation rec {
     mkdir $out/bin
     ln -s $out/opt/REAPER/reaper $out/bin/
     ln -s $out/opt/REAPER/reamote-server $out/bin/
+
+    runHook postInstall
   '';
 
   meta = with lib; {

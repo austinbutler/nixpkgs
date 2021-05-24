@@ -1,6 +1,6 @@
 { lib, stdenv, callPackage, fetchFromGitHub, autoreconfHook, pkg-config
 , CoreFoundation, IOKit, libossp_uuid
-, curl, libcap,  libuuid, lm_sensors, zlib, fetchpatch
+, curl, libcap,  libuuid, lm_sensors, zlib
 , nixosTests
 , withCups ? false, cups
 , withDBengine ? true, libuv, lz4, judy
@@ -15,14 +15,14 @@ with lib;
 let
   go-d-plugin = callPackage ./go.d.plugin.nix {};
 in stdenv.mkDerivation rec {
-  version = "1.28.0";
+  version = "1.31.0";
   pname = "netdata";
 
   src = fetchFromGitHub {
     owner = "netdata";
     repo = "netdata";
     rev = "v${version}";
-    sha256 = "1266jbfw55r1zh00xi6c90j2fs9hw8hmsb7686rh04l8mffny9f4";
+    sha256 = "0x6vg2z7x83b127flbfqkgpakd5md7n2w39dvs8s16facdy2lvry";
   };
 
   nativeBuildInputs = [ autoreconfHook pkg-config ];
@@ -36,6 +36,8 @@ in stdenv.mkDerivation rec {
     ++ optionals withSsl [ openssl.dev ];
 
   patches = [
+    # required to prevent plugins from relying on /etc
+    # and /var
     ./no-files-in-etc-and-var.patch
   ];
 
@@ -48,6 +50,8 @@ in stdenv.mkDerivation rec {
     # rename this plugin so netdata will look for setuid wrapper
     mv $out/libexec/netdata/plugins.d/apps.plugin \
        $out/libexec/netdata/plugins.d/apps.plugin.org
+    mv $out/libexec/netdata/plugins.d/cgroup-network \
+       $out/libexec/netdata/plugins.d/cgroup-network.org
     mv $out/libexec/netdata/plugins.d/perf.plugin \
        $out/libexec/netdata/plugins.d/perf.plugin.org
     mv $out/libexec/netdata/plugins.d/slabinfo.plugin \
@@ -77,8 +81,8 @@ in stdenv.mkDerivation rec {
   meta = {
     description = "Real-time performance monitoring tool";
     homepage = "https://www.netdata.cloud/";
-    license = licenses.gpl3;
+    license = licenses.gpl3Plus;
     platforms = platforms.unix;
-    maintainers = [ maintainers.lethalman ];
+    maintainers = [ ];
   };
 }

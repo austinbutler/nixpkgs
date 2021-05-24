@@ -4,11 +4,11 @@
 , gnutar, bzip2, flac, speex, libopus
 , libevent, expat, libjpeg, snappy
 , libpng, libcap
-, xdg_utils, yasm, nasm, minizip, libwebp
+, xdg-utils, yasm, nasm, minizip, libwebp
 , libusb1, pciutils, nss, re2
 
-, python2Packages, perl, pkg-config
-, nspr, systemd, kerberos
+, python2, python3, perl, pkg-config
+, nspr, systemd, libkrb5
 , util-linux, alsaLib
 , bison, gperf
 , glib, gtk3, dbus-glib
@@ -17,16 +17,16 @@
 , protobuf, speechd, libXdamage, cups
 , ffmpeg, libxslt, libxml2, at-spi2-core
 , jre8
-, pipewire_0_2
+, pipewire
 , libva
+, libdrm, wayland, mesa, libxkbcommon # Ozone
+, curl
 
 # optional dependencies
 , libgcrypt ? null # gnomeSupport || cupsSupport
-, libdrm ? null, wayland ? null, mesa ? null, libxkbcommon ? null # useOzone
 
 # package customization
-, useOzone ? true
-, gnomeSupport ? false, gnome ? null
+, gnomeSupport ? false, gnome2 ? null
 , gnomeKeyringSupport ? false, libgnome-keyring3 ? null
 , proprietaryCodecs ? true
 , cupsSupport ? true
@@ -43,6 +43,12 @@ with lib;
 
 let
   jre = jre8; # TODO: remove override https://github.com/NixOS/nixpkgs/pull/89731
+  python2WithPackages = python2.withPackages(ps: with ps; [
+    ply jinja2 setuptools
+  ]);
+  python3WithPackages = python3.withPackages(ps: with ps; [
+    ply jinja2 setuptools
+  ]);
 
   # The additional attributes for creating derivations based on the chromium
   # source tree.
@@ -89,7 +95,7 @@ let
     bzip2 flac speex opusWithCustomModes
     libevent expat libjpeg snappy
     libpng libcap
-    xdg_utils minizip libwebp
+    xdg-utils minizip libwebp
     libusb1 re2
     ffmpeg libxslt libxml2
     nasm
@@ -101,16 +107,17 @@ let
   buildPath = "out/${buildType}";
   libExecPath = "$out/libexec/${packageName}";
 
+  warnObsoleteVersionConditional = min-version: result:
+    let ungoogled-version = (importJSON ./upstream-info.json).ungoogled-chromium.version;
+    in warnIf (versionAtLeast ungoogled-version min-version) "chromium: ungoogled version ${ungoogled-version} is newer than a conditional bounded at ${min-version}. You can safely delete it."
+      result;
   chromiumVersionAtLeast = min-version:
-    versionAtLeast upstream-info.version min-version;
+    let result = versionAtLeast upstream-info.version min-version;
+    in  warnObsoleteVersionConditional min-version result;
   versionRange = min-version: upto-version:
     let inherit (upstream-info) version;
         result = versionAtLeast version min-version && versionOlder version upto-version;
-        ungoogled-version = (importJSON ./upstream-info.json).ungoogled-chromium.version;
-    in if versionAtLeast ungoogled-version upto-version
-       then warn "chromium: ungoogled version ${ungoogled-version} is newer than a patchset bounded at ${upto-version}. You can safely delete it."
-            result
-       else result;
+    in warnObsoleteVersionConditional upto-version result;
 
   ungoogler = ungoogled-chromium {
     inherit (upstream-info.deps.ungoogled-patches) rev sha256;
@@ -127,39 +134,45 @@ let
     };
 
     nativeBuildInputs = [
-      llvmPackages.lldClang.bintools
-      ninja which python2Packages.python perl pkg-config
-      python2Packages.ply python2Packages.jinja2 nodejs
-      gnutar python2Packages.setuptools
+      ninja pkg-config
+      python2WithPackages perl nodejs
+      gnutar which
+      llvmPackages.bintools
+    ] ++ lib.optionals (chromiumVersionAtLeast "92") [
+      python3WithPackages
     ];
 
     buildInputs = defaultDependencies ++ [
       nspr nss systemd
       util-linux alsaLib
-      bison gperf kerberos
+      bison gperf libkrb5
       glib gtk3 dbus-glib
       libXScrnSaver libXcursor libXtst libxshmfence libGLU libGL
+      mesa # required for libgbm
       pciutils protobuf speechd libXdamage at-spi2-core
       jre
-      pipewire_0_2
+      pipewire
       libva
+      libdrm wayland mesa.drivers libxkbcommon
+      curl
     ] ++ optional gnomeKeyringSupport libgnome-keyring3
-      ++ optionals gnomeSupport [ gnome.GConf libgcrypt ]
+      ++ optionals gnomeSupport [ gnome2.GConf libgcrypt ]
       ++ optionals cupsSupport [ libgcrypt cups ]
-      ++ optional pulseSupport libpulseaudio
-      ++ optionals useOzone [ libdrm wayland mesa.drivers libxkbcommon ];
+      ++ optional pulseSupport libpulseaudio;
 
     patches = [
       ./patches/no-build-timestamps.patch # Optional patch to use SOURCE_DATE_EPOCH in compute_build_timestamp.py (should be upstreamed)
       ./patches/widevine-79.patch # For bundling Widevine (DRM), might be replaceable via bundle_widevine_cdm=true in gnFlags
-      # ++ optional (versionRange "68" "72") (githubPatch "<patch>" "0000000000000000000000000000000000000000000000000000000000000000")
-    ] ++ optional (versionRange "89" "90") (githubPatch
-      # To fix the build of chromiumBeta:
-      "b5b80df7dafba8cafa4c6c0ba2153dfda467dfc9" # add dependency on opus in webcodecs
-      "1r4wmwaxz5xbffmj5wspv2xj8s32j9p6jnwimjmalqg3al2ba64x"
-    );
+      # Fix the build by adding a missing dependency (s. https://crbug.com/1197837):
+      ./patches/fix-missing-atspi2-dependency.patch
+    ] ++ optionals (chromiumVersionAtLeast "91") [
+      ./patches/closure_compiler-Use-the-Java-binary-from-the-system.patch
+    ];
 
-    postPatch = ''
+    postPatch = lib.optionalString (chromiumVersionAtLeast "91") ''
+      # Required for patchShebangs (unsupported):
+      chmod -x third_party/webgpu-cts/src/tools/deno
+    '' + ''
       # remove unused third-party
       for lib in ${toString gnSystemLibraries}; do
         if [ -d "third_party/$lib" ]; then
@@ -196,7 +209,7 @@ let
           '/usr/share/locale/' \
           '${glibc}/share/locale/'
 
-      sed -i -e 's@"\(#!\)\?.*xdg-@"\1${xdg_utils}/bin/xdg-@' \
+      sed -i -e 's@"\(#!\)\?.*xdg-@"\1${xdg-utils}/bin/xdg-@' \
         chrome/browser/shell_integration_linux.cc
 
       sed -i -e '/lib_loader.*Load/s!"\(libudev\.so\)!"${lib.getLib systemd}/lib/\1!' \
@@ -226,11 +239,11 @@ let
     '';
 
     gnFlags = mkGnFlags ({
+      is_official_build = true;
       custom_toolchain = "//build/toolchain/linux/unbundle:default";
       host_toolchain = "//build/toolchain/linux/unbundle:default";
-      is_official_build = true;
+      system_wayland_scanner_path = "${wayland}/bin/wayland-scanner";
 
-      use_vaapi = !stdenv.isAarch64; # TODO: Remove once M88 is released
       use_sysroot = false;
       use_gnome_keyring = gnomeKeyringSupport;
       use_gio = gnomeSupport;
@@ -251,13 +264,10 @@ let
       symbol_level = 0;
       fieldtrial_testing_like_official_build = true;
 
-      # Google API keys, see:
-      #   http://www.chromium.org/developers/how-tos/api-keys
-      # Note: These are for NixOS/nixpkgs use ONLY. For your own distribution,
-      # please get your own set of keys.
+      # Google API key, see: https://www.chromium.org/developers/how-tos/api-keys
+      # Note: The API key is for NixOS/nixpkgs use ONLY.
+      # For your own distribution, please get your own set of keys.
       google_api_key = "AIzaSyDGi15Zwl11UNe6Y-5XW_upsfyw31qwZPI";
-      google_default_client_id = "404761575300.apps.googleusercontent.com";
-      google_default_client_secret = "9rIFQjfnkykEmqb6FfjJQD1D";
     } // optionalAttrs proprietaryCodecs {
       # enable support for the H.264 codec
       proprietary_codecs = true;
@@ -266,19 +276,14 @@ let
     } // optionalAttrs pulseSupport {
       use_pulseaudio = true;
       link_pulseaudio = true;
-    } // optionalAttrs useOzone {
-      use_ozone = true;
-      use_xkbcommon = true;
-      use_glib = true;
-      use_gtk = true;
-      use_system_libwayland = true;
-      use_system_minigbm = true;
-      use_system_libdrm = true;
-      system_wayland_scanner_path = "${wayland}/bin/wayland-scanner";
-    } // optionalAttrs (chromiumVersionAtLeast "89") {
       # Disable PGO (defaults to 2 since M89) because it fails without additional changes:
       # error: Could not read profile ../../chrome/build/pgo_profiles/chrome-linux-master-1610647094-405a32bcf15e5a84949640f99f84a5b9f61e2f2e.profdata: Unsupported instrumentation profile format version
       chrome_pgo_phase = 0;
+      # Disable build with TFLite library because it fails without additional changes:
+      # ninja: error: '../../chrome/test/data/simple_test.tflite', needed by 'test_data/simple_test.tflite', missing and no known rule to make it
+      # Note: chrome/test/data/simple_test.tflite is in the Git repository but not in chromium-90.0.4400.8.tar.xz
+      # See also chrome/services/machine_learning/README.md
+      build_with_tflite_lib = false;
     } // optionalAttrs ungoogled {
       chrome_pgo_phase = 0;
       enable_hangout_services_extension = false;
@@ -304,7 +309,7 @@ let
 
       # This is to ensure expansion of $out.
       libExecPath="${libExecPath}"
-      python build/linux/unbundle/replace_gn_files.py --system-libraries ${toString gnSystemLibraries}
+      ${python2}/bin/python2 build/linux/unbundle/replace_gn_files.py --system-libraries ${toString gnSystemLibraries}
       ${gnChromium}/bin/gn gen --args=${escapeShellArg gnFlags} out/Release | tee gn-gen-outputs.txt
 
       # Fail if `gn gen` contains a WARNING.

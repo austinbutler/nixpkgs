@@ -2,22 +2,19 @@
 , buildPythonPackage
 , fetchPypi
 , pythonOlder
-, importlib-metadata
 , pytestCheckHook
 }:
 
 buildPythonPackage rec {
   pname = "catalogue";
-  version = "2.0.1";
+  version = "2.0.4";
 
   disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0d01077dbfca7aa53f3ef4adecccce636bce4f82e5b52237703ab2f56478e56e";
+    hash = "sha256-ntNF0ShVrzFfFxVYNhKya4YhorCi4775dNxdcS95g6o=";
   };
-
-  propagatedBuildInputs = [ importlib-metadata ];
 
   checkInputs = [ pytestCheckHook ];
 
@@ -26,6 +23,5 @@ buildPythonPackage rec {
     homepage = "https://github.com/explosion/catalogue";
     changelog = "https://github.com/explosion/catalogue/releases/tag/v${version}";
     license = licenses.mit;
-    maintainers = with maintainers; [ danieldk ];
   };
 }

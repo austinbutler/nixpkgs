@@ -9,7 +9,7 @@
 
 { stdenv, lib, fetchFromGitHub,
   # Main build tools
-  pkg-config, autoconf, automake, libtool, m4, lzma, python3,
+  pkg-config, autoconf, automake, libtool, m4, xz, python3,
   numactl,
   # Processing, video codecs, containers
   ffmpeg-full, nv-codec-headers, libogg, x264, x265, libvpx, libtheora, dav1d,
@@ -100,7 +100,7 @@ _EOF
     ffmpeg-full libogg libtheora x264 x265 libvpx dav1d
     libopus lame libvorbis a52dec speex libsamplerate
     libiconv fribidi fontconfig freetype libass jansson libxml2 harfbuzz
-    libdvdread libdvdnav libdvdcss libbluray lzma
+    libdvdread libdvdnav libdvdcss libbluray xz
   ] ++ lib.optional (!stdenv.isDarwin) numactl
   ++ lib.optionals useGtk [
     glib gtk3 libappindicator-gtk3 libnotify
@@ -111,8 +111,6 @@ _EOF
   # NOTE: 2018-12-27: Handbrake supports nv-codec-headers for Linux only,
   # look at ./make/configure.py search "enable_nvenc"
   ++ lib.optional stdenv.isLinux nv-codec-headers;
-
-  enableParallelBuilding = true;
 
   configureFlags = [
     "--disable-df-fetch"

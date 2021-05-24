@@ -1,6 +1,6 @@
-{ lib, stdenv, fetchgit, fetchFromGitHub, fetchFromGitLab, fetchpatch, cmake, pkg-config, makeWrapper, python27, python37, retroarch
+{ lib, stdenv, fetchgit, fetchFromGitHub, fetchFromGitLab, fetchpatch, cmake, pkg-config, makeWrapper, python27, python3, retroarch
 , alsaLib, fluidsynth, curl, hidapi, libGLU, gettext, glib, gtk2, portaudio, SDL, SDL_net, SDL2, SDL2_image, libGL
-, ffmpeg_3, pcre, libevdev, libpng, libjpeg, libzip, udev, libvorbis, snappy, which, hexdump
+, ffmpeg, pcre, libevdev, libpng, libjpeg, libzip, udev, libvorbis, snappy, which, hexdump
 , miniupnpc, sfml, xorg, zlib, nasm, libpcap, boost, icu, openssl
 , buildPackages }:
 
@@ -831,15 +831,24 @@ in with lib.licenses;
 
   ppsspp = mkLibRetroCore {
     core = "ppsspp";
-    src = fetchgit {
-      url = "https://github.com/hrydgard/ppsspp";
-      rev = "bf1777f7d3702e6a0f71c7ec1fc51976e23c2327";
-      sha256 = "17sym0vk72lzbh9a1501mhw98c78x1gq7k1fpy69nvvb119j37wa";
+    src = fetchFromGitHub {
+      owner = "hrydgard";
+      repo = "ppsspp";
+      rev = "v1.11";
+      fetchSubmodules = true;
+      sha256 = "sha256-vfp/vacIItlPP5dR7jzDT7oOUNFnjvvdR46yi79EJKU=";
     };
+    patches = [
+      (fetchpatch {
+        name = "fix_ffmpeg_4.4.patch";  # to be removed with next release
+        url = "https://patch-diff.githubusercontent.com/raw/hrydgard/ppsspp/pull/14176.patch";
+        sha256 = "sha256-ecDoOydaLfL6+eFpahcO1TnRl866mZZVHlr6Qrib1mo=";
+      })
+    ];
     description = "ppsspp libretro port";
     license = gpl2;
-    extraNativeBuildInputs = [ cmake pkg-config ];
-    extraBuildInputs = [ libGLU libGL libzip ffmpeg_3 python37 snappy xorg.libX11 ];
+    extraNativeBuildInputs = [ cmake pkg-config python3 ];
+    extraBuildInputs = [ libGLU libGL libzip ffmpeg snappy xorg.libX11 ];
     makefile = "Makefile";
     cmakeFlags = [ "-DLIBRETRO=ON -DUSE_SYSTEM_FFMPEG=ON -DUSE_SYSTEM_SNAPPY=ON -DUSE_SYSTEM_LIBZIP=ON -DOpenGL_GL_PREFERENCE=GLVND" ];
     postBuild = "mv lib/ppsspp_libretro${stdenv.hostPlatform.extensions.sharedLibrary} ppsspp_libretro${stdenv.hostPlatform.extensions.sharedLibrary}";
@@ -925,8 +934,8 @@ in with lib.licenses;
     src = fetchFromGitHub {
       owner = "snes9xgit";
       repo = core;
-      rev = "6db918cfe32b157239da44096091c212fdfb3b60";
-      sha256 = "0y3jhy50qdhhfglybys9m0fgk9r24ksdcgv5iqpyxy5a4cjvhv8j";
+      rev = "bd9246ddd75a5e9f78d6189c8c57754d843630f7";
+      sha256 = "10fm7ah3aha9lf4k9hgw0dlhdvshzpig2d0ylcb12gf9zz0i22ns";
     };
     description = "Port of SNES9x git to libretro";
     license = "Non-commercial";
@@ -1009,6 +1018,20 @@ in with lib.licenses;
     description = "Port of TGBDual to libretro";
     license = gpl2;
     makefile = "Makefile";
+  };
+
+  thepowdertoy = mkLibRetroCore rec {
+    core = "thepowdertoy";
+    src = fetchRetro {
+      repo = "ThePowderToy";
+      rev = "0ff547e89ae9d6475b0226db76832daf03eec937";
+      sha256 = "kDpmo/RPYRvROOX3AhsB5pIl0MfHbQmbyTMciLPDNew=";
+    };
+    description = "Port of The Powder Toy to libretro";
+    license = gpl3Only;
+    extraNativeBuildInputs = [ cmake ];
+    makefile = "Makefile";
+    postBuild = "cd src/";
   };
 
   tic80 = mkLibRetroCore {

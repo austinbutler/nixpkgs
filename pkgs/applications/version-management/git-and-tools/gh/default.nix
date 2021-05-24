@@ -2,25 +2,33 @@
 
 buildGoModule rec {
   pname = "gh";
-  version = "1.5.0";
+  version = "1.10.3";
 
   src = fetchFromGitHub {
     owner = "cli";
     repo = "cli";
     rev = "v${version}";
-    sha256 = "1f23b8bn867b4zihz8m91xmkclcw1jnqkwi06klhm5576akahigq";
+    sha256 = "sha256-hwqnINygXycd9W6tPjXsRcGbdTyULGL31aRl5NUxGtc=";
   };
 
-  vendorSha256 = "00adc0xjrkjrjh0gxk55vhpgxb5x0j5ialzrdvhlrvhpnb44qrcq";
+  vendorSha256 = "sha256-acFN/StOMu8RSN/wvJsf4vSnjsmRnkrjuDb9cDMnXRs=";
 
   nativeBuildInputs = [ installShellFiles ];
 
+  # upstream unsets these to handle cross but it breaks our build
+  postPatch = ''
+    substituteInPlace Makefile \
+      --replace "GOOS= GOARCH= GOARM= GOFLAGS= CGO_ENABLED=" ""
+  '';
+
   buildPhase = ''
-    export GO_LDFLAGS="-s -w"
-    make GH_VERSION=${version} bin/gh manpages
+    runHook preBuild
+    make GO_LDFLAGS="-s -w" GH_VERSION=${version} bin/gh manpages
+    runHook postBuild
   '';
 
   installPhase = ''
+    runHook preInstall
     install -Dm755 bin/gh -t $out/bin
     installManPage share/man/*/*.[1-9]
 
@@ -28,6 +36,7 @@ buildGoModule rec {
       $out/bin/gh completion -s $shell > gh.$shell
       installShellCompletion gh.$shell
     done
+    runHook postInstall
   '';
 
   # fails with `unable to find git executable in PATH`

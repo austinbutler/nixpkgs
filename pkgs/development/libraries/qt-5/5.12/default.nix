@@ -89,15 +89,6 @@ let
         sha256 = "1gv733qfdn9746nbqqxzyjx4ijjqkkb7zb71nxax49nna5bri3am";
       })
 
-      # Fix build with bison-3.7: https://code.qt.io/cgit/qt/qtwebengine-chromium.git/commit/?id=1a53f599
-      (fetchpatch {
-        name = "qtwebengine-bison-3.7-build.patch";
-        url = "https://code.qt.io/cgit/qt/qtwebengine-chromium.git/patch/?id=1a53f599";
-        sha256 = "1nqpyn5fq37q7i9nasag6i14lnz0d7sld5ikqhlm8qwq9d7gbmjy";
-        stripLen = 1;
-        extraPrefix = "src/3rdparty/";
-      })
-
       ./qtwebengine-darwin-no-platform-check.patch
       ./qtwebengine-darwin-fix-failed-static-assertion.patch
     ];
@@ -107,7 +98,13 @@ let
         url = "https://github.com/qtwebkit/qtwebkit/commit/d92b11fea65364fefa700249bd3340e0cd4c5b31.patch";
         sha256 = "0h8ymfnwgkjkwaankr3iifiscsvngqpwb91yygndx344qdiw9y0n";
       })
+      (fetchpatch {
+        name = "qtwebkit-glib-2.68.patch";
+        url = "https://github.com/qtwebkit/qtwebkit/pull/1058/commits/5b698ba3faffd4e198a45be9fe74f53307395e4b.patch";
+        sha256 = "0a3xv0h4lv8wggckgy8cg8xnpkg7n9h45312pdjdnnwy87xvzss0";
+      })
       ./qtwebkit.patch
+      ./qtwebkit-icu68.patch
 
       ./qtwebkit-darwin-no-readline.patch
       ./qtwebkit-darwin-no-qos-classes.patch
@@ -145,7 +142,7 @@ let
         patches = patches.qtbase;
         inherit bison cups harfbuzz libGL;
         withGtk3 = true; inherit dconf gtk3;
-        inherit developerBuild decryptSslTraffic;
+        inherit debug developerBuild decryptSslTraffic;
       };
 
       qtcharts = callPackage ../modules/qtcharts.nix {};
@@ -197,6 +194,7 @@ let
       qmake = makeSetupHook {
         deps = [ self.qtbase.dev ];
         substitutions = {
+          inherit debug;
           fix_qmake_libtool = ../hooks/fix-qmake-libtool.sh;
         };
       } ../hooks/qmake-hook.sh;

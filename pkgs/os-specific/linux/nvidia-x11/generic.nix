@@ -25,6 +25,8 @@
 , # don't include the bundled 32-bit libraries on 64-bit platforms,
   # even if it’s in downloaded binary
   disable32Bit ? false
+  # 32 bit libs only version of this package
+, lib32 ? null
 }:
 
 with lib;
@@ -49,7 +51,7 @@ let
     src =
       if stdenv.hostPlatform.system == "x86_64-linux" then
         fetchurl {
-          url = args.url or "https://download.nvidia.com/XFree86/Linux-x86_64/${version}/NVIDIA-Linux-x86_64-${version}${pkgSuffix}.run";
+          url = args.url or "https://us.download.nvidia.com/XFree86/Linux-x86_64/${version}/NVIDIA-Linux-x86_64-${version}${pkgSuffix}.run";
           sha256 = sha256_64bit;
         }
       else if stdenv.hostPlatform.system == "i686-linux" then
@@ -93,6 +95,8 @@ let
       };
       persistenced = mapNullable (hash: callPackage (import ./persistenced.nix self hash) { }) persistencedSha256;
       inherit persistencedVersion settingsVersion;
+    } // optionalAttrs (!i686bundled) {
+      inherit lib32;
     };
 
     meta = with lib; {

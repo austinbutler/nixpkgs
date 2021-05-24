@@ -63,13 +63,11 @@ in stdenv.mkDerivation rec {
 
   outputs = [ "out" ] ++ lib.optional mod "kmod";
 
-  enableParallelBuilding = true;
-
   meta = with lib; {
     description = "Set of libraries and drivers for fast packet processing";
     homepage = "http://dpdk.org/";
     license = with licenses; [ lgpl21 gpl2 bsd2 ];
     platforms =  platforms.linux;
-    maintainers = with maintainers; [ domenkozar magenbluten orivej ];
+    maintainers = with maintainers; [ magenbluten orivej ];
   };
 }

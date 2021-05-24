@@ -2,15 +2,15 @@
 
 buildGoModule rec {
   pname = "terraform-ls";
-  version = "0.12.0";
+  version = "0.16.2";
 
   src = fetchFromGitHub {
     owner = "hashicorp";
     repo = pname;
     rev = "v${version}";
-    sha256 = "w9PLKLFjKehtub1LbVX9TbvKkj/S1t0MwZIZurF2x18=";
+    sha256 = "sha256-5+h1fyTCp1jUZeKRCeDhfqAA11SMyR5nw2Y2x6JyIwY=";
   };
-  vendorSha256 = "J8ovcUeQsb58Bq/EM9mvYqtuDY1bXTEVCC9/AH+UttU=";
+  vendorSha256 = "sha256-m5ddUwuTX0mSihkoGIMQKidptwUL8Bao5HgHJBWX0os=";
 
   # tests fail in sandbox mode because of trying to download stuff from releases.hashicorp.com
   doCheck = false;

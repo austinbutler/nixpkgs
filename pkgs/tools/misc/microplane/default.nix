@@ -1,30 +1,20 @@
-{ lib, buildGoPackage, fetchFromGitHub }:
+{ lib, buildGoModule, fetchFromGitHub }:
 
-buildGoPackage rec {
+buildGoModule rec {
   pname = "microplane";
-  version = "0.0.25";
+  version = "0.0.31";
 
   src = fetchFromGitHub {
     owner = "Clever";
     repo = "microplane";
     rev = "v${version}";
-    sha256 = "0vynkv3d70q8d079kgdmwbavyyrjssqnd223dl1rikyy7sd5sli8";
+    sha256 = "sha256-PcojOFe3SHhnFy09kcxHhb5kd07TG7Uq+coPUNbJjx4=";
   };
 
-  goPackagePath = "github.com/Clever/microplane";
-
-  subPackages = ["."];
-
-  # Regenerate deps.nix with the following steps:
-  # git clone git@github.com:Clever/microplane.git
-  # cd microplane
-  # git checkout v<version>
-  # dep2nix
-
-  goDeps = ./deps.nix;
+  vendorSha256 = "sha256-5HHdxSXg3ZIUyFQALaYgvf4pQwNxG58cF4vnCnMgAuY=";
 
   buildFlagsArray = ''
-    -ldflags="-s -w -X main.version=v${version}"
+    -ldflags=-s -w -X main.version=${version}
   '';
 
   postInstall = ''

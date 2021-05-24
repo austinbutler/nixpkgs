@@ -79,6 +79,8 @@ let
       include ${pkgs.mailcap}/etc/nginx/mime.types;
       include ${cfg.package}/conf/fastcgi.conf;
       include ${cfg.package}/conf/uwsgi_params;
+
+      default_type application/octet-stream;
   '';
 
   configFile = pkgs.writers.writeNginxConfig "nginx.conf" ''
@@ -152,10 +154,10 @@ let
 
       ${optionalString (cfg.recommendedProxySettings) ''
         proxy_redirect          off;
-        proxy_connect_timeout   90;
-        proxy_send_timeout      90;
-        proxy_read_timeout      90;
-        proxy_http_version      1.0;
+        proxy_connect_timeout   ${cfg.proxyTimeout};
+        proxy_send_timeout      ${cfg.proxyTimeout};
+        proxy_read_timeout      ${cfg.proxyTimeout};
+        proxy_http_version      1.1;
         include ${recommendedProxyConfig};
       ''}
 
@@ -247,7 +249,15 @@ let
           + optionalString (ssl && vhost.http2) "http2 "
           + optionalString vhost.default "default_server "
           + optionalString (extraParameters != []) (concatStringsSep " " extraParameters)
-          + ";";
+          + ";"
+          + (if ssl && vhost.http3 then ''
+          # UDP listener for **QUIC+HTTP/3
+          listen ${addr}:${toString port} http3 reuseport;
+          # Advertise that HTTP/3 is available
+          add_header Alt-Svc 'h3=":443"';
+          # Sent when QUIC was used
+          add_header QUIC-Status $quic;
+          '' else "");
 
         redirectListen = filter (x: !x.ssl) defaultListen;
 
@@ -391,10 +401,22 @@ in
         ";
       };
 
+      proxyTimeout = mkOption {
+        type = types.str;
+        default = "60s";
+        example = "20s";
+        description = "
+          Change the proxy related timeouts in recommendedProxySettings.
+        ";
+      };
+
       package = mkOption {
         default = pkgs.nginxStable;
         defaultText = "pkgs.nginxStable";
         type = types.package;
+        apply = p: p.override {
+          modules = p.modules ++ cfg.additionalModules;
+        };
         description = "
           Nginx package to use. This defaults to the stable version. Note
           that the nginx team recommends to use the mainline version which
@@ -402,8 +424,20 @@ in
         ";
       };
 
+      additionalModules = mkOption {
+        default = [];
+        type = types.listOf (types.attrsOf types.anything);
+        example = literalExample "[ pkgs.nginxModules.brotli ]";
+        description = ''
+          Additional <link xlink:href="https://www.nginx.com/resources/wiki/modules/">third-party nginx modules</link>
+          to install. Packaged modules are available in
+          <literal>pkgs.nginxModules</literal>.
+        '';
+      };
+
       logError = mkOption {
         default = "stderr";
+        type = types.str;
         description = "
           Configures logging.
           The first parameter defines a file that will store the log. The
@@ -659,6 +693,7 @@ in
                 Defines the address and other parameters of the upstream servers.
               '';
               default = {};
+              example = { "127.0.0.1:8000" = {}; };
             };
             extraConfig = mkOption {
               type = types.lines;
@@ -673,6 +708,14 @@ in
           Defines a group of servers to use as proxy target.
         '';
         default = {};
+        example = literalExample ''
+          "backend_server" = {
+            servers = { "127.0.0.1:8000" = {}; };
+            extraConfig = ''''
+              keepalive 16;
+            '''';
+          };
+        '';
       };
 
       virtualHosts = mkOption {
@@ -785,28 +828,38 @@ in
         # Logs directory and mode
         LogsDirectory = "nginx";
         LogsDirectoryMode = "0750";
+        # Proc filesystem
+        ProcSubset = "pid";
+        ProtectProc = "invisible";
+        # New file permissions
+        UMask = "0027"; # 0640 / 0750
         # Capabilities
         AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" "CAP_SYS_RESOURCE" ];
         CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" "CAP_SYS_RESOURCE" ];
         # Security
         NoNewPrivileges = true;
-        # Sandboxing
+        # Sandboxing (sorted by occurrence in https://www.freedesktop.org/software/systemd/man/systemd.exec.html)
         ProtectSystem = "strict";
         ProtectHome = mkDefault true;
         PrivateTmp = true;
         PrivateDevices = true;
         ProtectHostname = true;
+        ProtectClock = true;
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
+        ProtectKernelLogs = true;
         ProtectControlGroups = true;
         RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+        RestrictNamespaces = true;
         LockPersonality = true;
-        MemoryDenyWriteExecute = !(builtins.any (mod: (mod.allowMemoryWriteExecute or false)) pkgs.nginx.modules);
+        MemoryDenyWriteExecute = !(builtins.any (mod: (mod.allowMemoryWriteExecute or false)) cfg.package.modules);
         RestrictRealtime = true;
         RestrictSUIDSGID = true;
+        RemoveIPC = true;
         PrivateMounts = true;
         # System Call Filtering
         SystemCallArchitectures = "native";
+        SystemCallFilter = "~@cpu-emulation @debug @keyring @ipc @mount @obsolete @privileged @setuid";
       };
     };
 
@@ -814,8 +867,9 @@ in
       source = configFile;
     };
 
-    # postRun hooks on cert renew can't be used to restart Nginx since renewal
-    # runs as the unprivileged acme user. sslTargets are added to wantedBy + before
+    # This service waits for all certificates to be available
+    # before reloading nginx configuration.
+    # sslTargets are added to wantedBy + before
     # which allows the acme-finished-$cert.target to signify the successful updating
     # of certs end-to-end.
     systemd.services.nginx-config-reload = let
@@ -853,6 +907,7 @@ in
     users.users = optionalAttrs (cfg.user == "nginx") {
       nginx = {
         group = cfg.group;
+        isSystemUser = true;
         uid = config.ids.uids.nginx;
       };
     };

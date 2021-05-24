@@ -12,6 +12,8 @@ let
 
   isNix23 = versionAtLeast nixVersion "2.3pre";
 
+  isNix24 = versionAtLeast nixVersion "2.4pre";
+
   makeNixBuildUser = nr: {
     name  = "nixbld${toString nr}";
     value = {
@@ -21,6 +23,7 @@ let
          calls in `libstore/build.cc', don't add any supplementary group
          here except "nixbld".  */
       uid = builtins.add config.ids.uids.nixbld nr;
+      isSystemUser = true;
       group = "nixbld";
       extraGroups = [ "nixbld" ];
     };
@@ -40,7 +43,11 @@ let
         max-jobs = ${toString (cfg.maxJobs)}
         cores = ${toString (cfg.buildCores)}
         sandbox = ${if (builtins.isBool cfg.useSandbox) then boolToString cfg.useSandbox else cfg.useSandbox}
-        extra-sandbox-paths = ${toString cfg.sandboxPaths}
+        ${if isNix24 then ''
+          sandbox-paths = ${toString cfg.sandboxPaths}
+        '' else ''
+          extra-sandbox-paths = ${toString cfg.sandboxPaths}
+        ''}
         substituters = ${toString cfg.binaryCaches}
         trusted-substituters = ${toString cfg.trustedBinaryCaches}
         trusted-public-keys = ${toString cfg.binaryCachePublicKeys}

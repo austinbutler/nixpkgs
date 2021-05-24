@@ -2,26 +2,29 @@
 
 buildGoModule rec {
   pname = "starboard-octant-plugin";
-  version = "0.9.0";
+  version = "0.10.3";
 
   src = fetchFromGitHub {
     owner = "aquasecurity";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-R6hnAqFpebZ9PV3KAX052wjjCtW5D9hKfj7DdS+3Ibg=";
+    sha256 = "sha256-9vl068ZTw6Czf+cWQ0k1lU0pqh7P0YZgLguHkk3M918=";
   };
 
-  vendorSha256 = "sha256-c5sel3xs4npTENqRQu8d9hUOK1OFQodF3M0ZpUpr1po=";
+  vendorSha256 = "sha256-HOvZPDVKZEoL91yyaJRuKThHirY77xlKOtLKARthxn8=";
 
-  buildFlagsArray = [ "-ldflags=" "-s" "-w" ];
+  preBuild = ''
+    buildFlagsArray+=("-ldflags" "-s -w")
+  '';
 
   meta = with lib; {
+    homepage = "https://github.com/aquasecurity/starboard-octant-plugin";
+    changelog = "https://github.com/aquasecurity/starboard-octant-plugin/releases/tag/v${version}";
     description = "Octant plugin for viewing Starboard security information";
     longDescription = ''
       This is an Octant plugin for Starboard which provides visibility into vulnerability assessment reports for
       Kubernetes workloads stored as custom security resources.
     '';
-    homepage = src.meta.homepage;
     license = licenses.asl20;
     maintainers = with maintainers; [ jk ];
   };

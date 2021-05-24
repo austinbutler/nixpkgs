@@ -8,12 +8,12 @@
 
 let
   executableName = "element-desktop";
-  version = "1.7.18";
+  version = "1.7.28";
   src = fetchFromGitHub {
     owner = "vector-im";
     repo = "element-desktop";
     rev = "v${version}";
-    sha256 = "sha256-5k+VVcloFAcFvk683r7njOCuj7OOnHS9QLEHFu0g+5o=";
+    sha256 = "0p88gw1y37q35qqf94w3qlb84s2shm41n1pw5fgx0c0ymlzpl636";
   };
 in mkYarnPackage rec {
   name = "element-desktop-${version}";
@@ -45,7 +45,8 @@ in mkYarnPackage rec {
 
     # executable wrapper
     makeWrapper '${electron}/bin/electron' "$out/bin/${executableName}" \
-      --add-flags "$out/share/element/electron"
+      --add-flags "$out/share/element/electron" \
+      --set-default MOZ_DBUS_REMOTE 1
   '';
 
   # Do not attempt generating a tarball for element-web again.
@@ -73,6 +74,7 @@ in mkYarnPackage rec {
   meta = with lib; {
     description = "A feature-rich client for Matrix.org";
     homepage = "https://element.io/";
+    changelog = "https://github.com/vector-im/element-desktop/blob/v${version}/CHANGELOG.md";
     license = licenses.asl20;
     maintainers = teams.matrix.members;
     inherit (electron.meta) platforms;
