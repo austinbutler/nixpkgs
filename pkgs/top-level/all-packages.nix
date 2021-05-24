@@ -22371,6 +22371,8 @@ in
     patches = config."2bwm".patches or [];
   };
 
+  _4kslideshowmaker = callPackage ../applications/video/4kslideshowmaker { };
+
   a2jmidid = callPackage ../applications/audio/a2jmidid { };
 
   aacgain = callPackage ../applications/audio/aacgain { };

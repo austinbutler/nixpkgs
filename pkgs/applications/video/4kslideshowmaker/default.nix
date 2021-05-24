@@ -1,5 +1,5 @@
 { stdenv, lib, fetchurl, writeScript, cdrtools, dvdauthor, ffmpeg_3, imagemagick
-, lame, mjpegtools, sox, transcode, vorbis-tools, runtimeShell }:
+, lame, mjpegtools, sox, transcode, vorbis-tools, runtimeShell, makeWrapper }:
 
 stdenv.mkDerivation rec {
   pname = "4kslideshowmaker";
@@ -13,30 +13,14 @@ stdenv.mkDerivation rec {
     sha256 = "2c87658444df5451f04ca8d4daaa534c93e4684689721389ae8382065e40d361";
   };
 
-  #patchPhase = ''
-  #  # fix upstream typos
-  #  substituteInPlace dvd-slideshow \
-  #    --replace "version='0.8.4-1'" "version='0.8.4-2'" \
-  #    --replace "mymyecho" "myecho"
-  #'';
+  nativeBuildInputs = [ makeWrapper ];
 
   installPhase = ''
-    mkdir -p "$out/bin"
-    cp dvd-slideshow         "$out/bin/dvd-slideshow.real"
-    cp dvd-menu              "$out/bin/dvd-menu.real"
-    cp dir2slideshow         "$out/bin/dir2slideshow.real"
-    cp gallery1-to-slideshow "$out/bin/gallery1-to-slideshow.real"
-    cp jigl2slideshow        "$out/bin/jigl2slideshow.real"
-
-    cp ${wrapper} "$out/bin/dvd-slideshow.sh"
-    ln -s dvd-slideshow.sh "$out/bin/dvd-slideshow"
-    ln -s dvd-slideshow.sh "$out/bin/dvd-slideshow.ffmpeg"
-    ln -s dvd-slideshow.sh "$out/bin/dvd-menu"
-    ln -s dvd-slideshow.sh "$out/bin/dir2slideshow"
-    ln -s dvd-slideshow.sh "$out/bin/gallery1-to-slideshow"
-    ln -s dvd-slideshow.sh "$out/bin/jigl2slideshow"
-
-    cp -a man "$out/"
+    mkdir -p "$out/bin" "$out/lib"
+    cp 4kslideshowmaker-bin "$out/bin/4kslideshowmaker"
+    cp -r . "$out/lib"
+    rm $out/lib/{4kslideshowmaker-bin,4kslideshowmaker.sh}
+    wrapProgram "$out/bin/${pname}" --set LD_LIBRARY_PATH $out/lib
   '';
 
   meta = {
