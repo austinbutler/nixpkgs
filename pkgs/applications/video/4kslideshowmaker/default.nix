@@ -1,7 +1,8 @@
-{ stdenv, lib, fetchurl, writeScript, cdrtools, dvdauthor, ffmpeg_3, imagemagick
-, lame, mjpegtools, sox, transcode, vorbis-tools, runtimeShell, makeWrapper }:
+{ stdenv, lib, fetchurl, mkDerivation, openssl_1_0_2, qtbase, qtremoteobjects
+, qtvirtualkeyboard, qtwayland, gtk3, alsaLib, makeWrapper, autoPatchelfHook
+, wrapQtAppsHook }:
 
-stdenv.mkDerivation rec {
+mkDerivation rec {
   pname = "4kslideshowmaker";
   versionMajor = "1";
   versionMinor = "8";
@@ -9,19 +10,23 @@ stdenv.mkDerivation rec {
   version = "${versionMajor}.${versionMinor}.${versionPatch}.1041";
 
   src = fetchurl {
-    url = "https://dl.4kdownload.com/app/${pname}_${versionMajor}.${versionMinor}.${versionPatch}_amd64.tar.bz2";
+    url =
+      "https://dl.4kdownload.com/app/${pname}_${versionMajor}.${versionMinor}.${versionPatch}_amd64.tar.bz2";
     sha256 = "2c87658444df5451f04ca8d4daaa534c93e4684689721389ae8382065e40d361";
   };
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [ autoPatchelfHook wrapQtAppsHook ];
+  buildInputs = [ alsaLib gtk3 openssl_1_0_2 qtbase qtvirtualkeyboard qtremoteobjects qtwayland ];
 
   installPhase = ''
     mkdir -p "$out/bin" "$out/lib"
     cp 4kslideshowmaker-bin "$out/bin/4kslideshowmaker"
-    cp -r . "$out/lib"
-    rm $out/lib/{4kslideshowmaker-bin,4kslideshowmaker.sh}
-    wrapProgram "$out/bin/${pname}" --set LD_LIBRARY_PATH $out/lib
+    #cp -r . "$out/lib"
+    #rm $out/lib/{4kslideshowmaker-bin,4kslideshowmaker.sh}
+    #wrapProgram "$out/bin/${pname}" --set LD_LIBRARY_PATH $out/lib
   '';
+
+  #qtWrapperArgs = [ "--prefix LD_LIBRARY_PATH : $out/lib" ];
 
   meta = {
     description =

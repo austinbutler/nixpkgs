@@ -182,7 +182,7 @@
   qtremoteobjects = {
     version = "5.14.2";
     src = fetchurl {
-      url = "${mirror}/official_releases/qt/5.14/5.14.2/submodules/qtremoteobjects-everywhere-src-5.14.2.tar.xz";
+      url = "${mirror}/archive/qt/5.14/5.14.2/submodules/qtremoteobjects-everywhere-src-5.14.2.tar.xz";
       sha256 = "a6a601c4f4aab6fe41a462dae57033819f697e3317240a382cee45c08be614d6";
       name = "qtremoteobjects-everywhere-src-5.14.2.tar.xz";
     };

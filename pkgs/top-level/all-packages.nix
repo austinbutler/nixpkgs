@@ -22371,7 +22371,7 @@ in
     patches = config."2bwm".patches or [];
   };
 
-  _4kslideshowmaker = callPackage ../applications/video/4kslideshowmaker { };
+  _4kslideshowmaker = libsForQt514.callPackage ../applications/video/4kslideshowmaker { };
 
   a2jmidid = callPackage ../applications/audio/a2jmidid { };
 

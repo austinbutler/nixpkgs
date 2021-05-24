@@ -174,6 +174,7 @@ let
       qtquick1 = null;
       qtquickcontrols = callPackage ../modules/qtquickcontrols.nix {};
       qtquickcontrols2 = callPackage ../modules/qtquickcontrols2.nix {};
+      qtremoteobjects = callPackage ../modules/qtremoteobjects.nix {};
       qtscript = callPackage ../modules/qtscript.nix {};
       qtsensors = callPackage ../modules/qtsensors.nix {};
       qtserialport = callPackage ../modules/qtserialport.nix {};
