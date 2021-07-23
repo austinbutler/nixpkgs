@@ -2,16 +2,29 @@
 
 buildGoModule rec {
   pname = "earthly";
-  version = "0.5.13";
+  version = "0.5.18";
 
   src = fetchFromGitHub {
     owner = "earthly";
     repo = "earthly";
     rev = "v${version}";
-    sha256 = "sha256-XN3E1oCIlohALnaP17WOB7/1vaklmyAfVZLxrBOXhbo=";
+    sha256 = "sha256-YY4scGRMuvyEpeEgvoJJsTtROl11hMyGr7vYBYvJY/w=";
   };
 
-  vendorSha256 = "sha256-q3dDV0eop2NxXHFrlppWsZrO2Hz1q5xhs1DnB6PvG9g=";
+  vendorSha256 = "sha256-aDkaOycQ/wPybSH5fnJIGtCOh+KV0wEF+qinRQQIdm4=";
+
+  buildFlagsArray = ''
+    -ldflags=
+      -s -w
+      -X main.Version=v${version}
+      -X main.DefaultBuildkitdImage=earthly/buildkitd:v${version}
+      -extldflags -static
+  '';
+
+  BUILDTAGS = "dfrunmount dfrunsecurity dfsecrets dfssh dfrunnetwork";
+  preBuild = ''
+    makeFlagsArray+=(BUILD_TAGS="${BUILDTAGS}")
+  '';
 
   postInstall = ''
     mv $out/bin/debugger $out/bin/earthly-debugger

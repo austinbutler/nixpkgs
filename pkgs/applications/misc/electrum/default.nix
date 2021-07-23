@@ -20,7 +20,7 @@
 }:
 
 let
-  version = "4.1.2";
+  version = "4.1.5";
 
   libsecp256k1_name =
     if stdenv.isLinux then "libsecp256k1.so.0"
@@ -36,7 +36,7 @@ let
     owner = "spesmilo";
     repo = "electrum";
     rev = version;
-    sha256 = "0zvv8nmjzw5pchykz5p28483nby4lp4ah7iqr08pv36gy89l51v5";
+    sha256 = "1ps8yaps5kfd7yv7bpdvssbwm6f5qivxcvhwn17cpddc2760a7nk";
 
     extraPostFetch = ''
       mv $out ./all
@@ -51,7 +51,7 @@ python3.pkgs.buildPythonApplication {
 
   src = fetchurl {
     url = "https://download.electrum.org/${version}/Electrum-${version}.tar.gz";
-    sha256 = "05m6vbd4sfjk536kwa5wa3kv21jxxqnglx0ddvnmxfhf98371bhk";
+    sha256 = "188r4zji985z8pm9b942xhmvv174yndk6jxagxl7ljk03wl2wiwi";
   };
 
   postUnpack = ''
@@ -154,6 +154,8 @@ python3.pkgs.buildPythonApplication {
       of the blockchain.
     '';
     homepage = "https://electrum.org/";
+    downloadPage = "https://electrum.org/#download";
+    changelog = "https://github.com/spesmilo/electrum/blob/master/RELEASE-NOTES";
     license = licenses.mit;
     platforms = platforms.all;
     maintainers = with maintainers; [ joachifm np prusnak ];

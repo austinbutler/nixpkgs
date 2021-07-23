@@ -6,10 +6,11 @@
 # files.
 
 stdenv.mkDerivation rec {
-  name = "attr-2.4.48";
+  pname = "attr";
+  version = "2.4.48";
 
   src = fetchurl {
-    url = "mirror://savannah/attr/${name}.tar.gz";
+    url = "mirror://savannah/attr/${pname}-${version}.tar.gz";
     sha256 = "1rr4adzwax4bzr2c00f06zcsljv5y6p9wymz1g89ww7cb2rp5bay";
   };
 
@@ -31,15 +32,7 @@ stdenv.mkDerivation rec {
   meta = with lib; {
     homepage = "https://savannah.nongnu.org/projects/attr/";
     description = "Library and tools for manipulating extended attributes";
-    platforms = platforms.unix;
+    platforms = platforms.linux;
     license = licenses.gpl2Plus;
-
-    # The build failure on Darwin will likely be solved after upgrading the
-    # macOS SDK in nixpkgs. Check the current SDK version in
-    # ../../../../os-specific/darwin/apple-sdk/default.nix to see if it has
-    # been updated to 10.13 or later. Once the requirements are met, building
-    # it should be straightforward as Homebrew was able to build it without
-    # patching.
-    broken = stdenv.isDarwin;
   };
 }

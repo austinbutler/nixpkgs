@@ -21,6 +21,7 @@
 , direnv
 , fzf
 , gnome
+, himalaya
 , khard
 , languagetool
 , llvmPackages
@@ -207,7 +208,7 @@ self: super: {
   });
 
   ensime-vim = super.ensime-vim.overrideAttrs (old: {
-    passthru.python3Dependencies = ps: with ps; [ sexpdata websocket_client ];
+    passthru.python3Dependencies = ps: with ps; [ sexpdata websocket-client ];
     dependencies = with self; [ vimproc-vim vimshell-vim self.self forms ];
   });
 
@@ -250,6 +251,14 @@ self: super: {
       '';
     });
 
+  fzf-checkout-vim = super.fzf-checkout-vim.overrideAttrs (old: {
+    # The plugin has a makefile which tries to run tests in a docker container.
+    # This prevents it.
+    prePatch = ''
+      rm Makefile
+    '';
+  });
+
   fzf-vim = super.fzf-vim.overrideAttrs (old: {
     dependencies = with self; [ fzfWrapper ];
   });
@@ -285,6 +294,21 @@ self: super: {
       license = lib.licenses.mit;
     };
   });
+
+  himalaya-vim = buildVimPluginFrom2Nix {
+    pname = "himalaya-vim";
+    inherit (himalaya) src version;
+    configurePhase = "cd vim/";
+    dependencies = with self; [ himalaya ];
+    preFixup = ''
+      substituteInPlace $out/share/vim-plugins/himalaya-vim/plugin/himalaya.vim \
+        --replace 'if !executable("himalaya")' 'if v:false'
+    '';
+    postFixup = ''
+      mkdir -p $out/bin
+      ln -s ${himalaya}/bin/himalaya $out/bin/himalaya
+    '';
+  };
 
   LanguageClient-neovim =
     let
@@ -379,6 +403,14 @@ self: super: {
     dependencies = with self; [ ultisnips ];
   });
 
+  neogit = super.neogit.overrideAttrs (old: {
+    dependencies = with self; [ plenary-nvim ];
+  });
+
+  null-ls-nvim = super.null-ls-nvim.overrideAttrs (old: {
+    path = "null-ls.nvim";
+  });
+
   nvim-lsputils = super.nvim-lsputils.overrideAttrs (old: {
     dependencies = with self; [ popfix ];
   });
@@ -457,6 +489,12 @@ self: super: {
 
   telescope-fzf-writer-nvim = super.telescope-fzf-writer-nvim.overrideAttrs (old: {
     dependencies = with self; [ telescope-nvim ];
+  });
+
+  telescope-fzf-native-nvim = super.telescope-fzf-native-nvim.overrideAttrs (old: {
+    dependencies = with self; [ telescope-nvim ];
+    buildPhase = "make";
+    meta.platforms = lib.platforms.all;
   });
 
   telescope-fzy-native-nvim = super.telescope-fzy-native-nvim.overrideAttrs (old: {
@@ -605,7 +643,7 @@ self: super: {
             libiconv
           ];
 
-          cargoSha256 = "16fhiv6qmf7dv968jyybkgs1wkphy383s78g8w5wnz4i0czld8dq";
+          cargoSha256 = "046c5w47isnz5l23kpk8zkbw312yp5dz9wq9dc2kmpklai71fc1a";
         };
       in
       ''
@@ -739,12 +777,24 @@ self: super: {
     dependencies = with self; [ vim-addon-mw-utils tlib_vim ];
   });
 
+  vim-speeddating = super.vim-speeddating.overrideAttrs (old: {
+    dependencies = with self; [ vim-repeat ];
+  });
+
   vim-stylish-haskell = super.vim-stylish-haskell.overrideAttrs (old: {
     postPatch = old.postPatch or "" + ''
       substituteInPlace ftplugin/haskell/stylish-haskell.vim --replace \
         'g:stylish_haskell_command = "stylish-haskell"' \
         'g:stylish_haskell_command = "${stylish-haskell}/bin/stylish-haskell"'
     '';
+  });
+
+  vim-surround = super.vim-surround.overrideAttrs (old: {
+    dependencies = with self; [ vim-repeat ];
+  });
+
+  vim-unimpaired = super.vim-unimpaired.overrideAttrs (old: {
+    dependencies = with self; [ vim-repeat ];
   });
 
   vim-wakatime = super.vim-wakatime.overrideAttrs (old: {

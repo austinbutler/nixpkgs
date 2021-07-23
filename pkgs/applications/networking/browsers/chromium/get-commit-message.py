@@ -19,15 +19,15 @@ for entry in feed.entries:
         continue
     url = requests.get(entry.link).url.split('?')[0]
     content = entry.content[0].value
+    content = html_tags.sub('', content)  # Remove any HTML tags
     if re.search(r'Linux', content) is None:
         continue
     #print(url)  # For debugging purposes
     version = re.search(r'\d+(\.\d+){3}', content).group(0)
     print('chromium: TODO -> ' + version)
     print('\n' + url)
-    if fixes := re.search(r'This update includes .+ security fixes\.', content):
-        fixes = html_tags.sub('', fixes.group(0))
-        zero_days = re.search(r'Google is aware of reports that .+ in the wild\.', content)
+    if fixes := re.search(r'This update includes .+ security fixes\.', content).group(0):
+        zero_days = re.search(r'Google is aware( of reports)? that .+ in the wild\.', content)
         if zero_days:
             fixes += " " + zero_days.group(0)
         print('\n' + '\n'.join(textwrap.wrap(fixes, width=72)))

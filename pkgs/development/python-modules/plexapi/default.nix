@@ -3,26 +3,26 @@
 , fetchFromGitHub
 , requests
 , tqdm
-, websocket_client
+, websocket-client
 , isPy27
 }:
 
 buildPythonPackage rec {
   pname = "PlexAPI";
-  version = "4.5.2";
+  version = "4.6.1";
   disabled = isPy27;
 
   src = fetchFromGitHub {
     owner = "pkkid";
     repo = "python-plexapi";
     rev = version;
-    sha256 = "sha256-9rdpisEuLUO7oO7+7SQb4fXqRG30rf4R7bSFY+QpMhM=";
+    sha256 = "sha256-WL5UBsvAdtfOCkVX9NI0Z2fJ2CAO+NwD8wvkvkJ2uww=";
   };
 
   propagatedBuildInputs = [
     requests
     tqdm
-    websocket_client
+    websocket-client
   ];
 
   # Tests require a running Plex instance

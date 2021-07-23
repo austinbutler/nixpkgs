@@ -1,22 +1,34 @@
-{ lib, buildPythonPackage, fetchPypi, isPy3k, attrs, protobuf, zeroconf }:
+{ lib
+, buildPythonPackage
+, pythonOlder
+, fetchPypi
+, protobuf
+, zeroconf
+}:
 
 buildPythonPackage rec {
   pname = "aioesphomeapi";
-  version = "2.7.0";
+  version = "4.1.0";
+  format = "setuptools";
 
-  disabled = !isPy3k;
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-PCoSJnt8EptVq5u0+NgEBwY6zLkD87XqVRBDdqBziM8=";
+    sha256 = "0210l2d5g76pllr2vh990k9shfv3zrknx5d2dmgqb5y90142cp76";
   };
 
-  propagatedBuildInputs = [ attrs protobuf zeroconf ];
+  propagatedBuildInputs = [
+    protobuf
+    zeroconf
+  ];
 
   # no tests implemented
   doCheck = false;
 
-  pythonImportsCheck = [ "aioesphomeapi" ];
+  pythonImportsCheck = [
+    "aioesphomeapi"
+  ];
 
   meta = with lib; {
     description = "Python Client for ESPHome native API";

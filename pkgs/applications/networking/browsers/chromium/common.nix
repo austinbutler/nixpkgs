@@ -9,7 +9,7 @@
 
 , python2, python3, perl, pkg-config
 , nspr, systemd, libkrb5
-, util-linux, alsaLib
+, util-linux, alsa-lib
 , bison, gperf
 , glib, gtk3, dbus-glib
 , glibc
@@ -54,9 +54,9 @@ let
   # source tree.
   extraAttrs = buildFun base;
 
-  githubPatch = commit: sha256: fetchpatch {
+  githubPatch = { commit, sha256, revert ? false }: fetchpatch {
     url = "https://github.com/chromium/chromium/commit/${commit}.patch";
-    inherit sha256;
+    inherit sha256 revert;
   };
 
   mkGnFlags =
@@ -92,9 +92,10 @@ let
   };
 
   defaultDependencies = [
+    (libpng.override { apngSupport = false; }) # https://bugs.chromium.org/p/chromium/issues/detail?id=752403
     bzip2 flac speex opusWithCustomModes
     libevent expat libjpeg snappy
-    libpng libcap
+    libcap
     xdg-utils minizip libwebp
     libusb1 re2
     ffmpeg libxslt libxml2
@@ -144,7 +145,7 @@ let
 
     buildInputs = defaultDependencies ++ [
       nspr nss systemd
-      util-linux alsaLib
+      util-linux alsa-lib
       bison gperf libkrb5
       glib gtk3 dbus-glib
       libXScrnSaver libXcursor libXtst libxshmfence libGLU libGL
@@ -165,14 +166,31 @@ let
       ./patches/widevine-79.patch # For bundling Widevine (DRM), might be replaceable via bundle_widevine_cdm=true in gnFlags
       # Fix the build by adding a missing dependency (s. https://crbug.com/1197837):
       ./patches/fix-missing-atspi2-dependency.patch
-    ] ++ optionals (chromiumVersionAtLeast "91") [
       ./patches/closure_compiler-Use-the-Java-binary-from-the-system.patch
+    ] ++ lib.optionals (versionRange "91" "94.0.4583.0") [
+      # Required as dependency for the next patch:
+      (githubPatch {
+        # Reland "Reland "Linux sandbox syscall broker: use struct kernel_stat""
+        commit = "4b438323d68840453b5ef826c3997568e2e0e8c7";
+        sha256 = "1lf6yilx2ffd3r0840ilihp4px35w7jvr19ll56bncqmz4r5fd82";
+      })
+      # To fix the text rendering, see #131074:
+      (githubPatch {
+        # Linux sandbox: fix fstatat() crash
+        commit = "60d5e803ef2a4874d29799b638754152285e0ed9";
+        sha256 = "0apmsqqlfxprmdmi3qzp3kr9jc52mcc4xzps206kwr8kzwv48b70";
+      })
+    ] ++ lib.optionals (chromiumVersionAtLeast "93") [
+      # We need to revert this patch to build M93 with LLVM 12.
+      (githubPatch {
+        # Reland "Replace 'blacklist' with 'ignorelist' in ./tools/msan/."
+        commit = "9d080c0934b848ee4a05013c78641e612fcc1e03";
+        sha256 = "1bxdhxmiy6h4acq26lq43x2mxx6rawmfmlgsh5j7w8kyhkw5af0c";
+        revert = true;
+      })
     ];
 
-    postPatch = lib.optionalString (chromiumVersionAtLeast "91") ''
-      # Required for patchShebangs (unsupported):
-      chmod -x third_party/webgpu-cts/src/tools/deno
-    '' + ''
+    postPatch = ''
       # remove unused third-party
       for lib in ${toString gnSystemLibraries}; do
         if [ -d "third_party/$lib" ]; then
@@ -191,6 +209,7 @@ let
         substituteInPlace third_party/harfbuzz-ng/src/src/update-unicode-tables.make \
           --replace "/usr/bin/env -S make -f" "/usr/bin/make -f"
       fi
+      chmod -x third_party/webgpu-cts/src/tools/deno
 
       # We want to be able to specify where the sandbox is via CHROME_DEVEL_SANDBOX
       substituteInPlace sandbox/linux/suid/client/setuid_sandbox_host.cc \
@@ -201,7 +220,7 @@ let
       substituteInPlace services/audio/audio_sandbox_hook_linux.cc \
         --replace \
           '/usr/share/alsa/' \
-          '${alsaLib}/share/alsa/' \
+          '${alsa-lib}/share/alsa/' \
         --replace \
           '/usr/lib/x86_64-linux-gnu/gconv/' \
           '${glibc}/lib/gconv/' \

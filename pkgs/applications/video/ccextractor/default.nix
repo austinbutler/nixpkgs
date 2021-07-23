@@ -4,13 +4,13 @@
 with lib;
 stdenv.mkDerivation rec {
   pname = "ccextractor";
-  version = "0.88";
+  version = "0.90";
 
   src = fetchFromGitHub {
     owner = "CCExtractor";
     repo = pname;
     rev = "v${version}";
-    sha256 = "1sya45hvv4d46bk7541yimmafgvgyhkpsvwfz9kv6pm4yi1lz6nb";
+    sha256 = "sha256-NVFCwUZZVt8GrWXWyvoF8UrUZ/ix+GWubKtc3218k7o=";
   };
 
   sourceRoot = "source/src";

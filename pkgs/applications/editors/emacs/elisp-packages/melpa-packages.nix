@@ -8,7 +8,7 @@ To update the list of packages from MELPA,
 2. Check for evaluation errors:
      env NIXPKGS_ALLOW_BROKEN=1 nix-instantiate --show-trace ../../../../../ -A emacs.pkgs.melpaStablePackages
      env NIXPKGS_ALLOW_BROKEN=1 nix-instantiate --show-trace ../../../../../ -A emacs.pkgs.melpaPackages
-3. Run `git commit -m "melpa-packages: $(date -Idate)" recipes-archive-melpa.json`
+3. Run `git commit -m "melpa-packages $(date -Idate)" recipes-archive-melpa.json`
 
 ## Update from overlay
 
@@ -80,8 +80,8 @@ let
 
         auto-complete-clang-async = super.auto-complete-clang-async.overrideAttrs (old: {
           buildInputs = old.buildInputs ++ [ pkgs.llvmPackages.llvm ];
-          CFLAGS = "-I${pkgs.llvmPackages.clang}/include";
-          LDFLAGS = "-L${pkgs.llvmPackages.clang}/lib";
+          CFLAGS = "-I${pkgs.llvmPackages.libclang.lib}/include";
+          LDFLAGS = "-L${pkgs.llvmPackages.libclang.lib}/lib";
         });
 
         # part of a larger package
@@ -114,6 +114,13 @@ let
           '';
 
           stripDebugList = [ "share" ];
+        });
+
+        erlang = super.erlang.overrideAttrs (attrs: {
+          buildInputs = attrs.buildInputs ++ [
+            pkgs.perl
+            pkgs.ncurses
+          ];
         });
 
         # https://github.com/syl20bnr/evil-escape/pull/86
@@ -188,7 +195,7 @@ let
           dontUseCmakeBuildDir = true;
           doCheck = true;
           packageRequires = [ self.emacs ];
-          nativeBuildInputs = [ pkgs.cmake pkgs.llvmPackages.llvm pkgs.llvmPackages.clang ];
+          nativeBuildInputs = [ pkgs.cmake pkgs.llvmPackages.llvm pkgs.llvmPackages.libclang ];
         });
 
         # tries to write a log file to $HOME

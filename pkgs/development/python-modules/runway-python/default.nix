@@ -20,8 +20,8 @@
 , wget
 , deepdiff
 , pytestCheckHook
-, pytestcov
-, websocket_client
+, pytest-cov
+, websocket-client
 }:
 
 buildPythonPackage rec {
@@ -61,8 +61,8 @@ buildPythonPackage rec {
   checkInputs = [
     deepdiff
     pytestCheckHook
-    pytestcov
-    websocket_client
+    pytest-cov
+    websocket-client
   ];
 
   disabledTests = [

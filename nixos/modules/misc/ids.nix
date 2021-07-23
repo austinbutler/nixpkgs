@@ -229,7 +229,7 @@ in
       grafana = 196;
       skydns = 197;
       # ripple-rest = 198; # unused, removed 2017-08-12
-      nix-serve = 199;
+      # nix-serve = 199; # unused, removed 2020-12-12
       tvheadend = 200;
       uwsgi = 201;
       gitit = 202;
@@ -252,7 +252,7 @@ in
       postsrsd = 220;
       opendkim = 221;
       dspam = 222;
-      gale = 223;
+      # gale = 223; removed 2021-06-10
       matrix-synapse = 224;
       rspamd = 225;
       # rmilter = 226; # unused, removed 2019-08-22
@@ -300,7 +300,7 @@ in
       #pdns-recursor = 269; # dynamically allocated as of 2020-20-18
       #kresd = 270; # switched to "knot-resolver" with dynamic ID
       rpc = 271;
-      geoip = 272;
+      #geoip = 272; # new module uses DynamicUser
       fcron = 273;
       sonarr = 274;
       radarr = 275;
@@ -562,7 +562,7 @@ in
       postsrsd = 220;
       opendkim = 221;
       dspam = 222;
-      gale = 223;
+      # gale = 223; removed 2021-06-10
       matrix-synapse = 224;
       rspamd = 225;
       # rmilter = 226; # unused, removed 2019-08-22

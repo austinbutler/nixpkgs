@@ -9,11 +9,11 @@
 
 buildPythonPackage rec {
   pname = "pysma";
-  version = "0.4.3";
+  version = "0.6.2";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-vriMnJFS7yfTyDT1f4sx1xEBTQjqc4ZHmkdHp1vcd+Q=";
+    sha256 = "sha256-nKnOWVPRFmylwUeb0yApMHdW8vGvPCLlOGkZGNYC128=";
   };
 
   propagatedBuildInputs = [

@@ -5,16 +5,18 @@
 
 stdenv.mkDerivation rec {
   pname = "betterlockscreen";
-  version = "3.1.1";
+  version = "3.2.0";
 
   src = fetchFromGitHub {
     owner = "pavanjadhaw";
     repo = "betterlockscreen";
     rev = version;
-    sha256 = "sha256-TA4YSd/elFuLU1ZMu+dqIOt6hK9pnzgoJudaMpIwh+U=";
+    sha256 = "sha256-UOMCTHtw1C+MiJL6AQ+8gqmmbqrs1QTzEi1Ar03PyMs=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
+
+  patches = [ ./replace-i3lock.patch ];
 
   installPhase =
     let

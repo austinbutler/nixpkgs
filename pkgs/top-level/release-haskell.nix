@@ -81,16 +81,32 @@ let
 
   recursiveUpdateMany = builtins.foldl' lib.recursiveUpdate {};
 
+  staticHaskellPackagesPlatforms =
+    packagePlatforms pkgs.pkgsStatic.haskell.packages.integer-simple.ghc8104;
+
   jobs = recursiveUpdateMany [
     (mapTestOn {
       haskellPackages = packagePlatforms pkgs.haskellPackages;
       haskell.compiler = packagePlatforms pkgs.haskell.compiler;
 
-      tests = let
-        testPlatforms = packagePlatforms pkgs.tests;
-      in {
-        haskell = testPlatforms.haskell;
-        writers = testPlatforms.writers;
+      tests.haskell = packagePlatforms pkgs.tests.haskell;
+
+      pkgsMusl.haskell.compiler = packagePlatforms pkgs.pkgsMusl.haskell.compiler // {
+        # remove musl ghc865Binary since it is known to be broken and
+        # causes an evaluation error on darwin.
+        # TODO: remove ghc865Binary altogether and use ghc8102Binary
+        ghc865Binary = {};
+      };
+
+      # test some statically linked packages to catch regressions
+      # and get some cache going for static compilation with GHC
+      # Use integer-simple to avoid GMP linking problems (LGPL)
+      pkgsStatic.haskell.packages.integer-simple.ghc8104 = {
+        inherit (staticHaskellPackagesPlatforms)
+          hello
+          random
+          lens
+          ;
       };
 
       # top-level packages that depend on haskellPackages
@@ -162,6 +178,7 @@ let
         nix-tree
         nixfmt
         nota
+        nvfetcher
         ormolu
         pandoc
         pakcs
@@ -186,6 +203,7 @@ let
         tldr-hs
         tweet-hs
         update-nix-fetchgit
+        uusi
         uqm
         uuagc
         vaultenv
@@ -207,6 +225,7 @@ let
       # working as expected.
       cabal-install = all;
       Cabal_3_4_0_0 = with compilerNames; [ ghc884 ghc8104 ];
+      cabal2nix-unstable = all;
       funcmp = all;
       # Doesn't currently work on ghc-9.0:
       # https://github.com/haskell/haskell-language-server/issues/297
@@ -230,11 +249,10 @@ let
         };
         constituents = accumulateDerivations [
           # haskell specific tests
-          jobs.tests.haskell
-          # writeHaskell and writeHaskellBin
-          # TODO: writeHaskell currently fails on darwin
-          jobs.tests.writers.x86_64-linux
-          jobs.tests.writers.aarch64-linux
+          #
+          # TODO: The writers test appears to be failing on darwin for unknown
+          # reasons.  See https://github.com/NixOS/nixpkgs/pull/129606#issuecomment-881307871.
+          (lib.recursiveUpdate jobs.tests.haskell { writers.x86_64-darwin = null; })
           # important top-level packages
           jobs.cabal-install
           jobs.cabal2nix
@@ -272,6 +290,40 @@ let
           (builtins.map
             (name: jobs.haskellPackages."${name}")
             (maintainedPkgNames pkgs.haskellPackages));
+      };
+      staticHaskellPackages = pkgs.releaseTools.aggregate {
+        name = "static-haskell-packages";
+        meta = {
+          description = "Static haskell builds using the pkgsStatic infrastructure";
+          maintainers = [
+            lib.maintainers.sternenseemann
+            lib.maintainers.rnhmjoj
+          ];
+        };
+        constituents = [
+          # TODO: reenable darwin builds if static libiconv works
+          jobs.pkgsStatic.haskell.packages.integer-simple.ghc8104.hello.x86_64-linux
+          jobs.pkgsStatic.haskell.packages.integer-simple.ghc8104.hello.aarch64-linux
+          jobs.pkgsStatic.haskell.packages.integer-simple.ghc8104.lens.x86_64-linux
+          jobs.pkgsStatic.haskell.packages.integer-simple.ghc8104.lens.aarch64-linux
+          jobs.pkgsStatic.haskell.packages.integer-simple.ghc8104.random.x86_64-linux
+          jobs.pkgsStatic.haskell.packages.integer-simple.ghc8104.random.aarch64-linux
+        ];
+      };
+      muslGHCs = pkgs.releaseTools.aggregate {
+        name = "haskell-pkgsMusl-ghcs";
+        meta = {
+          description = "GHCs built with musl";
+          maintainers = with lib.maintainers; [
+            nh2
+          ];
+        };
+        constituents = accumulateDerivations [
+          jobs.pkgsMusl.haskell.compiler.ghc8102Binary
+          jobs.pkgsMusl.haskell.compiler.ghc884
+          jobs.pkgsMusl.haskell.compiler.ghc8104
+          jobs.pkgsMusl.haskell.compiler.ghc901
+        ];
       };
     }
   ];
