@@ -10,28 +10,32 @@ let
   python = python3;
   yarn' = yarn.override { inherit nodejs; };
   defaultYarnOpts = [ "frozen-lockfile" "non-interactive" "no-progress"];
+  markdownItKatex = fetchTarball {
+    url = "https://github.com/mjbvz/markdown-it-katex/archive/2bf0b89c6c22ef0b585f55ccab66d1f7c5356bea.zip";
+    sha256 = "0w2p13v3byi58id3z14k3bj0sk4qx02km6bi142rp36aflnz1wkq";
+  };
 
 in stdenv.mkDerivation rec {
   pname = "code-server";
-  version = "3.9.0";
-  commit = "fc6d123da59a4e5a675ac8e080f66e032ba01a1b";
+  version = "3.11.0";
+  commit = "c04198697698dc72b5981fd1b70d6ecbd9b22caa";
 
   src = fetchFromGitHub {
     owner = "cdr";
     repo = "code-server";
     rev = "v${version}";
-    sha256 = "0jgmf8d7hki1iv6yy1z0s5qjyxchxnwj8kv53jrwkllim08swbi3";
+    sha256 = "0p8mw31x8a8a4swywzws15gqm9m02m4qqswrmgjxp92mqqli9r9g";
   };
 
   cloudAgent = buildGoModule rec {
     pname = "cloud-agent";
-    version = "0.2.1";
+    version = "0.2.3";
 
     src = fetchFromGitHub {
       owner = "cdr";
       repo = "cloud-agent";
       rev = "v${version}";
-      sha256 = "06fpiwxjz2cgzw4ks9sk3376rprkd02khfnb10hg7dhn3y9gp7x8";
+      sha256 = "14i1qq273f0yn5v52ryiqwj7izkd1yd212di4gh4bqypmmzhw3jj";
     };
 
     vendorSha256 = "0k9v10wkzx53r5syf6bmm81gr4s5dalyaa07y9zvx6vv5r2h0661";
@@ -49,7 +53,12 @@ in stdenv.mkDerivation rec {
     nativeBuildInputs = [ yarn' git ];
     buildPhase = ''
       export HOME=$PWD
+      substituteInPlace lib/vscode/extensions/notebook-markdown-extensions/package.json \
+        --replace "https://github.com/mjbvz/markdown-it-katex.git" "file:${markdownItKatex}"
 
+      cd lib/vscode/extensions/notebook-markdown-extensions
+      yarn install --ignore-scripts
+      cd -
       yarn config set yarn-offline-mirror $out
       find "$PWD" -name "yarn.lock" -printf "%h\n" | \
         xargs -I {} yarn --cwd {} \
@@ -61,9 +70,9 @@ in stdenv.mkDerivation rec {
 
     # to get hash values use nix-build -A code-server.prefetchYarnCache
     outputHash = {
-      x86_64-linux = "01nkqcfvx2qw9g60h8k9x221ibv3j58vdkjzcjnj7ph54a33ifih";
-      aarch64-linux = "01nkqcfvx2qw9g60h8k9x221ibv3j58vdkjzcjnj7ph54a33ifih";
-      x86_64-darwin = "01nkqcfvx2qw9g60h8k9x221ibv3j58vdkjzcjnj7ph54a33ifih";
+      x86_64-linux = "0mj46m2vw658phk6mf2pppar8kyz04a8qvhrds74zy1777y236y4";
+      aarch64-linux = "0mj46m2vw658phk6mf2pppar8kyz04a8qvhrds74zy1777y236y4";
+      x86_64-darwin = "0mj46m2vw658phk6mf2pppar8kyz04a8qvhrds74zy1777y236y4";
     }.${system} or (throw "Unsupported system ${system}");
   };
 
@@ -97,10 +106,6 @@ in stdenv.mkDerivation rec {
     substituteInPlace lib/vscode/build/npm/postinstall.js \
       --replace "cp.execSync('git config pull.rebase true');" ""
 
-    # allow offline install for postinstall scripts in extensions
-    grep -rl "yarn install" --include package.json lib/vscode/extensions \
-      | xargs sed -i 's/yarn install/yarn install --offline/g'
-
     substituteInPlace ci/dev/postinstall.sh \
       --replace 'yarn' 'yarn --ignore-scripts'
 
@@ -109,6 +114,7 @@ in stdenv.mkDerivation rec {
       --replace 'yarn --production' 'yarn --production --offline'
 
     # disable automatic updates
+    echo "Disabling automatic updates"
     sed -i '/update.mode/,/\}/{s/default:.*/default: "none",/g}' \
       lib/vscode/src/vs/platform/update/common/update.config.contribution.ts
 
@@ -150,7 +156,18 @@ in stdenv.mkDerivation rec {
   '';
 
   buildPhase = ''
+    echo "STARTING BUILD PHASE"
     # install code-server dependencies
+    substituteInPlace lib/vscode/extensions/notebook-markdown-extensions/package.json \
+      --replace "https://github.com/mjbvz/markdown-it-katex.git" "file:${markdownItKatex}"
+    cat lib/vscode/extensions/notebook-markdown-extensions/package.json
+    grep -rl "yarn install" --include package.json lib/vscode/extensions
+    cd lib/vscode/extensions/notebook-markdown-extensions
+    pwd
+    yarn install --offline --ignore-scripts
+    cd -
+    echo "DONE!!!!"
+
     yarn --offline
 
     # install vscode dependencies without running script for all vscode packages
@@ -172,10 +189,6 @@ in stdenv.mkDerivation rec {
     # There's an environment variable to disable downloads, but the package makes a breaking call to
     # sw_vers before that variable is checked.
     patch -p1 -i ${./playwright.patch}
-  '' + lib.optionalString stdenv.isDarwin ''
-    # fsevents build fails on Darwin. It's an optional package that's only installed as part of Darwin
-    # builds, so the patch will fail if run on non-Darwin systems.
-    patch -p1 -i ${./darwin-fsevents.patch}
   '' + ''
     # rebuild binaries, we use npm here, as yarn does not provide an alternative
     # that would not attempt to try to reinstall everything and break our
@@ -184,9 +197,12 @@ in stdenv.mkDerivation rec {
 
     # run postinstall scripts, which eventually do yarn install on all
     # additional requirements
+    echo "Running postinstall scripts!"
+    cat lib/vscode/extensions/notebook-markdown-extensions/package.json
     yarn --cwd lib/vscode postinstall --frozen-lockfile --offline
 
     # build code-server
+    echo "BUILDING code-server"
     yarn build
 
     # build vscode
