@@ -17,6 +17,7 @@
 , bash-completion
 , lib
 , CoreServices
+, buildPackages
 }:
 
 stdenv.mkDerivation rec {
@@ -40,18 +41,19 @@ stdenv.mkDerivation rec {
   patches = [
     ./fix_pkgconfig_includedir.patch
   ];
+  depsBuildBuild = [ gobject-introspection pkg-config ];
 
   nativeBuildInputs = [
     meson
     ninja
-    pkg-config
+    #buildPackages.pkg-config
     gettext
     bison
     flex
     python3
     makeWrapper
     glib
-    gobject-introspection
+    #buildPackages.gobject-introspection
     bash-completion
 
     # documentation

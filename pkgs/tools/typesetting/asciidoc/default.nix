@@ -21,6 +21,7 @@
 #, epubcheck ? null
 , gnused ? null
 , coreutils ? null
+, buildPackages
 
 # if true, enable all the below filters and backends
 , enableExtraPlugins ? false
@@ -253,13 +254,13 @@ stdenv.mkDerivation rec {
         ${optionalString enableJava ''-e "s|^FOP =.*|FOP = '${fop}/bin/fop'|"''} \
         -e "s|^W3M =.*|W3M = '${w3m}/bin/w3m'|" \
         -e "s|^LYNX =.*|LYNX = '${lynx}/bin/lynx'|" \
-        -e "s|^XMLLINT =.*|XMLLINT = '${libxml2.bin}/bin/xmllint'|" \
+        -e "s|^XMLLINT =.*|XMLLINT = '${buildPackages.libxml2.bin}/bin/xmllint'|" \
         -e "s|^EPUBCHECK =.*|EPUBCHECK = 'nixpkgs_is_missing_epubcheck'|" \
         -i a2x.py
   '' else ''
     sed -e "s|^ENV =.*|ENV = dict(XML_CATALOG_FILES='${docbook_xml_dtd_45}/xml/dtd/docbook/catalog.xml ${docbook_xsl_ns}/xml/xsl/docbook/catalog.xml ${docbook_xsl}/xml/xsl/docbook/catalog.xml')|" \
-        -e "s|^XSLTPROC =.*|XSLTPROC = '${libxslt.bin}/bin/xsltproc'|" \
-        -e "s|^XMLLINT =.*|XMLLINT = '${libxml2.bin}/bin/xmllint'|" \
+        -e "s|^XSLTPROC =.*|XSLTPROC = '${buildPackages.libxslt.bin}/bin/xsltproc'|" \
+        -e "s|^XMLLINT =.*|XMLLINT = '${buildPackages.libxml2.bin}/bin/xmllint'|" \
         -i a2x.py
   '') + ''
     patchShebangs .
