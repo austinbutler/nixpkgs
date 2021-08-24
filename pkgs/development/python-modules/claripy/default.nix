@@ -13,14 +13,14 @@
 
 buildPythonPackage rec {
   pname = "claripy";
-  version = "9.0.9031";
+  version = "9.0.9506";
   disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "angr";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-UCmt2Vm8OWyKa0fmPlGuvzaFddUWs6quavUgIZasoJg=";
+    sha256 = "sha256-wczwKTtOJ4VC3UZvd1KT6GfGUk5AS90ggLi2lFjhD+Q=";
   };
 
   # Use upstream z3 implementation

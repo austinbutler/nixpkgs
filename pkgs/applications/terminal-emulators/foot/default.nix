@@ -1,8 +1,9 @@
 { stdenv
 , lib
-, fetchzip
+, fetchFromGitea
 , fetchurl
-, runCommandNoCC
+, fetchpatch
+, runCommand
 , fcft
 , freetype
 , pixman
@@ -53,7 +54,7 @@ let
     '';
   };
 
-  stimuliFile = runCommandNoCC "pgo-stimulus-file" { } ''
+  stimuliFile = runCommand "pgo-stimulus-file" { } ''
     ${stimulusGenerator} \
       --rows=67 --cols=135 \
       --scroll --scroll-region \
@@ -93,10 +94,22 @@ stdenv.mkDerivation rec {
   pname = "foot";
   inherit version;
 
-  src = fetchzip {
-    url = "https://codeberg.org/dnkl/${pname}/archive/${version}.tar.gz";
+  src = fetchFromGitea {
+    domain = "codeberg.org";
+    owner = "dnkl";
+    repo = pname;
+    rev = version;
     sha256 = "1k0alz991cslls4926c5gq02pdq0vfw9jfpprh2a1vb59xgikv7h";
   };
+
+  patches = [
+    # Fixes PGO builds with clang
+    (fetchpatch {
+      url = "https://codeberg.org/dnkl/foot/commit/2acd4b34c57659d86dca76c58e4363de9b0a1f17.patch";
+      sha256 = "13xi9ppaqx2p88cxbh6801ry9ral70ylh40agn6ij7pklybs4d7s";
+      includes = [ "pgo/pgo.c" ];
+    })
+  ];
 
   depsBuildBuild = [
     pkg-config
@@ -137,8 +150,9 @@ stdenv.mkDerivation rec {
     export AR="${ar}"
   '';
 
+  mesonBuildType = "release";
+
   mesonFlags = [
-    "--buildtype=release"
     "-Db_lto=true"
     "-Dterminfo-install-location=${placeholder "terminfo"}/share/terminfo"
   ];

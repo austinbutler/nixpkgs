@@ -1,7 +1,8 @@
-{ docker
-, fetchFromGitLab
+{ fetchFromGitLab
 , python
-, lib }:
+, lib
+, apksigner
+}:
 
 python.pkgs.buildPythonApplication rec {
   version = "2.0.3";
@@ -16,7 +17,6 @@ python.pkgs.buildPythonApplication rec {
 
   postPatch = ''
     substituteInPlace fdroidserver/common.py --replace "FDROID_PATH = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))" "FDROID_PATH = '$out/bin'"
-    substituteInPlace setup.py --replace "pyasn1-modules >= 0.2.1, < 0.3" "pyasn1-modules"
   '';
 
   preConfigure = ''
@@ -33,8 +33,6 @@ python.pkgs.buildPythonApplication rec {
     androguard
     clint
     defusedxml
-    docker
-    docker-py
     GitPython
     libcloud
     mwclient
@@ -50,6 +48,8 @@ python.pkgs.buildPythonApplication rec {
     yamllint
   ];
 
+  makeWrapperArgs = [ "--prefix" "PATH" ":" "${lib.makeBinPath [ apksigner ]}" ];
+
   # no tests
   doCheck = false;
 
@@ -59,7 +59,7 @@ python.pkgs.buildPythonApplication rec {
     homepage = "https://f-droid.org";
     description = "Server and tools for F-Droid, the Free Software repository system for Android";
     license = licenses.agpl3;
-    maintainers = [ lib.maintainers.pmiddend ];
+    maintainers = [ lib.maintainers.obfusk ];
   };
 
 }

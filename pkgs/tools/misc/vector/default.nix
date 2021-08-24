@@ -28,19 +28,19 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "vector";
-  version = "0.15.0";
+  version = "0.15.2";
 
   src = fetchFromGitHub {
     owner = "timberio";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-8ZsZyV6zlMiNTVYPwqQi7F1OJ4hV33IqrrGkvUb8JaY=";
+    sha256 = "sha256-u/KHiny9o/q74dh/w3cShAb6oEkMxNaTMF2lOFx+1po=";
   };
 
-  cargoSha256 = "sha256-t6KeyBwIfCQTfaennFiFX3K+8unFOsduBP7nRbAo9wI=";
+  cargoSha256 = "sha256-wUNF+810Yh4hPQzraWo2mDi8KSmRKp9Z9D+4kwKQ+IU=";
   nativeBuildInputs = [ pkg-config ];
   buildInputs = [ oniguruma openssl protobuf rdkafka zstd ]
-    ++ lib.optional stdenv.isDarwin [ Security libiconv coreutils CoreServices ];
+    ++ lib.optionals stdenv.isDarwin [ Security libiconv coreutils CoreServices ];
 
   # needed for internal protobuf c wrapper library
   PROTOC = "${protobuf}/bin/protoc";
