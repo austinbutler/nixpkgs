@@ -374,6 +374,8 @@ with pkgs;
 
   docker-slim = callPackage ../applications/virtualization/docker-slim { };
 
+  docker-show-context = callPackage ../development/tools/docker-show-context { };
+
   docker-sync = callPackage ../tools/misc/docker-sync { };
 
   dockle = callPackage ../development/tools/dockle { };
