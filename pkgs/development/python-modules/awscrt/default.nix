@@ -21,6 +21,7 @@ buildPythonPackage rec {
   # https://github.com/awslabs/aws-crt-python/issues/281
   doCheck = false;
 
+  #src = /Users/abutler/Documents/aws-crt-python;
   src = fetchPypi {
     inherit pname version;
     sha256 = "b8aa68bca404bf0085be0570eff5b542d01f7e8e3c0f9b0859abfe5e070162ff";

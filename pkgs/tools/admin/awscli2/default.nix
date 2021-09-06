@@ -1,4 +1,4 @@
-{ lib, python3, groff, less, fetchFromGitHub, fetchpatch }:
+{ lib, python3, groff, less, fetchFromGitHub, fetchpatch, nix-gitignore }:
 let
   py = python3.override {
     packageOverrides = self: super: {
@@ -27,12 +27,14 @@ with py.pkgs; buildPythonApplication rec {
   pname = "awscli2";
   version = "2.2.30"; # N.B: if you change this, change botocore to a matching version too
 
-  src = fetchFromGitHub {
-    owner = "aws";
-    repo = "aws-cli";
-    rev = version;
-    sha256 = "sha256-OPxo5RjdDCTPntiJInUtgcU43Nn5JEUbwRJXeBl/yYQ";
-  };
+  #src = /Users/abutler/Documents/aws-cli;
+  src = nix-gitignore.gitignoreSource [".venv"] /Users/abutler/Documents/aws-cli;
+  #src = fetchFromGitHub {
+  #  owner = "aws";
+  #  repo = "aws-cli";
+  #  rev = version;
+  #  sha256 = "sha256-OPxo5RjdDCTPntiJInUtgcU43Nn5JEUbwRJXeBl/yYQ";
+  #};
 
   patches = [
     (fetchpatch {

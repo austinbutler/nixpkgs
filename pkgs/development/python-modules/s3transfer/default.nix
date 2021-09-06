@@ -16,10 +16,11 @@ buildPythonPackage rec {
   pname = "s3transfer";
   version = "0.4.2";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-ywIvSxZVHt67sxo3fT8JYA262nNj2MXbeXbn9Hcy4bI=";
-  };
+  src = /Users/abutler/Documents/s3transfer;
+  #src = fetchPypi {
+  #  inherit pname version;
+  #  sha256 = "sha256-ywIvSxZVHt67sxo3fT8JYA262nNj2MXbeXbn9Hcy4bI=";
+  #};
 
   propagatedBuildInputs =
     [ botocore
