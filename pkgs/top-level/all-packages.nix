@@ -12943,6 +12943,8 @@ with pkgs;
     inherit pkgs lib;
   };
 
+  poetry2conda = python3Packages.callPackage ../development/python-modules/poetry2conda { };
+
   pipenv = callPackage ../development/tools/pipenv {};
 
   pipewire = callPackage ../development/libraries/pipewire {};
@@ -26740,7 +26742,7 @@ with pkgs;
 
   vivaldi-widevine = callPackage ../applications/networking/browsers/vivaldi/widevine.nix { };
 
-  openmpt123 = callPackage ../applications/audio/openmpt123 { };
+  libopenmpt = callPackage ../applications/audio/libopenmpt { };
 
   openrazer-daemon = with python3Packages; toPythonApplication openrazer-daemon;
 
