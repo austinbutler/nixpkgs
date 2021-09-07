@@ -27,7 +27,6 @@ with py.pkgs; buildPythonApplication rec {
   pname = "awscli2";
   version = "2.2.30"; # N.B: if you change this, change botocore to a matching version too
 
-  #src = /Users/abutler/Documents/aws-cli;
   src = nix-gitignore.gitignoreSource [".venv"] /Users/abutler/Documents/aws-cli;
   #src = fetchFromGitHub {
   #  owner = "aws";
@@ -74,11 +73,14 @@ with py.pkgs; buildPythonApplication rec {
     wcwidth
   ];
 
+
   checkPhase = ''
     export PATH=$PATH:$out/bin
+    export TMPDIR="/tmp"
+    export HOME="$TMPDIR"
 
     # https://github.com/NixOS/nixpkgs/issues/16144#issuecomment-225422439
-    export HOME=$TMP
+    #export HOME=$TMP
 
     AWS_TEST_COMMAND=$out/bin/aws python scripts/ci/run-tests
   '';
