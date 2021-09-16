@@ -1,4 +1,5 @@
 { lib
+, stdenv
 , aiohttp
 , async-timeout
 , buildPythonPackage
@@ -13,14 +14,14 @@
 
 buildPythonPackage rec {
   pname = "async-upnp-client";
-  version = "0.19.0";
+  version = "0.21.0";
   disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "StevenLooman";
     repo = "async_upnp_client";
     rev = version;
-    sha256 = "0xj3j54nasl59gs1k84h3fixjsaqn7whg33h6wi99l5yfbwfqv8p";
+    sha256 = "sha256-GKvljxm2N4pC8Mh+UOW170VPB3va9X9BuQXp6OJ/SSQ=";
   };
 
   propagatedBuildInputs = [
@@ -52,6 +53,8 @@ buildPythonPackage rec {
     "test_subscribe_renew"
     "test_start_server"
     "test_init"
+  ] ++ lib.optionals stdenv.isDarwin [
+    "test_deferred_callback_url"
   ];
 
   pythonImportsCheck = [ "async_upnp_client" ];

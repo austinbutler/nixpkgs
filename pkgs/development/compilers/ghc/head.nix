@@ -2,7 +2,7 @@
 
 # build-tools
 , bootPkgs
-, autoconf, autoreconfHook, automake, coreutils, fetchgit, perl, python3, m4, sphinx
+, autoconf, autoreconfHook, automake, coreutils, fetchgit, perl, python3, m4, sphinx, xattr
 , bash
 
 , libiconv ? null, ncurses
@@ -40,7 +40,7 @@
 , # Whether to build terminfo.
   enableTerminfo ? !stdenv.targetPlatform.isWindows
 
-, version ? "9.3.20210504"
+, version ? "9.3.20210806"
 , # What flavour to build. An empty string indicates no
   # specific flavour and falls back to ghc default values.
   ghcFlavour ? lib.optionalString (stdenv.targetPlatform != stdenv.hostPlatform)
@@ -133,7 +133,8 @@ let
   # Use gold either following the default, or to avoid the BFD linker due to some bugs / perf issues.
   # But we cannot avoid BFD when using musl libc due to https://sourceware.org/bugzilla/show_bug.cgi?id=23856
   # see #84670 and #49071 for more background.
-  useLdGold = targetPlatform.linker == "gold" || (targetPlatform.linker == "bfd" && !targetPlatform.isMusl);
+  useLdGold = targetPlatform.linker == "gold" ||
+    (targetPlatform.linker == "bfd" && (targetPackages.stdenv.cc.bintools.bintools.hasGold or false) && !targetPlatform.isMusl);
 
   runtimeDeps = [
     targetPackages.stdenv.cc.bintools
@@ -152,8 +153,8 @@ stdenv.mkDerivation (rec {
 
   src = fetchgit {
     url = "https://gitlab.haskell.org/ghc/ghc.git/";
-    rev = "049c3a83fbce67e58e70c727d89e8331608a4e04";
-    sha256 = "0dk7c9ywam9fj33lqzpwxhiwz017m58j6ixvc8b07kzp7kskaxq7";
+    rev = "5d651c78fed7e55b3b3cd21a04499d1a2f75204d";
+    sha256 = "1z9xg8jsqr9id985wxfhkjyb3kpyrmr7vjdqzfv42cpxynd483r8";
   };
 
   enableParallelBuilding = true;
@@ -255,6 +256,10 @@ stdenv.mkDerivation (rec {
     ghc bootPkgs.alex bootPkgs.happy bootPkgs.hscolour
   ] ++ lib.optionals enableDocs [
     sphinx
+  ] ++ lib.optionals stdenv.isDarwin [
+    # TODO(@sternenseemann): use XATTR env var once we have
+    # https://gitlab.haskell.org/ghc/ghc/-/merge_requests/6447
+    xattr
   ];
 
   # For building runtime libs
@@ -285,6 +290,10 @@ stdenv.mkDerivation (rec {
     # * https://gitlab.haskell.org/ghc/ghc/-/issues/19580
     ++ lib.optional stdenv.targetPlatform.isMusl "pie";
 
+  # big-parallel allows us to build with more than 2 cores on
+  # Hydra which already warrants a significant speedup
+  requiredSystemFeatures = [ "big-parallel" ];
+
   postInstall = ''
     # Install the bash completion file.
     install -D -m 444 utils/completion/ghc.bash $out/share/bash-completion/completions/${targetPrefix}ghc
@@ -310,7 +319,10 @@ stdenv.mkDerivation (rec {
   meta = {
     homepage = "http://haskell.org/ghc";
     description = "The Glasgow Haskell Compiler";
-    maintainers = with lib.maintainers; [ marcweber andres peti ];
+    maintainers = with lib.maintainers; [
+      guibou
+    ] ++ lib.teams.haskell.members;
+    timeout = 24 * 3600;
     inherit (ghc.meta) license platforms;
     # ghcHEAD times out on aarch64-linux on Hydra.
     hydraPlatforms = builtins.filter (p: p != "aarch64-linux") ghc.meta.platforms;

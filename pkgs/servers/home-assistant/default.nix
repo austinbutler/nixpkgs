@@ -24,6 +24,18 @@ let
     # Override the version of some packages pinned in Home Assistant's setup.py and requirements_all.txt
     (mkOverride "python-slugify" "4.0.1" "69a517766e00c1268e5bbfc0d010a0a8508de0b18d30ad5a1ff357f8ae724270")
 
+    (self: super: {
+      async-upnp-client = super.async-upnp-client.overridePythonAttrs (oldAttrs: rec {
+        version = "0.19.2";
+        src = fetchFromGitHub {
+          owner = "StevenLooman";
+          repo = "async_upnp_client";
+          rev = version;
+          sha256 = "1v8d2lvxihqasn7866zssys16s0lgxkk6ri2dp4rr7wr8g9ixvdr";
+        };
+      });
+    })
+
     # Pinned due to API changes in iaqualink>=2.0, remove after
     # https://github.com/home-assistant/core/pull/48137 was merged
     (self: super: {
@@ -53,63 +65,9 @@ let
       });
     })
 
-    # Pinned due to bug in ring-doorbell 0.7.0
-    # https://github.com/tchellomello/python-ring-doorbell/issues/240
-    (mkOverride "ring-doorbell" "0.6.2"
-      "fbd537722a27b3b854c26506d894b7399bb8dc57ff36083285971227a2d46560")
-
-    # Pinned due to API changes in pyatv>=0.8.0
-    (self: super: {
-      pyatv = super.pyatv.overridePythonAttrs (olAttrs: rec {
-        version = "0.7.7";
-        src = fetchFromGitHub {
-          owner = "postlund";
-          repo = "pyatv";
-          rev = "v${version}";
-          sha256 = "sha256-dPnh8XZN7ZVR2rYNnj7GSYXW5I2GNQwD/KRDTgs2AtI=";
-        };
-      });
-    })
-
-    # Pinned due to API changes in pyflunearyou>=2.0
-    (self: super: {
-      pyflunearyou = super.pyflunearyou.overridePythonAttrs (oldAttrs: rec {
-        version = "1.0.7";
-        src = fetchFromGitHub {
-          owner = "bachya";
-          repo = "pyflunearyou";
-          rev = version;
-          sha256 = "0hq55k298m9a90qb3lasw9bi093hzndrah00rfq94bp53aq0is99";
-        };
-        postPatch = ''
-          substituteInPlace pyproject.toml \
-            --replace "poetry.masonry.api" "poetry.core.masonry.api" \
-            --replace 'msgpack = "^0.6.2"' 'msgpack = "*"' \
-            --replace 'ujson = "^1.35"' 'ujson = "*"'
-        '';
-      });
-    })
-
     # Pinned due to API changes in pylast 4.2.1
     (mkOverride "pylast" "4.2.0"
       "0zd0dn2l738ndz62vpa751z0ldnm91dcz9zzbvxv53r08l0s9yf3")
-
-    # Pinned due to API changes in pyopenuv>=1.1.0
-    (self: super: {
-      pyopenuv = super.pyopenuv.overridePythonAttrs (oldAttrs: rec {
-        version = "1.0.13";
-        src = fetchFromGitHub {
-          owner = "bachya";
-          repo = "pyopenuv";
-          rev = version;
-          sha256 = "1gx9xjkyvqqy8410lnbshq1j5y4cb0cdc4m505g17rwdzdwb01y8";
-        };
-        postPatch = ''
-          substituteInPlace pyproject.toml \
-            --replace "poetry.masonry.api" "poetry.core.masonry.api"
-        '';
-      });
-    })
 
     # Pinned due to API changes in pyruckus>0.12
     (self: super: {
@@ -137,9 +95,35 @@ let
       });
     })
 
+    # Pinned due to changes in total-connect-client>0.58 which made the tests fails at the moment
+    (self: super: {
+      total-connect-client = super.total-connect-client.overridePythonAttrs (oldAttrs: rec {
+        version = "0.58";
+        src = fetchFromGitHub {
+          owner = "craigjmidwinter";
+          repo = "total-connect-client";
+          rev = version;
+          sha256 = "1dqmgvgvwjh235wghygan2jnfvmn9vz789in2as3asig9cifix9z";
+        };
+      });
+    })
+
     # home-assistant-frontend does not exist in python3.pkgs
     (self: super: {
       home-assistant-frontend = self.callPackage ./frontend.nix { };
+    })
+
+    # Pinned due to incompability with aioesphomeapi 8.0.0
+    (self: super: {
+      aioesphomeapi = super.aioesphomeapi.overrideAttrs (oldAttrs: rec {
+        version = "7.0.0";
+        src = fetchFromGitHub {
+          owner = "esphome";
+          repo = oldAttrs.pname;
+          rev = "v${version}";
+          hash = "sha256-ho/1fpq4yAgmYNERPqs51oqr08ncaN9+GRTUUuGU7ps=";
+        };
+      });
     })
   ];
 
@@ -170,7 +154,7 @@ let
   extraBuildInputs = extraPackages py.pkgs;
 
   # Don't forget to run parse-requirements.py after updating
-  hassVersion = "2021.7.0";
+  hassVersion = "2021.8.8";
 
 in with py.pkgs; buildPythonApplication rec {
   pname = "homeassistant";
@@ -187,7 +171,7 @@ in with py.pkgs; buildPythonApplication rec {
     owner = "home-assistant";
     repo = "core";
     rev = version;
-    sha256 = "1dx1pmi0w265pyajmmvd7k6vb5z7s77a7b161zd0n4zsb989dil6";
+    sha256 = "1fj16qva04d9qhpnfxxacsp82vqqfha5c2zg4f850kld4qhwrgky";
   };
 
   # leave this in, so users don't have to constantly update their downstream patch handling
@@ -201,7 +185,9 @@ in with py.pkgs; buildPythonApplication rec {
       --replace "awesomeversion==21.4.0" "awesomeversion" \
       --replace "bcrypt==3.1.7" "bcrypt" \
       --replace "cryptography==3.3.2" "cryptography" \
+      --replace "httpx==0.18.2" "httpx>=0.18.2" \
       --replace "pip>=8.0.3,<20.3" "pip" \
+      --replace "requests==2.25.1" "requests>=2.25.1" \
       --replace "ruamel.yaml==0.15.100" "ruamel.yaml"
     substituteInPlace tests/test_config.py --replace '"/usr"' '"/build/media"'
   '';
@@ -401,7 +387,6 @@ in with py.pkgs; buildPythonApplication rec {
     "fritzbox_callmonitor"
     "frontend"
     "garages_amsterdam"
-    "garmin_connect"
     "gdacs"
     "generic"
     "generic_thermostat"
@@ -443,7 +428,8 @@ in with py.pkgs; buildPythonApplication rec {
     "home_connect"
     "home_plus_control"
     "homeassistant"
-    "homekit"
+    # disable homekit tests because they fail in the network component
+    #"homekit"
     "homekit_controller"
     "homematic"
     "homematicip_cloud"
@@ -671,7 +657,6 @@ in with py.pkgs; buildPythonApplication rec {
     "switcher_kis"
     "syncthing"
     "syncthru"
-    "synology_dsm"
     "system_health"
     "system_log"
     "tado"
@@ -744,7 +729,6 @@ in with py.pkgs; buildPythonApplication rec {
     "workday"
     "worldclock"
     "wsdot"
-    "wunderground"
     "xbox"
     "xiaomi"
     "xiaomi_aqara"
@@ -753,6 +737,7 @@ in with py.pkgs; buildPythonApplication rec {
     "yandex_transport"
     "yandextts"
     "yeelight"
+    "youless"
     # disabled, because it tries to join a multicast group and fails to find a usable network interface
     # "zeroconf"
     "zerproc"
@@ -804,8 +789,15 @@ in with py.pkgs; buildPythonApplication rec {
     # wallbox/test_config_flow.py: Tries to connect to api.wall-box.cim: Failed to establish a new connection: [Errno -2] Name or service not known
     "--deselect tests/components/wallbox/test_config_flow.py::test_form_invalid_auth"
     "--deselect tests/components/wallbox/test_config_flow.py::test_form_cannot_connect"
-    # tests/components/default_config/test_init.py: Tries to check for updates and fails ungracefully without network access
+    # default_config/test_init.py: Tries to check for updates and fails ungracefully without network access
     "--deselect tests/components/default_config/test_init.py::test_setup"
+    # local_ip/test_{init,config_flow}.py: tries to lookup a route towards a multicast address and fails
+    "--deselect tests/components/local_ip/test_init.py::test_basic_setup"
+    "--deselect tests/components/local_ip/test_config_flow.py::test_config_flow"
+    # netatmo/test_select.py: NoneType object has no attribute state
+    "--deselect tests/components/netatmo/test_select.py::test_select_schedule_thermostats"
+    # helpers/test_system_info.py: AssertionError: assert 'Unknown' == 'Home Assistant Container'
+    "--deselect tests/helpers/test_system_info.py::test_container_installationtype"
     # tests are located in tests/
     "tests"
     # dynamically add packages required for component tests
@@ -841,8 +833,6 @@ in with py.pkgs; buildPythonApplication rec {
     "test_onboarding_core_no_rpi_power"
     # hue/test_sensor_base.py: Race condition when counting events
     "test_hue_events"
-    # homekit/test_homekit.py: Tries to use zeroconf, which tries to join a multicast group
-    "test_homekit_uses_system_zeroconf"
     # august/test_lock.py: AssertionError: assert 'unlocked' == 'locked'
     "test_lock_update_via_pubnub"
   ];

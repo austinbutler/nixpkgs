@@ -1,25 +1,33 @@
 { lib, pkgs }: self: with self; with lib.licenses; {
 
-  elisp-ffi = melpaBuild rec {
+  elisp-ffi = let
+    rev = "da37c516a0e59bdce63fb2dc006a231dee62a1d9";
+  in melpaBuild {
     pname = "elisp-ffi";
-    version = "1.0.0";
+    version = "20170518.0";
+
+    commit = rev;
 
     src = pkgs.fetchFromGitHub {
       owner = "skeeto";
       repo = "elisp-ffi";
-      rev = version;
-      sha256 = "0z2n3h5l5fj8wl8i1ilfzv11l3zba14sgph6gz7dx7q12cnp9j22";
+      inherit rev;
+      sha256 = "sha256-StOezQEnNTjRmjY02ub5FRh59aL6gWfw+qgboz0wF94=";
     };
+
+    nativeBuildInputs = [ pkgs.pkg-config ];
 
     buildInputs = [ pkgs.libffi ];
 
-    preBuild = "make";
+    preBuild = ''
+      mv ffi.el elisp-ffi.el
+      make
+    '';
 
     recipe = pkgs.writeText "recipe" ''
       (elisp-ffi
       :repo "skeeto/elisp-ffi"
-      :fetcher github
-      :files ("ffi-glue" "ffi.el"))
+      :fetcher github)
     '';
 
     meta = {
@@ -38,7 +46,7 @@
     pname = "agda-mode";
     version = pkgs.haskellPackages.Agda.version;
 
-    phases = [ "buildPhase" "installPhase" ];
+    dontUnpack = true;
 
     # already byte-compiled by Agda builder
     buildPhase = ''
@@ -70,6 +78,31 @@
     };
   };
 
+  # may be part of MELPA in the future, see
+  # https://github.com/mlochbaum/BQN/issues/10#issuecomment-912982874
+  bqn-mode = self.trivialBuild {
+    pname = "bqn-mode";
+    version = "unstable-2021-09-04";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "mlochbaum";
+      repo = "BQN";
+      rev = "e623a2fcafdf5fd6c8d31570175284805c4f34d9";
+      sha256 = "1a2lpxy3bak4724r0ns4la5d0j6484ngi73kcwp82vgbbpk7lcrp";
+    };
+
+    postUnpack = ''
+      sourceRoot="$sourceRoot/editors/emacs"
+    '';
+
+    meta = {
+      description = "Emacs mode for BQN";
+      license = lib.licenses.gpl3Only;
+      maintainers = [ lib.maintainers.sternenseemann ];
+      homepage = "https://mlochbaum.github.io/BQN/editors/index.html";
+    };
+  };
+
   ghc-mod = melpaBuild {
     pname = "ghc";
     version = pkgs.haskellPackages.ghc-mod.version;
@@ -92,21 +125,23 @@
     };
   };
 
-  git-undo = callPackage ./git-undo { };
-
-  haskell-unicode-input-method = melpaBuild {
-    pname = "emacs-haskell-unicode-input-method";
+  haskell-unicode-input-method = let
+    rev = "d8d168148c187ed19350bb7a1a190217c2915a63";
+  in melpaBuild {
+    pname = "haskell-unicode-input-method";
     version = "20110905.2307";
+
+    commit = rev;
 
     src = pkgs.fetchFromGitHub {
       owner = "roelvandijk";
       repo = "emacs-haskell-unicode-input-method";
-      rev = "d8d168148c187ed19350bb7a1a190217c2915a63";
+      inherit rev;
       sha256 = "09b7bg2s9aa4s8f2kdqs4xps3jxkq5wsvbi87ih8b6id38blhf78";
     };
 
     recipe = pkgs.writeText "recipe" ''
-      (emacs-haskell-unicode-input-method
+      (haskell-unicode-input-method
        :repo "roelvandijk/emacs-haskell-unicode-input-method"
        :fetcher github)
     '';
@@ -134,14 +169,19 @@
     };
   };
 
-  matrix-client = melpaBuild {
+  matrix-client = let
+    rev = "d2ac55293c96d4c95971ed8e2a3f6f354565c5ed";
+  in melpaBuild
+  {
     pname = "matrix-client";
     version = "0.3.0";
+
+    commit = rev;
 
     src = pkgs.fetchFromGitHub {
       owner = "alphapapa";
       repo = "matrix-client.el";
-      rev = "d2ac55293c96d4c95971ed8e2a3f6f354565c5ed";
+      inherit rev;
       sha256 = "1scfv1502yg7x4bsl253cpr6plml1j4d437vci2ggs764sh3rcqq";
     };
 
@@ -197,17 +237,46 @@
     };
   };
 
+  urweb-mode = self.trivialBuild {
+    pname = "urweb-mode";
+
+    inherit (pkgs.urweb) src version;
+
+    packageRequires = [
+      self.cl-lib
+      self.flycheck
+    ];
+
+    postUnpack = "sourceRoot=$sourceRoot/src/elisp";
+
+    meta = {
+      description = "Major mode for editing Ur/Web";
+      inherit (pkgs.urweb.meta) license homepage;
+      maintainers = [ lib.maintainers.sternenseemann ];
+    };
+  };
+
   # Packages made the classical callPackage way
+
+  apheleia = callPackage ./apheleia { };
 
   ebuild-mode = callPackage ./ebuild-mode { };
 
   emacspeak = callPackage ./emacspeak { };
 
+  ement = callPackage ./ement { };
+
   ess-R-object-popup = callPackage ./ess-R-object-popup { };
 
   font-lock-plus = callPackage ./font-lock-plus { };
 
+  git-undo = callPackage ./git-undo { };
+
   helm-words = callPackage ./helm-words { };
+
+  isearch-plus = callPackage ./isearch-plus { };
+
+  isearch-prop = callPackage ./isearch-prop { };
 
   jam-mode = callPackage ./jam-mode { };
 
@@ -216,6 +285,8 @@
   org-mac-link = callPackage ./org-mac-link { };
 
   perl-completion = callPackage ./perl-completion { };
+
+  plz = callPackage ./plz { };
 
   pod-mode = callPackage ./pod-mode { };
 
@@ -250,38 +321,4 @@
   rectMark = rect-mark;
   sunriseCommander = sunrise-commander;
 
-  # Legacy aliases, these try to mostly map to melpa stable because it's
-  # closer to the old outdated package infra.
-  #
-  # Ideally this should be dropped some time during/after 20.03
-
-  autoComplete = self.melpaStablePackages.auto-complete;
-  bbdb3 = self.melpaStablePackages.bbdb;
-  colorTheme = self.color-theme;
-  cryptol = self.melpaStablePackages.cryptol-mode;
-  d = self.melpaStablePackages.d-mode;
-  emacsw3m = self.w3m;
-  erlangMode = self.melpaStablePackages.erlang;
-  flymakeCursor = self.melpaStablePackages.flymake-cursor;
-  graphvizDot = self.melpaStablePackages.graphviz-dot-mode;
-  haskellMode = self.melpaStablePackages.haskell-mode;
-  hsc3Mode = self.hsc3-mode;
-  idris = self.melpaStablePackages.idris-mode;
-  jade = self.jade-mode;
-  js2 = self.melpaStablePackages.js2-mode;
-  loremIpsum = self.lorem-ipsum;
-  markdownMode = self.melpaStablePackages.markdown-mode;
-  maudeMode = self.maude-mode;
-  phpMode = self.melpaStablePackages.php-mode;
-  prologMode = self.prolog-mode;
-  proofgeneral = self.melpaStablePackages.proof-general;
-  proofgeneral_HEAD = self.proof-general;
-  rainbowDelimiters = self.melpaStablePackages.rainbow-delimiters;
-  sbtMode = self.melpaStablePackages.sbt-mode;
-  scalaMode1 = self.melpaStablePackages.scala-mode;
-  # scalaMode2 = null;  # No clear mapping as of now
-  structuredHaskellMode = self.melpaStablePackages.shm;
-  tuaregMode = self.melpaStablePackages.tuareg;
-  writeGood = self.melpaStablePackages.writegood-mode;
-  xmlRpc = self.melpaStablePackages.xml-rpc;
 }

@@ -1,30 +1,40 @@
 { lib
 , buildPythonPackage
-, pythonOlder
-, fetchPypi
+, fetchFromGitHub
+, mock
+, noiseprotocol
 , protobuf
+, pytest-asyncio
+, pytestCheckHook
+, pythonOlder
 , zeroconf
 }:
 
 buildPythonPackage rec {
   pname = "aioesphomeapi";
-  version = "4.1.0";
+  version = "9.1.0";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "0210l2d5g76pllr2vh990k9shfv3zrknx5d2dmgqb5y90142cp76";
+  src = fetchFromGitHub {
+    owner = "esphome";
+    repo = pname;
+    rev = "v${version}";
+    sha256 = "sha256-MuQQ9IpLjsAStpdG8Q0uOzLQl02afStVb52/Rtd+IIs=";
   };
 
   propagatedBuildInputs = [
+    noiseprotocol
     protobuf
     zeroconf
   ];
 
-  # no tests implemented
-  doCheck = false;
+  checkInputs = [
+    mock
+    pytest-asyncio
+    pytestCheckHook
+  ];
 
   pythonImportsCheck = [
     "aioesphomeapi"

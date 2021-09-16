@@ -141,6 +141,8 @@ let
 
     cairo2 = callPackage ../development/ocaml-modules/cairo2 { };
 
+    callipyge = callPackage ../development/ocaml-modules/callipyge { };
+
     caqti = callPackage ../development/ocaml-modules/caqti { };
 
     caqti-async = callPackage ../development/ocaml-modules/caqti/async.nix { };
@@ -158,6 +160,8 @@ let
     caqti-type-calendar = callPackage ../development/ocaml-modules/caqti/type-calendar.nix { };
 
     cfstream = callPackage ../development/ocaml-modules/cfstream { };
+
+    chacha = callPackage ../development/ocaml-modules/chacha { };
 
     charInfo_width = callPackage ../development/ocaml-modules/charInfo_width { };
 
@@ -610,7 +614,7 @@ let
     linenoise = callPackage ../development/ocaml-modules/linenoise { };
 
     llvm = callPackage ../development/ocaml-modules/llvm {
-      libllvm = pkgs.llvmPackages_8.libllvm;
+      libllvm = pkgs.llvmPackages_10.libllvm;
     };
 
     logs = callPackage ../development/ocaml-modules/logs { };
@@ -623,9 +627,7 @@ let
       inherit (pkgs) file;
     };
 
-    lwt = callPackage ../development/ocaml-modules/lwt {
-      ocaml-migrate-parsetree = ocaml-migrate-parsetree-2;
-    };
+    lwt = callPackage ../development/ocaml-modules/lwt { };
 
     lwt-canceler = callPackage ../development/ocaml-modules/lwt-canceler { };
 
@@ -806,6 +808,8 @@ let
 
     nocrypto =  callPackage ../development/ocaml-modules/nocrypto { };
 
+    noise = callPackage ../development/ocaml-modules/noise { };
+
     nonstd =  callPackage ../development/ocaml-modules/nonstd { };
 
     notty = callPackage ../development/ocaml-modules/notty { };
@@ -880,6 +884,8 @@ let
 
     ocaml_pcre = callPackage ../development/ocaml-modules/pcre {};
 
+    ocaml-print-intf = callPackage ../development/ocaml-modules/ocaml-print-intf { };
+
     pgocaml = callPackage ../development/ocaml-modules/pgocaml {};
 
     pgocaml_ppx = callPackage ../development/ocaml-modules/pgocaml/ppx.nix {};
@@ -936,6 +942,8 @@ let
 
     odoc = callPackage ../development/ocaml-modules/odoc { };
 
+    odoc-parser = callPackage ../development/ocaml-modules/odoc-parser { };
+
     omd = callPackage ../development/ocaml-modules/omd { };
 
     opam-core = callPackage ../development/ocaml-modules/opam-core {
@@ -965,6 +973,8 @@ let
     optint = callPackage ../development/ocaml-modules/optint { };
 
     otfm = callPackage ../development/ocaml-modules/otfm { };
+
+    otoml = callPackage ../development/ocaml-modules/otoml { };
 
     otr = callPackage ../development/ocaml-modules/otr { };
 
@@ -1007,6 +1017,8 @@ let
     postgresql = callPackage ../development/ocaml-modules/postgresql {
       inherit (pkgs) postgresql;
     };
+
+    pp = callPackage ../development/ocaml-modules/pp { };
 
     ppx_bap = callPackage ../development/ocaml-modules/ppx_bap { };
 
@@ -1170,6 +1182,8 @@ let
 
     reason-native = lib.recurseIntoAttrs (callPackage ../development/ocaml-modules/reason-native { });
 
+    rfc7748 = callPackage ../development/ocaml-modules/rfc7748 { };
+
     ezresto = callPackage ../development/ocaml-modules/resto/ezresto.nix { };
     ezresto-directory = callPackage ../development/ocaml-modules/resto/ezresto-directory.nix { };
 
@@ -1301,6 +1315,8 @@ let
     vchan = callPackage ../development/ocaml-modules/vchan { };
 
     vg = callPackage ../development/ocaml-modules/vg { };
+
+    vlq = callPackage ../development/ocaml-modules/vlq { };
 
     visitors = callPackage ../development/ocaml-modules/visitors { };
 
