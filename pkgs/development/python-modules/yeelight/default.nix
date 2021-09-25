@@ -9,14 +9,14 @@
 
 buildPythonPackage rec {
   pname = "yeelight";
-  version = "0.7.2";
+  version = "0.7.4";
   disabled = pythonOlder "3.4";
 
   src = fetchFromGitLab {
     owner = "stavros";
     repo = "python-yeelight";
     rev = "v${version}";
-    sha256 = "06pg5q50dw5a0h6jnln8419asi8nahzvlk0s65ymykqq0jxac31y";
+    sha256 = "sha256-qpyD4o8YMVu6DiizuBs/44Vz0oPIMR4/YQwaCDNKpFI=";
   };
 
   propagatedBuildInputs = [
