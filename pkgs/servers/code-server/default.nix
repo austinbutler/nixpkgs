@@ -93,8 +93,8 @@ in stdenv.mkDerivation rec {
     patchShebangs ./ci
 
     # remove unnecessary git config command
-    substituteInPlace lib/vscode/build/npm/postinstall.js \
-      --replace "cp.execSync('git config pull.rebase true');" ""
+    #substituteInPlace lib/vscode/build/npm/postinstall.js \
+    #  --replace "cp.execSync('git config pull.rebase true');" ""
 
     substituteInPlace ci/dev/postinstall.sh \
       --replace 'yarn' 'yarn --ignore-scripts'
@@ -105,8 +105,8 @@ in stdenv.mkDerivation rec {
 
     # disable automatic updates
     echo "Disabling automatic updates"
-    sed -i '/update.mode/,/\}/{s/default:.*/default: "none",/g}' \
-      lib/vscode/src/vs/platform/update/common/update.config.contribution.ts
+    #sed -i '/update.mode/,/\}/{s/default:.*/default: "none",/g}' \
+    #  lib/vscode/src/vs/platform/update/common/update.config.contribution.ts
 
     # inject git commit
     substituteInPlace ci/build/build-release.sh \
@@ -114,13 +114,13 @@ in stdenv.mkDerivation rec {
 
     # remove all built-in extensions, as these are 3rd party extensions that
     # gets downloaded from vscode marketplace
-    jq --slurp '.[0] * .[1]' "lib/vscode/product.json" <(
-      cat << EOF
-    {
-      "builtInExtensions": []
-    }
-    EOF
-    ) | sponge lib/vscode/product.json
+    #jq --slurp '.[0] * .[1]' "lib/vscode/product.json" <(
+    #  cat << EOF
+    #{
+    #  "builtInExtensions": []
+    #}
+    #EOF
+    #) | sponge lib/vscode/product.json
   '';
 
   configurePhase = ''
