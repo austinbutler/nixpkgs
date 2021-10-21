@@ -9761,6 +9761,8 @@ with pkgs;
 
   sonata = callPackage ../applications/audio/sonata { };
 
+  soundconverter = with python3Packages; toPythonApplication soundconverter;
+
   soundkonverter = libsForQt5.soundkonverter;
 
   soundwireserver = callPackage ../applications/audio/soundwireserver { };
