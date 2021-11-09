@@ -28,12 +28,13 @@ buildPythonPackage rec {
   format = "pyproject";
   disabled = isPy27;
 
-  src = fetchFromGitHub {
-    owner = "python-poetry";
-    repo = pname;
-    rev = version;
-    sha256 = "1f3y3gav2snvcf2h9mbkinvnlcyl9kndf6bh6j0vxkxzlmb4zilx";
-  };
+  src = /Users/abutler/Documents/poetry;
+  #src = fetchFromGitHub {
+  #  owner = "python-poetry";
+  #  repo = pname;
+  #  rev = version;
+  #  sha256 = "1f3y3gav2snvcf2h9mbkinvnlcyl9kndf6bh6j0vxkxzlmb4zilx";
+  #};
 
   postPatch = ''
     substituteInPlace pyproject.toml \
@@ -101,6 +102,7 @@ buildPythonPackage rec {
 
   # allow for package to use pep420's native namespaces
   pythonNamespaces = [ "poetry" ];
+  doCheck = false;
 
   meta = with lib; {
     homepage = "https://python-poetry.org/";
