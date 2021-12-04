@@ -1,11 +1,6 @@
 name: Build Nix Packages
 
 on:
-  #push:
-  #  branches: [ ci-my-pkgs ]
-  #pull_request:
-  #  branches: [ ci-my-pkgs ]
-
   workflow_dispatch:
     inputs:
       git_ref:
@@ -14,9 +9,14 @@ on:
       packages:
         description: Packages to build, space separated
         required: true
-          #environment:
-          #  type: environment
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+      os:
+        description: Operating system
+        required: true
+        type: choice
+        options:
+          # https://github.com/actions/virtual-environments#available-environments
+          - macos-11
+          - ubuntu-latest
 jobs:
   parse-inputs:
     runs-on: ubuntu-latest
@@ -24,14 +24,13 @@ jobs:
       - name: Parse packages
         id: parse-packages
         run: |
-          echo ${{ github.event.inputs.packages }}
           PACKAGES=$(printf %s "${{ github.event.inputs.packages }}" | jq -cRs 'split(" ")')
           echo "PACKAGES: $PACKAGES"
           echo ::set-output name=packages::${PACKAGES}
     outputs:
       packages: ${{ steps.parse-packages.outputs.packages }}
   build:
-    runs-on: macos-11 #${{ github.event.inputs.environment }}
+    runs-on: ${{ github.event.inputs.os }}
     needs:
       - parse-inputs
     strategy:
@@ -44,5 +43,5 @@ jobs:
       - uses: cachix/install-nix-action@v16
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - name: build packages
+      - name: Build package
         run: nix-build -A ${{ matrix.package }}
