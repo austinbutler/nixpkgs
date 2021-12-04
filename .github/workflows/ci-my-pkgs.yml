@@ -12,7 +12,7 @@ on:
         description: Git commit or branch
         required: true
       packages:
-        description: Packages to build, comma separated
+        description: Packages to build, space separated
         required: true
           #environment:
           #  type: environment
@@ -27,7 +27,7 @@ jobs:
           PACKAGES=$(printf %s ${{ github.event.inputs.packages }} | jq -cRs 'split(" ")')
           echo ::set-output name=packages::${PACKAGES}
     outputs:
-      packages: ${{ steps.parse-inputs.outputs.packages }}
+      packages: ${{ steps.parse-packages.outputs.packages }}
   build:
     runs-on: macos-11 #${{ github.event.inputs.environment }}
     needs:
