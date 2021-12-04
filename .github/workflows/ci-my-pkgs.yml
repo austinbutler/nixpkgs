@@ -12,14 +12,16 @@ on:
         description: Git commit or branch
         required: true
       packages:
-        description: Packages to build, space separated
+        description: Packages to build, comma separated
         required: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
     runs-on: macos-11
-
+    strategy:
+      matrix:
+        package: [${{github.event.inputs.packages}}]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -28,4 +30,4 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: build packages
-        run: nix-build -A ${{github.event.inputs.packages}}
+        run: nix-build -A ${{matrix.package}}
