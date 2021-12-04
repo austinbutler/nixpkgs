@@ -18,11 +18,23 @@ on:
           #  type: environment
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  parse-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse packages
+        id: parse-packages
+        run: |
+          PACKAGES=$(printf %s ${{ github.event.inputs.packages }} | jq -cRs 'split(" ")')
+          echo ::set-output name=packages::${PACKAGES}
+    outputs:
+      packages: ${{ steps.parse-inputs.outputs.packages }}
   build:
     runs-on: macos-11 #${{ github.event.inputs.environment }}
+    needs:
+      - parse-inputs
     strategy:
       matrix:
-        package: ${{ fromJSON(format('[{0}]', github.event.inputs.packages)) }}
+        package: ${{ fromJSON(needs.parse-inputs.outputs.packages) }}
     steps:
       - uses: actions/checkout@v2
         with:
