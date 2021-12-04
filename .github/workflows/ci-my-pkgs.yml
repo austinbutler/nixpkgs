@@ -28,4 +28,4 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: build packages
-        run: nix-build -A ${{github.events.inputs.packages}}
+        run: nix-build -A ${{github.event.inputs.packages}}
