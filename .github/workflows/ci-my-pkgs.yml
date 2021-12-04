@@ -24,6 +24,7 @@ jobs:
       - name: Parse packages
         id: parse-packages
         run: |
+          echo ${{ github.event.inputs.packages }}
           PACKAGES=$(printf %s ${{ github.event.inputs.packages }} | jq -cRs 'split(" ")')
           echo ::set-output name=packages::${PACKAGES}
     outputs:
