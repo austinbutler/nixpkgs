@@ -14,12 +14,12 @@ on:
       packages:
         description: Packages to build, comma separated
         required: true
-      environment:
-        type: environment
+          #environment:
+          #  type: environment
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
-    runs-on: ${{ github.event.inputs.environment }}
+    runs-on: macos-11 #${{ github.event.inputs.environment }}
     strategy:
       matrix:
         package: ${{ fromJson('[github.event.inputs.packages]') }}
