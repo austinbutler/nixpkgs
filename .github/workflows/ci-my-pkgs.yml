@@ -22,7 +22,7 @@ jobs:
     runs-on: macos-11 #${{ github.event.inputs.environment }}
     strategy:
       matrix:
-        package: ${{ fromJson('[github.event.inputs.packages]') }}
+        package: ${{ format('[{0}]', github.event.inputs.packages) }}
     steps:
       - uses: actions/checkout@v2
         with:
