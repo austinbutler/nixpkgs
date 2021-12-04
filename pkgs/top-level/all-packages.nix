@@ -2885,6 +2885,8 @@ with pkgs;
 
   elogind = callPackage ../applications/misc/elogind { };
 
+  elpa = callPackage ../development/libraries/elpa { };
+
   enca = callPackage ../tools/text/enca { };
 
   enigma = callPackage ../games/enigma {};
@@ -4655,6 +4657,9 @@ with pkgs;
   dolphin-emu-beta = qt5.callPackage ../misc/emulators/dolphin-emu/master.nix {
     inherit (darwin.apple_sdk.frameworks) CoreBluetooth ForceFeedback IOKit OpenGL;
   };
+  dolphin-emu-primehack = qt5.callPackage ../misc/emulators/dolphin-emu/primehack.nix {
+    inherit (darwin.apple_sdk.frameworks) CoreBluetooth ForceFeedback IOKit OpenGL;
+  };
 
   domoticz = callPackage ../servers/domoticz { };
 
@@ -5505,6 +5510,8 @@ with pkgs;
 
   genimage = callPackage ../tools/filesystems/genimage { };
 
+  genmap = callPackage ../applications/science/biology/genmap { };
+
   geonkick = callPackage ../applications/audio/geonkick {};
 
   gerrit = callPackage ../applications/version-management/gerrit { };
@@ -6314,6 +6321,8 @@ with pkgs;
   horst = callPackage ../tools/networking/horst { };
 
   host = bind.host;
+
+  hostess = callPackage ../development/tools/hostess {};
 
   hotpatch = callPackage ../development/libraries/hotpatch { };
 
@@ -13082,9 +13091,7 @@ with pkgs;
 
   inherit (callPackage ../development/compilers/vala { })
     vala_0_40
-    vala_0_46
     vala_0_48
-    vala_0_50
     vala_0_52
     vala_0_54
     vala;
@@ -14372,6 +14379,8 @@ with pkgs;
   libsigrokdecode4dsl = callPackage ../applications/science/electronics/dsview/libsigrokdecode4dsl.nix { };
 
   cli11 = callPackage ../development/tools/misc/cli11 { };
+
+  datree = callPackage ../development/tools/datree { };
 
   dcadec = callPackage ../development/tools/dcadec { };
 
@@ -18299,6 +18308,8 @@ with pkgs;
   libu2f-server = callPackage ../development/libraries/libu2f-server { };
 
   libubox = callPackage ../development/libraries/libubox { };
+
+  libudev-zero = callPackage ../development/libraries/libudev-zero { };
 
   libuecc = callPackage ../development/libraries/libuecc { };
 
@@ -22472,6 +22483,10 @@ with pkgs;
 
   ofono = callPackage ../tools/networking/ofono { };
 
+  okapi = callPackage ../development/libraries/okapi {
+    inherit (darwin.apple_sdk.frameworks) Security;
+  };
+
   openpam = callPackage ../development/libraries/openpam { };
 
   openbsm = callPackage ../development/libraries/openbsm { };
@@ -25138,6 +25153,14 @@ with pkgs;
   gpx = callPackage ../applications/misc/gpx { };
 
   gqrx = callPackage ../applications/radio/gqrx { };
+  gqrx-portaudio = callPackage ../applications/radio/gqrx {
+    portaudioSupport = true;
+    pulseaudioSupport = false;
+  };
+  gqrx-gr-audio = callPackage ../applications/radio/gqrx {
+    portaudioSupport = false;
+    pulseaudioSupport = false;
+  };
 
   gpx-viewer = callPackage ../applications/misc/gpx-viewer { };
 
@@ -27493,6 +27516,8 @@ with pkgs;
 
   capture = callPackage ../tools/misc/capture {};
 
+  patchmatrix = callPackage ../applications/audio/patchmatrix { };
+
   pbrt = callPackage ../applications/graphics/pbrt { };
 
   pcloud = callPackage ../applications/networking/pcloud { };
@@ -27530,8 +27555,6 @@ with pkgs;
   pdfgrep  = callPackage ../tools/typesetting/pdfgrep { };
 
   pdfpc = callPackage ../applications/misc/pdfpc {
-    # https://github.com/pdfpc/pdfpc/issues/594
-    vala = vala_0_50;
     inherit (gst_all_1) gstreamer gst-plugins-base gst-plugins-good gst-libav;
   };
 
@@ -27818,6 +27841,8 @@ with pkgs;
   qmmp = libsForQt5.callPackage ../applications/audio/qmmp { };
 
   qnotero = libsForQt5.callPackage ../applications/office/qnotero { };
+
+  qpwgraph = libsForQt5.callPackage ../applications/audio/qpwgraph { };
 
   qrcode = callPackage ../tools/graphics/qrcode {};
 
