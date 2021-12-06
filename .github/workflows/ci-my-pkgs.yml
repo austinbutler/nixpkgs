@@ -9,6 +9,14 @@ on:
       packages:
         description: Packages to build, space separated
         required: true
+      check:
+        description: Add "--check"
+        type: choice
+        required: false
+        default: false
+        options:
+          - false
+          - true
       os:
         description: Operating system
         required: true
