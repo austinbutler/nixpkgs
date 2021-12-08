@@ -4856,6 +4856,16 @@
     githubId = 12491746;
     name = "Masato Yonekawa";
   };
+  hyshka = {
+    name = "Bryan Hyshka";
+    email = "bryan@hyshka.com";
+    github = "hyshka";
+    githubId = 2090758;
+    keys = [{
+      longkeyid = "rsa2048/0xDB2D93D1BFAAA6EA";
+      fingerprint = "24F4 1925 28C4 8797 E539  F247 DB2D 93D1 BFAA A6EA";
+    }];
+  };
   hyzual = {
     email = "hyzual@gmail.com";
     github = "Hyzual";
@@ -7664,6 +7674,12 @@
     github = "michojel";
     githubId = 21156022;
     name = "Michal Minář";
+  };
+  michzappa = {
+    email = "me@michzappa.com";
+    github = "michzappa";
+    githubId = 59343378;
+    name = "Michael Zappa";
   };
   mickours = {
     email = "mickours@gmail.com<";
