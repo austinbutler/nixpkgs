@@ -6,8 +6,8 @@ mkDiscoursePlugin {
   src = fetchFromGitHub {
     owner = "discourse";
     repo = "discourse-calendar";
-    rev = "519cf403ae3003291de20145aca243e2ffbcb4a2";
-    sha256 = "0398cf7k03i7j7v5w1mysjzk2npbkvr7icj5sjwa8i8xzg34gck4";
+    rev = "fbc617a5fa9f3a22bcc72bc2b32ea3cbdf6087c5";
+    sha256 = "sha256-qBtq8IvxdKYIFNL9DwdRqZceMMO/qgd6jTr3kk3so3Y=";
   };
   meta = with lib; {
     homepage = "https://github.com/discourse/discourse-calendar";

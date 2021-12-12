@@ -11,7 +11,7 @@
 , libXcursor, libXext, libXi, libXrender, libinput, libjpeg, libpng
 , libxcb, libxkbcommon, libxml2, libxslt, openssl, pcre16, pcre2, sqlite, udev
 , xcbutil, xcbutilimage, xcbutilkeysyms, xcbutilrenderutil, xcbutilwm
-, zlib
+, zlib, at-spi2-core
 
   # optional dependencies
 , cups ? null, libmysqlclient ? null, postgresql ? null
@@ -68,7 +68,7 @@ stdenv.mkDerivation {
     ] ++ lib.optional libGLSupported libGL
   );
 
-  buildInputs = [ python3 ]
+  buildInputs = [ python3 at-spi2-core ]
     ++ lib.optionals (!stdenv.isDarwin)
     (
       [ libinput ]
@@ -83,6 +83,8 @@ stdenv.mkDerivation {
     ++ lib.optionals stdenv.isDarwin [ xcbuild ];
 
   propagatedNativeBuildInputs = [ lndir ];
+
+  enableParallelBuilding = true;
 
   outputs = [ "bin" "dev" "out" ];
 
@@ -113,6 +115,8 @@ stdenv.mkDerivation {
     sed -i '/PATHS.*NO_DEFAULT_PATH/ d' src/corelib/Qt5CoreMacros.cmake
     sed -i 's/NO_DEFAULT_PATH//' src/gui/Qt5GuiConfigExtras.cmake.in
     sed -i '/PATHS.*NO_DEFAULT_PATH/ d' mkspecs/features/data/cmake/Qt5BasicConfig.cmake.in
+  '' + lib.optionalString (compareVersion "5.15.0" >= 0) ''
+    patchShebangs ./bin
   '' + (
     if stdenv.isDarwin then ''
         sed -i \
@@ -147,6 +151,8 @@ stdenv.mkDerivation {
     ''}
 
     NIX_CFLAGS_COMPILE+=" -DNIXPKGS_QT_PLUGIN_PREFIX=\"$qtPluginPrefix\""
+  '' + lib.optionalString (compareVersion "5.15.0" >= 0) ''
+    ./bin/syncqt.pl -version $version
   '';
 
   postConfigure = ''

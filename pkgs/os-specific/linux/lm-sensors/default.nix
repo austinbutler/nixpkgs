@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , fetchFromGitHub
+, bash
 , bison
 , flex
 , which
@@ -24,7 +25,8 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ bison flex which ];
-  buildInputs = [ perl ]
+  # bash is required for correctly replacing the shebangs in all tools for cross-compilation.
+  buildInputs = [ bash perl ]
     ++ lib.optional sensord rrdtool;
 
   makeFlags = [
@@ -42,7 +44,7 @@ stdenv.mkDerivation rec {
     changelog = "https://raw.githubusercontent.com/lm-sensors/lm-sensors/V${dashedVersion}/CHANGES";
     description = "Tools for reading hardware sensors";
     license = with licenses; [ lgpl21Plus gpl2Plus ];
-    maintainers = with maintainers; [ pengmeiyu ];
+    maintainers = with maintainers; [ pmy ];
     platforms = platforms.linux;
     mainProgram = "sensors";
   };

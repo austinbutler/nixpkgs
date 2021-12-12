@@ -1,17 +1,15 @@
-{ lib, stdenv, fetchurl, fetchgit, jre_headless, coreutils, gradle_6, git, perl
+{ lib, stdenv, fetchurl, fetchFromGitLab, jdk17_headless, coreutils, gradle_6, git, perl
 , makeWrapper }:
 
 let
   pname = "signald";
+  version = "0.15.0";
 
-  version = "0.13.1";
-
-  # This package uses the .git directory
-  src = fetchgit {
-    url = "https://gitlab.com/signald/signald";
+  src = fetchFromGitLab {
+    owner = pname;
+    repo = pname;
     rev = version;
-    sha256 = "1ilmg0i1kw2yc7m3hxw1bqdpl3i9wwbj8623qmz9cxhhavbcd5i7";
-    leaveDotGit = true;
+    sha256 = "ftK+oeqzJ+TxrlvqivFkAi5RCcyJ5Y0oQAJuo0YheBg=";
   };
 
   buildConfigJar = fetchurl {
@@ -19,17 +17,10 @@ let
     sha256 = "0y1f42y7ilm3ykgnm6s3ks54d71n8lsy5649xgd9ahv28lj05x9f";
   };
 
-  patches = [ ./git-describe-always.patch ./gradle-plugin.patch ];
-
-  postPatch = ''
-    patchShebangs gradlew
-    sed -i -e 's|BuildConfig.jar|${buildConfigJar}|' build.gradle
-  '';
-
   # fake build to pre-download deps into fixed-output derivation
   deps = stdenv.mkDerivation {
-    name = "${pname}-deps";
-    inherit src version postPatch patches;
+    pname = "${pname}-deps";
+    inherit src version;
     nativeBuildInputs = [ gradle_6 perl ];
     buildPhase = ''
       export GRADLE_USER_HOME=$(mktemp -d)
@@ -45,11 +36,21 @@ let
     forceShare = [ "dummy" ];
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "0w8ixp1l0ch1jc2dqzxdx3ljlh17hpgns2ba7qvj43nr4prl71l7";
+    # Downloaded jars differ by platform
+    outputHash = {
+      x86_64-linux = "gEaOOsELhfKC1cFV8tqRHbBUI6+M/cDOaqN8FQ1J/TE=";
+      aarch64-linux = "UhnQ+Ge48/NdTqUWIxd0VNadHFvQ9awBTtn65Nz3+UM=";
+    }.${stdenv.system} or (throw "Unsupported platform");
   };
 
 in stdenv.mkDerivation rec {
-  inherit pname src version postPatch patches;
+  inherit pname src version;
+
+  patches = [ ./gradle-plugin.patch ];
+
+  postPatch = ''
+    sed -i 's|BuildConfig.jar|${buildConfigJar}|' build.gradle
+  '';
 
   buildPhase = ''
     runHook preBuild
@@ -71,7 +72,7 @@ in stdenv.mkDerivation rec {
     tar xvf ./build/distributions/signald.tar --strip-components=1 --directory $out/
     wrapProgram $out/bin/signald \
       --prefix PATH : ${lib.makeBinPath [ coreutils ]} \
-      --set JAVA_HOME "${jre_headless}"
+      --set JAVA_HOME "${jdk17_headless}"
 
     runHook postInstall
   '';
@@ -90,6 +91,6 @@ in stdenv.mkDerivation rec {
     homepage = "https://signald.org";
     license = licenses.gpl3Plus;
     maintainers = with maintainers; [ expipiplus1 ];
-    platforms = platforms.unix;
+    platforms = [ "x86_64-linux" "aarch64-linux" ];
   };
 }

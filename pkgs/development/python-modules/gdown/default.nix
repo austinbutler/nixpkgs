@@ -6,18 +6,19 @@
 , tqdm
 , setuptools
 , six
+, beautifulsoup4
 }:
 
 buildPythonApplication rec {
   pname = "gdown";
-  version = "3.13.1";
+  version = "4.2.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-vh1NKRPk1e5cT3cVj8IrzmpaZ9yY2KtWrTGsCU9KkP4=";
+    sha256 = "bd871c125242a9d3691aa74f360b6b5268a58c13991bb2405fdb3ec3028307dc";
   };
 
-  propagatedBuildInputs = [ filelock requests tqdm setuptools six ];
+  propagatedBuildInputs = [ filelock requests tqdm setuptools six beautifulsoup4 ];
 
   checkPhase = ''
     $out/bin/gdown --help > /dev/null

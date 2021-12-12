@@ -2,7 +2,7 @@
 , fetchFromGitHub
 , mkDerivation
 , cmake
-, epoxy
+, libepoxy
 , libarchive
 , libpcap
 , libslirp
@@ -24,13 +24,14 @@ mkDerivation rec {
 
   nativeBuildInputs = [ cmake pkg-config ];
   buildInputs = [
-    epoxy
+    libepoxy
     libarchive
-    libpcap
     libslirp
     qtbase
     SDL2
   ];
+
+  qtWrapperArgs = [ "--prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ libpcap ]}" ];
 
   meta = with lib; {
     homepage = "http://melonds.kuribo64.net/";

@@ -1,4 +1,5 @@
-{ lib, stdenv
+{ lib
+, stdenv
 , nix-update-script
 , appstream
 , appstream-glib
@@ -20,7 +21,6 @@
 , meson
 , ninja
 , packagekit
-, pantheon
 , pkg-config
 , python3
 , vala
@@ -30,23 +30,14 @@
 
 stdenv.mkDerivation rec {
   pname = "appcenter";
-  version = "3.8.0";
+  version = "3.9.1";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = pname;
     rev = version;
-    sha256 = "07lkdpnjj9pxbq8h794qjiidvnysvzx0132w98r1wg9k7ca170bj";
+    sha256 = "sha256-xktIHQHmz5gh72NEz9UQ9fMvBlj1BihWxHgxsHmTIB0=";
   };
-
-  patches = [
-    # Try to remove other backends to make flatpak backend work.
-    # https://github.com/NixOS/nixpkgs/issues/70214
-    ./flatpak-only.patch
-    # The homepage banner does not show up on first run,
-    # has issues with app icon and mouse scrolling.
-    ./drop-homepage-banner.patch
-  ];
 
   passthru = {
     updateScript = nix-update-script {
@@ -100,5 +91,6 @@ stdenv.mkDerivation rec {
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
     maintainers = teams.pantheon.members;
+    mainProgram = "io.elementary.appcenter";
   };
 }

@@ -1,8 +1,7 @@
-{ lib, stdenv
+{ lib
+, stdenv
 , fetchFromGitHub
-, fetchpatch
 , nix-update-script
-, pantheon
 , pkg-config
 , meson
 , ninja
@@ -22,7 +21,6 @@
 , libsoup
 , vte
 , webkitgtk
-, zeitgeist
 , ctags
 , libgit2-glib
 , wrapGAppsHook
@@ -31,7 +29,7 @@
 
 stdenv.mkDerivation rec {
   pname = "elementary-code";
-  version = "6.0.0";
+  version = "6.1.0";
 
   repoName = "code";
 
@@ -39,17 +37,8 @@ stdenv.mkDerivation rec {
     owner = "elementary";
     repo = repoName;
     rev = version;
-    sha256 = "1w1m52mq3zr9alkxk1c0s4ncscka1km5ppd0r6zm86qan9cjwq0f";
+    sha256 = "sha256-AXmMcPj2hf33G5v3TUg+eZwaKOdVlRvoVXglMJFHRjw=";
   };
-
-  patches = [
-    # Upstream code not respecting our localedir
-    # https://github.com/elementary/code/pull/1090
-    (fetchpatch {
-      url = "https://github.com/elementary/code/commit/88dc40d7bbcc2288ada6673eb8f4fab345d97882.patch";
-      sha256 = "16y20bvslcm390irlib759703lvf7w6rz4xzaiazjj1r1njwinvv";
-    })
-  ];
 
   passthru = {
     updateScript = nix-update-script {
@@ -84,7 +73,6 @@ stdenv.mkDerivation rec {
     libsoup
     vte
     webkitgtk
-    zeitgeist
   ];
 
   # install script fails with UnicodeDecodeError because of printing a fancy elipsis character
@@ -108,5 +96,6 @@ stdenv.mkDerivation rec {
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
     maintainers = teams.pantheon.members;
+    mainProgram = "io.elementary.code";
   };
 }
