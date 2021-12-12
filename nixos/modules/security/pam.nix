@@ -536,7 +536,7 @@ let
           optionalString config.services.sssd.enable ''
             auth sufficient ${pkgs.sssd}/lib/security/pam_sss.so use_first_pass
           '' +
-          optionalString config.krb5.enable && config.krb5.pamIntegration ''
+          optionalString (config.krb5.enable && config.krb5.pamIntegration) ''
             auth [default=ignore success=1 service_err=reset] ${pam_krb5}/lib/security/pam_krb5.so use_first_pass
             auth [default=die success=done] ${pam_ccreds}/lib/security/pam_ccreds.so action=validate use_first_pass
             auth sufficient ${pam_ccreds}/lib/security/pam_ccreds.so action=store use_first_pass
@@ -559,7 +559,7 @@ let
           optionalString config.services.sssd.enable ''
             password sufficient ${pkgs.sssd}/lib/security/pam_sss.so use_authtok
           '' +
-          optionalString config.krb5.enable && config.krb5.pamIntegration ''
+          optionalString (config.krb5.enable && config.krb5.pamIntegration) ''
             password sufficient ${pam_krb5}/lib/security/pam_krb5.so use_first_pass
           '' +
           optionalString cfg.enableGnomeKeyring ''
@@ -602,7 +602,7 @@ let
           optionalString config.services.sssd.enable ''
             session optional ${pkgs.sssd}/lib/security/pam_sss.so
           '' +
-          optionalString config.krb5.enable && config.krb5.pamIntegration ''
+          optionalString (config.krb5.enable && config.krb5.pamIntegration) ''
             session optional ${pam_krb5}/lib/security/pam_krb5.so
           '' +
           optionalString cfg.otpwAuth ''
