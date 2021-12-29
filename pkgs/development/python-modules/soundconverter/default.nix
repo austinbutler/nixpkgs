@@ -1,5 +1,5 @@
 { pkgs, lib, fetchurl, buildPythonPackage,
-  gtk3, pygobject3, gst-python, gsettings-desktop-schemas, python3Packages }:
+  gtk3, pygobject3, gst-python, gsettings-desktop-schemas, gobject-introspection, python3Packages, setuptools, wrapGAppsHook }:
 
 buildPythonPackage rec {
   pname = "soundconverter";
@@ -28,6 +28,8 @@ buildPythonPackage rec {
 
   nativeBuildInputs = with pkgs; [
     intltool
+    gobject-introspection
+    wrapGAppsHook
   ];
   propagatedBuildInputs = with pkgs; [
     pygobject3
@@ -40,7 +42,13 @@ buildPythonPackage rec {
     gst_all_1.gst-plugins-bad
     gst_all_1.gst-plugins-base
     gst_all_1.gst-plugins-good
+    gst_all_1.gst-plugins-ugly
+    setuptools
   ];
+  postPatch = ''
+    substituteInPlace bin/soundconverter --replace \
+      "DATA_PATH = os.path.join(SOURCE_PATH, 'data')" "DATA_PATH = '$out/share/soundconverter'"
+  '';
 
   meta = with lib; {
     homepage = "https://soundconverter.org/";
