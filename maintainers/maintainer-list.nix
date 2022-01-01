@@ -14147,4 +14147,10 @@
     github = "nigelgbanks";
     githubId = 487373;
   };
+  rytec-nl = {
+    name = "Rens Porre";
+    email = "rens@rytec.nl";
+    github = "rytec-nl";
+    githubId = 33692166;
+  };
 }
