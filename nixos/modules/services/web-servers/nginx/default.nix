@@ -278,7 +278,7 @@ let
         acmeLocation = optionalString (vhost.enableACME || vhost.useACMEHost != null) ''
           location /.well-known/acme-challenge {
             ${optionalString (vhost.acmeFallbackHost != null) "try_files $uri @acme-fallback;"}
-            root ${vhost.acmeRoot};
+            ${optionalString (vhost.acmeRoot != null) "root ${vhost.acmeRoot};"}
             auth_basic off;
           }
           ${optionalString (vhost.acmeFallbackHost != null) ''
@@ -319,6 +319,9 @@ let
           ''}
           ${optionalString vhost.rejectSSL ''
             ssl_reject_handshake on;
+          ''}
+          ${optionalString (hasSSL && vhost.kTLS) ''
+            ssl_conf_command Options KTLS;
           ''}
 
           ${mkBasicAuth vhostName vhost}
@@ -371,6 +374,8 @@ let
       ${user}:{PLAIN}${password}
     '') authDef)
   );
+
+  mkCertOwnershipAssertion = import ../../../security/acme/mk-cert-ownership-assertion.nix;
 in
 
 {
@@ -825,13 +830,25 @@ in
       }
 
       {
+        assertion = any (host: host.kTLS) (attrValues virtualHosts) -> versionAtLeast cfg.package.version "1.21.4";
+        message = ''
+          services.nginx.virtualHosts.<name>.kTLS requires nginx version
+          1.21.4 or above; see the documentation for services.nginx.package.
+        '';
+      }
+
+      {
         assertion = all (host: !(host.enableACME && host.useACMEHost != null)) (attrValues virtualHosts);
         message = ''
           Options services.nginx.service.virtualHosts.<name>.enableACME and
           services.nginx.virtualHosts.<name>.useACMEHost are mutually exclusive.
         '';
       }
-    ];
+    ] ++ map (name: mkCertOwnershipAssertion {
+      inherit (cfg) group user;
+      cert = config.security.acme.certs.${name};
+      groups = config.users.groups;
+    }) dependentCertNames;
 
     systemd.services.nginx = {
       description = "Nginx Web Server";
@@ -900,7 +917,7 @@ in
         PrivateMounts = true;
         # System Call Filtering
         SystemCallArchitectures = "native";
-        SystemCallFilter = "~@cpu-emulation @debug @keyring @ipc @mount @obsolete @privileged @setuid @mincore";
+        SystemCallFilter = [ "~@cpu-emulation @debug @keyring @mount @obsolete @privileged @setuid @mincore" ] ++ optionals (cfg.package != pkgs.tengine) [ "~@ipc" ];
       };
     };
 
@@ -937,9 +954,16 @@ in
     };
 
     security.acme.certs = let
-      acmePairs = map (vhostConfig: nameValuePair vhostConfig.serverName {
+      acmePairs = map (vhostConfig: let
+        hasRoot = vhostConfig.acmeRoot != null;
+      in nameValuePair vhostConfig.serverName {
         group = mkDefault cfg.group;
-        webroot = vhostConfig.acmeRoot;
+        # if acmeRoot is null inherit config.security.acme
+        # Since config.security.acme.certs.<cert>.webroot's own default value
+        # should take precedence set priority higher than mkOptionDefault
+        webroot = mkOverride (if hasRoot then 1000 else 2000) vhostConfig.acmeRoot;
+        # Also nudge dnsProvider to null in case it is inherited
+        dnsProvider = mkOverride (if hasRoot then 1000 else 2000) null;
         extraDomainNames = vhostConfig.serverAliases;
       # Filter for enableACME-only vhosts. Don't want to create dud certs
       }) (filter (vhostConfig: vhostConfig.useACMEHost == null) acmeEnabledVhosts);

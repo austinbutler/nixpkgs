@@ -40,14 +40,14 @@
 
 buildPythonPackage rec {
   pname = "sentry-sdk";
-  version = "1.5.0";
+  version = "1.5.2";
   format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "getsentry";
     repo = "sentry-python";
     rev = version;
-    sha256 = "sha256-hJqopR/kvqU0trniHMOahi3oeIzeMvc74ujmfJ2iG48=";
+    sha256 = "086kzvrpy1c7kiwjrdyr4i4a8dp4vncsc8dk6hp8c7bwswfffa3d";
   };
 
   propagatedBuildInputs = [

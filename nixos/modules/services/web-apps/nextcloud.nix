@@ -499,10 +499,17 @@ in {
     occ = mkOption {
       type = types.package;
       default = occ;
+      defaultText = literalDocBook "generated script";
       internal = true;
       description = ''
         The nextcloud-occ program preconfigured to target this Nextcloud instance.
       '';
+    };
+
+    nginx.recommendedHttpHeaders = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Enable additional recommended HTTP response headers";
     };
   };
 
@@ -526,8 +533,8 @@ in {
         # FIXME(@Ma27) remove as soon as nextcloud properly supports
         # mariadb >=10.6.
         isUnsupportedMariadb =
-          # All currently supported Nextcloud versions are affected.
-          (versionOlder cfg.package.version "23")
+          # All currently supported Nextcloud versions are affected (https://github.com/nextcloud/server/issues/25436).
+          (versionOlder cfg.package.version "24")
           # This module uses mysql
           && (cfg.config.dbtype == "mysql")
           # MySQL is managed via NixOS
@@ -903,14 +910,16 @@ in {
         };
         extraConfig = ''
           index index.php index.html /index.php$request_uri;
-          add_header X-Content-Type-Options nosniff;
-          add_header X-XSS-Protection "1; mode=block";
-          add_header X-Robots-Tag none;
-          add_header X-Download-Options noopen;
-          add_header X-Permitted-Cross-Domain-Policies none;
-          add_header X-Frame-Options sameorigin;
-          add_header Referrer-Policy no-referrer;
-          add_header Strict-Transport-Security "max-age=15552000; includeSubDomains" always;
+          ${optionalString (cfg.nginx.recommendedHttpHeaders) ''
+            add_header X-Content-Type-Options nosniff;
+            add_header X-XSS-Protection "1; mode=block";
+            add_header X-Robots-Tag none;
+            add_header X-Download-Options noopen;
+            add_header X-Permitted-Cross-Domain-Policies none;
+            add_header X-Frame-Options sameorigin;
+            add_header Referrer-Policy no-referrer;
+            add_header Strict-Transport-Security "max-age=15552000; includeSubDomains" always;
+          ''}
           client_max_body_size ${cfg.maxUploadSize};
           fastcgi_buffers 64 4K;
           fastcgi_hide_header X-Powered-By;

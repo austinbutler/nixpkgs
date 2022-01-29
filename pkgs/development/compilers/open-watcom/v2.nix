@@ -1,6 +1,7 @@
 { stdenv
 , lib
 , fetchFromGitHub
+, unstableGitUpdater
 
 # Docs cause an immense increase in build time, up to 2 additional hours
 , withDocs ? false
@@ -11,14 +12,14 @@
 
 stdenv.mkDerivation rec {
   pname = "open-watcom-v2";
-  version = "unstable-2021-11-30";
+  version = "unstable-2022-01-18";
   name = "${pname}-unwrapped-${version}";
 
   src = fetchFromGitHub {
     owner = "open-watcom";
     repo = "open-watcom-v2";
-    rev = "982c958eb4840e1c6a98773ba0600f652500f5a7";
-    sha256 = "18dp9nd1gjnpd1870149v67vzxbna25l6zi052z1r51xvaqwc3cx";
+    rev = "f09e0c969c45679c048180f2dc6b3dbbe69e42a0";
+    sha256 = "dEjG4L/VVufSAerKcXPUqZ7esz4m8/210ZshVz4SNAA=";
   };
 
   postPatch = ''
@@ -81,6 +82,10 @@ stdenv.mkDerivation rec {
 
   # Stripping breaks many tools
   dontStrip = true;
+
+  passthru.updateScript = unstableGitUpdater {
+    url = "https://github.com/open-watcom/open-watcom-v2.git";
+  };
 
   meta = with lib; {
     description = "The v2 fork of the Open Watcom suite of compilers and tools";

@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , fetchFromGitHub
+, fetchpatch
 , nix-update-script
 , pkg-config
 , meson
@@ -25,16 +26,23 @@
 
 stdenv.mkDerivation rec {
   pname = "elementary-camera";
-  version = "6.0.2";
-
-  repoName = "camera";
+  version = "6.0.3";
 
   src = fetchFromGitHub {
     owner = "elementary";
-    repo = repoName;
+    repo = "camera";
     rev = version;
-    sha256 = "sha256-uVeV+LKA/W7WVUAvVWaSNRzeh1MUrhRjvS0HuhZZJ04=";
+    sha256 = "sha256-xIv+mOlZV58XD0Z6Vc2wA1EQUxT5BaQ0zhYc9v+ne1w=";
   };
+
+  patches = [
+    # Fix build with meson 0.61
+    # https://github.com/elementary/camera/pull/216
+    (fetchpatch {
+      url = "https://github.com/elementary/camera/commit/ead143b7e3246c5fa9bb37c95d491fb07cea9e04.patch";
+      sha256 = "sha256-2zGigUi6DpjJx8SEvAE3Q3jrm7MggOvLc72lAPMPvs4=";
+    })
+  ];
 
   nativeBuildInputs = [
     appstream

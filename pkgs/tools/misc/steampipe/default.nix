@@ -2,16 +2,16 @@
 
 buildGoModule rec {
   pname = "steampipe";
-  version = "0.10.0";
+  version = "0.12.0";
 
   src = fetchFromGitHub {
     owner = "turbot";
     repo = "steampipe";
     rev = "v${version}";
-    sha256 = "sha256-Hg9GvHB2eTcOUUC/WLpks9TUWivoV6KxXcWWBWne5Lg=";
+    sha256 = "sha256-ApY3h6CqOJMWmIindp5TqWczSU50TBiS89lYzSzj8EM=";
   };
 
-  vendorSha256 = "sha256-akMUJcAoUGHz3FzDJlMUYtHXrtvU0JMiRfqhTm4IEpA=";
+  vendorSha256 = "sha256-ikmcayOy87u6XMYjxxzFv35Rlp9oTteEKFOPr/+xc2Y=";
 
   # tests are failing for no obvious reasons
   doCheck = false;
