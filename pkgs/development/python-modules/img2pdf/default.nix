@@ -51,6 +51,8 @@ buildPythonPackage rec {
   '';
 
   disabledTests = [
+    "test_general"
+    "test_gif_animation"
     "test_tiff_rgb"
   ];
 
