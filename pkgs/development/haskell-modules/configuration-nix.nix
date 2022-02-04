@@ -605,17 +605,7 @@ self: super: builtins.intersectAttrs super {
         sha256 = "1hjdprm990vyxz86fgq14ajn0lkams7i00h8k2i2g1a0hjdwppq6";
       };
 
-      spagoWithPatches = appendPatch (
-        # Spago needs a small patch to work with versions-5.0.0:
-        # https://github.com/purescript/spago/pull/798
-        # This can probably be removed with >spago-0.20.3.
-        pkgs.fetchpatch {
-          url = "https://github.com/purescript/spago/commit/dd4bf4413d9675c1c8065d24d0ed7b345c7fa5dd.patch";
-          sha256 = "1i1r3f4n9mlkckx15bfrdy5m7gjf0zx7ycwyqra6qn34zpcbzpmf";
-        }
-      ) super.spago;
-
-      spagoWithOverrides = spagoWithPatches.override {
+      spagoWithOverrides = super.spago.override {
         # spago has not yet been updated for the latest dhall.
         dhall = self.dhall_1_38_1;
       };
@@ -972,11 +962,11 @@ self: super: builtins.intersectAttrs super {
 
   rel8 = addTestToolDepend pkgs.postgresql super.rel8;
 
-  cachix = generateOptparseApplicativeCompletion "cachix" (super.cachix.override { nix = pkgs.nix_2_4; });
+  cachix = generateOptparseApplicativeCompletion "cachix" (super.cachix.override { nix = pkgs.nixVersions.nix_2_4; });
 
-  hercules-ci-agent = appendConfigureFlag "-fnix-2_4" (super.hercules-ci-agent.override { nix = pkgs.nix_2_4; });
-  hercules-ci-cnix-expr = appendConfigureFlag "-fnix-2_4" (super.hercules-ci-cnix-expr.override { nix = pkgs.nix_2_4; });
-  hercules-ci-cnix-store = appendConfigureFlag "-fnix-2_4" (super.hercules-ci-cnix-store.override { nix = pkgs.nix_2_4; });
+  hercules-ci-agent = appendConfigureFlag "-fnix-2_4" (super.hercules-ci-agent.override { nix = pkgs.nixVersions.nix_2_4; });
+  hercules-ci-cnix-expr = appendConfigureFlag "-fnix-2_4" (super.hercules-ci-cnix-expr.override { nix = pkgs.nixVersions.nix_2_4; });
+  hercules-ci-cnix-store = appendConfigureFlag "-fnix-2_4" (super.hercules-ci-cnix-store.override { nix = pkgs.nixVersions.nix_2_4; });
 
   # Enable extra optimisations which increase build time, but also
   # later compiler performance, so we should do this for user's benefit.
@@ -1054,4 +1044,22 @@ self: super: builtins.intersectAttrs super {
       "-p" "!/Can be used with http-client/"
     ] ++ drv.testFlags or [];
   }) super.http-api-data-qq;
+
+  # Additionally install documentation
+  jacinda = overrideCabal (drv: {
+    enableSeparateDocOutput = true;
+    postInstall = ''
+      ${drv.postInstall or ""}
+
+      docDir="$doc/share/doc/${drv.pname}-${drv.version}"
+
+      # man page goes to $out, it's small enough and haskellPackages has no
+      # support for a man output at the moment and $doc requires downloading
+      # a full PDF
+      install -Dm644 man/ja.1 -t "$out/share/man/man1"
+      # language guide and examples
+      install -Dm644 doc/guide.pdf -t "$docDir"
+      install -Dm644 test/examples/*.jac -t "$docDir/examples"
+    '';
+  }) super.jacinda;
 }

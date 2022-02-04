@@ -288,6 +288,8 @@ in {
 
     dpdk-kmods = callPackage ../os-specific/linux/dpdk-kmods { };
 
+    dpdk = pkgs.dpdk.override { inherit kernel; };
+
     exfat-nofuse = callPackage ../os-specific/linux/exfat { };
 
     evdi = callPackage ../os-specific/linux/evdi { };
@@ -347,6 +349,8 @@ in {
     rtl8188eus-aircrack = callPackage ../os-specific/linux/rtl8188eus-aircrack { };
 
     rtl8192eu = callPackage ../os-specific/linux/rtl8192eu { };
+
+    rtl8189es = callPackage ../os-specific/linux/rtl8189es { };
 
     rtl8723bs = callPackage ../os-specific/linux/rtl8723bs { };
 

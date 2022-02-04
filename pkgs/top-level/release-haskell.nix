@@ -188,6 +188,7 @@ let
         icepeak
         idris
         ihaskell
+        jacinda
         jl
         koka
         krank
@@ -397,8 +398,8 @@ let
           jobs.pkgsMusl.haskell.compiler.ghc921
           jobs.pkgsMusl.haskell.compiler.ghcHEAD
           jobs.pkgsMusl.haskell.compiler.integer-simple.ghc8107
-          jobs.pkgsMusl.haskell.compiler.integer-simple.ghc902
-          jobs.pkgsMusl.haskell.compiler.integer-simple.ghc921
+          jobs.pkgsMusl.haskell.compiler.native-bignum.ghc902
+          jobs.pkgsMusl.haskell.compiler.native-bignum.ghc921
           jobs.pkgsMusl.haskell.compiler.native-bignum.ghcHEAD
         ];
       };

@@ -54,9 +54,9 @@ self: super: {
   # There's an open PR updating the lower bound for `network`:
   # > https://github.com/abhinav/pinch/pull/46
   # With that said version tracked for `network` right now is 3.1.1.1 so we're
-  # replacing the network pinch uses with `network_3_1_2_5` for now.
+  # replacing the network pinch uses with `network_3_1_2_7` for now.
   pinch = super.pinch.overrideScope (self : super: {
-    network = self.network_3_1_2_5;
+    network = self.network_3_1_2_7;
   });
 
   # We can remove this once fakedata version gets to 1.0.1 as the test suite
@@ -182,7 +182,7 @@ self: super: {
   digit = doJailbreak super.digit;
 
   # hnix.patch needed until the next release is bumped
-  hnix = appendPatch ./patches/hnix.patch (generateOptparseApplicativeCompletion "hnix"
+  hnix = generateOptparseApplicativeCompletion "hnix"
     (overrideCabal (drv: {
       # 2020-06-05: HACK: does not pass own build suite - `dontCheck`
       doCheck = false;
@@ -190,7 +190,7 @@ self: super: {
       # needs newer version of relude and semialign than stackage has
       relude = self.relude_1_0_0_1;
       semialign = self.semialign_1_2_0_1;
-    })));
+    }));
 
   # Fails for non-obvious reasons while attempting to use doctest.
   focuslist = dontCheck super.focuslist;
@@ -1110,14 +1110,16 @@ self: super: {
   # https://github.com/elliottt/hsopenid/issues/15
   openid = markBroken super.openid;
 
-  # The test suite needs the packages's executables in $PATH to succeed.
-  arbtt = overrideCabal (drv: {
+  # Version constraints on test dependency tasty-golden need to be relaxed:
+  # https://github.com/nomeata/arbtt/pull/146
+  arbtt = doJailbreak (overrideCabal (drv: {
+    # The test suite needs the packages's executables in $PATH to succeed.
     preCheck = ''
       for i in $PWD/dist/build/*; do
         export PATH="$i:$PATH"
       done
     '';
-  }) super.arbtt;
+  }) super.arbtt);
 
   # https://github.com/erikd/hjsmin/issues/32
   hjsmin = dontCheck super.hjsmin;
@@ -1522,10 +1524,7 @@ self: super: {
   # Upstream issue: https://github.com/haskell-servant/servant-swagger/issues/129
   servant-swagger = dontCheck super.servant-swagger;
 
-  # substituteInPlace: https://github.com/hercules-ci/hercules-ci-agent/issues/363
-  hercules-ci-agent = overrideCabal { preConfigure = ''
-    substituteInPlace hercules-ci-agent/Hercules/Agent/Cachix/Init.hs --replace "Cachix.Client.Env" "Cachix.Client.Version"
-  ''; } (generateOptparseApplicativeCompletion "hercules-ci-agent" super.hercules-ci-agent);
+  hercules-ci-agent = generateOptparseApplicativeCompletion "hercules-ci-agent" super.hercules-ci-agent;
 
   hercules-ci-cli = pkgs.lib.pipe super.hercules-ci-cli [
     unmarkBroken
@@ -1745,6 +1744,8 @@ self: super: {
   # Too strict version bounds on ghc-events
   # https://github.com/haskell/ThreadScope/issues/118
   threadscope = doJailbreak super.threadscope;
+  # https://github.com/mpickering/hs-speedscope/issues/16
+  hs-speedscope = doJailbreak super.hs-speedscope;
 
   # Too strict version bounds on tasty
   # Can likely be removed next week (2021-04-09) when 1.1.1.1 is released.
@@ -2061,11 +2062,11 @@ self: super: {
 
   # Needs network >= 3.1.2
   quic = super.quic.overrideScope (self: super: {
-    network = self.network_3_1_2_5;
+    network = self.network_3_1_2_7;
   });
 
   http3 = super.http3.overrideScope (self: super: {
-    network = self.network_3_1_2_5;
+    network = self.network_3_1_2_7;
   });
 
   # Fixes https://github.com/NixOS/nixpkgs/issues/140613
@@ -2100,7 +2101,7 @@ self: super: {
 
   # Needs brick > 0.64
   nix-tree = super.nix-tree.override {
-    brick = self.brick_0_65;
+    brick = self.brick_0_66_1;
   };
 
   # build newer version for `pkgs.shellcheck`
@@ -2219,6 +2220,16 @@ self: super: {
 
   # Invalid CPP in test suite: https://github.com/cdornan/memory-cd/issues/1
   memory-cd = dontCheck super.memory-cd;
+
+  # raaz-0.3 onwards uses backpack and it does not play nicely with
+  # parallel builds using -j
+  #
+  # See: https://gitlab.haskell.org/ghc/ghc/-/issues/17188
+  #
+  # Overwrite the build cores
+  raaz = overrideCabal (drv: {
+    enableParallelBuilding = false;
+  }) super.raaz;
 
   # https://github.com/andreymulik/sdp/issues/3
   sdp = disableLibraryProfiling super.sdp;
