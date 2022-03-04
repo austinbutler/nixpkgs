@@ -259,6 +259,19 @@ let
       '';
     };
 
+    fastly = {
+      exporterConfig = {
+        enable = true;
+        tokenPath = pkgs.writeText "token" "abc123";
+      };
+
+      # noop: fastly's exporter can't start without first talking to fastly
+      # see: https://github.com/peterbourgon/fastly-exporter/issues/87
+      exporterTest = ''
+        succeed("true");
+      '';
+    };
+
     fritzbox = {
       # TODO add proper test case
       exporterConfig = {
@@ -659,7 +672,7 @@ let
             basicAuth.nextcloud-exporter = "snakeoilpw";
             locations."/" = {
               root = "${pkgs.prometheus-nextcloud-exporter.src}/serverinfo/testdata";
-              tryFiles = "/negative-space.xml =404";
+              tryFiles = "/negative-space.json =404";
             };
           };
         };
@@ -939,7 +952,7 @@ let
       exporterConfig = {
         enable = true;
       };
-      metricProvider.services.redis.enable = true;
+      metricProvider.services.redis.servers."".enable = true;
       exporterTest = ''
         wait_for_unit("redis.service")
         wait_for_unit("prometheus-redis-exporter.service")

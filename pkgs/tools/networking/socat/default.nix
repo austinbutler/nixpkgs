@@ -9,11 +9,11 @@
 
 stdenv.mkDerivation rec {
   pname = "socat";
-  version = "1.7.4.2";
+  version = "1.7.4.3";
 
   src = fetchurl {
     url = "http://www.dest-unreach.org/socat/download/${pname}-${version}.tar.bz2";
-    sha256 = "sha256-ZpCp+ZkEV7UFCXonK78sv0zDVXYXb3ZkbjUksOkcF2M=";
+    sha256 = "sha256-1HMYEEQVB3Y1EZ3+5EvPtB3jSXN0qaABsa/24vCFgAc=";
   };
 
   postPatch = ''
@@ -22,6 +22,11 @@ stdenv.mkDerivation rec {
       --replace /bin/rm rm \
       --replace /sbin/ifconfig ifconfig
   '';
+
+  configureFlags = lib.optionals stdenv.hostPlatform.isMusl [
+    # musl doesn't have getprotobynumber_r
+    "sc_cv_getprotobynumber_r=2"
+  ];
 
   buildInputs = [ openssl readline ];
 

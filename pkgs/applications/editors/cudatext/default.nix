@@ -38,13 +38,13 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "cudatext";
-  version = "1.150.0";
+  version = "1.156.2";
 
   src = fetchFromGitHub {
     owner = "Alexey-T";
     repo = "CudaText";
     rev = version;
-    sha256 = "sha256-6XG4v2S7InKA6OVrV+q1lT/CzNxmzVQfmAAo2cqbqBY=";
+    sha256 = "sha256-waVTNyK3OHpOvBJrXio+Xjn9q3WmUczbx3E26ChsuKo=";
   };
 
   postPatch = ''
@@ -98,6 +98,8 @@ stdenv.mkDerivation rec {
       exit 1
     fi
   '') additionalLexers;
+
+  passthru.updateScript = ./update.sh;
 
   meta = with lib; {
     description = "Cross-platform code editor";

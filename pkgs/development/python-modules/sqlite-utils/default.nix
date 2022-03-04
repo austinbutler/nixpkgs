@@ -1,10 +1,11 @@
 { lib
 , buildPythonPackage
 , fetchPypi
+, fetchpatch
 , pythonOlder
 , click
 , click-default-group
-, dateutils
+, python-dateutil
 , sqlite-fts4
 , tabulate
 , pytestCheckHook
@@ -13,23 +14,18 @@
 
 buildPythonPackage rec {
   pname = "sqlite-utils";
-  version = "3.19";
+  version = "3.25";
   disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "509099fce5f25faada6e76b6fb90e8ef5ba0f1715177933a816718be0c8e7244";
+    sha256 = "sha256-OKlwuXwXGU2WBauE33SYAuHzvPBhNdwYB3nQo5V2sUI=";
   };
-
-  postPatch = ''
-    substituteInPlace setup.py \
-      --replace '"pytest-runner"' ""
-  '';
 
   propagatedBuildInputs = [
     click
     click-default-group
-    dateutils
+    python-dateutil
     sqlite-fts4
     tabulate
   ];

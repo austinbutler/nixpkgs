@@ -1,17 +1,22 @@
-{ lib, buildGoModule, fetchFromGitHub, installShellFiles }:
+{ lib
+, stdenv
+, buildGoModule
+, fetchFromGitHub
+, installShellFiles
+}:
 
 buildGoModule rec {
   pname = "packer";
-  version = "1.7.8";
+  version = "1.7.10";
 
   src = fetchFromGitHub {
     owner = "hashicorp";
     repo = "packer";
     rev = "v${version}";
-    sha256 = "sha256-VLHibkyuB8H2zfUCAuk7lBKbW5bl2kJOkwpo/iqsdm8=";
+    sha256 = "sha256-KkdkLos55n+IE9oIZPADIcSgrE6kn0rDWzEkwoYfoFw=";
   };
 
-  vendorSha256 = "sha256-NB3oD4IB2xC9+d2eghPa1hnJM7Eop88zvRFlHdQDn38=";
+  vendorSha256 = "sha256-oSIwp8t+US8yNziuq0BR8BsVR1/e0jkxE4QuiqyheQQ=";
 
   subPackages = [ "." ];
 

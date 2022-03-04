@@ -5,9 +5,9 @@
 , appstream-glib
 , dbus
 , desktop-file-utils
-, elementary-gtk-theme
 , elementary-icon-theme
 , fetchFromGitHub
+, fetchpatch
 , flatpak
 , gettext
 , glib
@@ -30,20 +30,25 @@
 
 stdenv.mkDerivation rec {
   pname = "appcenter";
-  version = "3.9.0";
+  version = "3.9.1";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = pname;
     rev = version;
-    sha256 = "sha256-+r19n42FPoBArZNDF4ZAdUBZqsSxpLwpeBoyaRJBCrg=";
+    sha256 = "sha256-xktIHQHmz5gh72NEz9UQ9fMvBlj1BihWxHgxsHmTIB0=";
   };
 
-  passthru = {
-    updateScript = nix-update-script {
-      attrPath = "pantheon.${pname}";
-    };
-  };
+  patches = [
+    # Fix AppStream.PoolFlags being renamed
+    # Though the API break has been fixed in latest appstream,
+    # let's use the non-deprecated version anyway.
+    # https://github.com/elementary/appcenter/pull/1794
+    (fetchpatch {
+      url = "https://github.com/elementary/appcenter/commit/84bc6400713484aa9365f0ba73f59c495da3f08b.patch";
+      sha256 = "sha256-HNRCJ/5mRbEVjCq9nrXtdQOOk1Jj5jalApkghD8ecpk=";
+    })
+  ];
 
   nativeBuildInputs = [
     appstream-glib
@@ -60,7 +65,6 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     appstream
-    elementary-gtk-theme
     elementary-icon-theme
     flatpak
     glib
@@ -84,6 +88,12 @@ stdenv.mkDerivation rec {
     chmod +x meson/post_install.py
     patchShebangs meson/post_install.py
   '';
+
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
+    };
+  };
 
   meta = with lib; {
     homepage = "https://github.com/elementary/appcenter";

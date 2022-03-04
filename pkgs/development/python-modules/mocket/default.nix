@@ -19,12 +19,12 @@
 
 buildPythonPackage rec {
   pname = "mocket";
-  version = "3.10.1";
+  version = "3.10.4";
   disabled = !isPy3k;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "c77e75432c21108e5a28a529793eb2b82753b6f7050ac9f59fc5d7a72fa74c0f";
+    sha256 = "831c23bf891c525828b7da49a358c6e0698481e4c8b3a61a69e87f36d06ef969";
   };
 
   propagatedBuildInputs = [
@@ -45,6 +45,8 @@ buildPythonPackage rec {
     pook
   ];
 
+  # skip http tests
+  SKIP_TRUE_HTTP = true;
   pytestFlagsArray = [
     # Requires a live Redis instance
     "--ignore=tests/main/test_redis.py"

@@ -72,14 +72,14 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "libvirt";
-  version = "7.9.0";
+  version = "7.10.0";
 
   src =
     if buildFromTarball then
       fetchurl
         {
           url = "https://libvirt.org/sources/${pname}-${version}.tar.xz";
-          sha256 = "sha256-gpzytfV0J5xA8ERuEWiBXT82uJcQVgJjyiznAlb3Low=";
+          sha256 = "sha256-yzGAFK8JcyeSjG49cpIuO+AqPmQBJHsqpS2auOC0gPk=";
         }
     else
       fetchFromGitLab
@@ -87,7 +87,7 @@ stdenv.mkDerivation rec {
           owner = pname;
           repo = pname;
           rev = "v${version}";
-          sha256 = "sha256-Ua6+EKLES3385fqhH2+qwnwE+X/nmWqIBxCXXE3SVhs=";
+          sha256 = "sha256-bB8LsjZFeJbMmmC0YRPyMag2MBhwagUFC7aB1KhZEkA=";
           fetchSubmodules = true;
         };
 
@@ -220,12 +220,15 @@ stdenv.mkDerivation rec {
       binPath = [ iptables iproute2 pmutils numad numactl bridge-utils dmidecode dnsmasq ] ++ optionals enableIscsi [ openiscsi ];
     in
     ''
-        substituteInPlace $out/libexec/libvirt-guests.sh \
-          --replace 'ON_BOOT="start"'       'ON_BOOT=''${ON_BOOT:-start}' \
-          --replace 'ON_SHUTDOWN="suspend"' 'ON_SHUTDOWN=''${ON_SHUTDOWN:-suspend}' \
-          --replace "$out/bin"              '${gettext}/bin' \
-          --replace 'lock/subsys'           'lock' \
-          --replace 'gettext.sh'            'gettext.sh
+      substituteInPlace $out/bin/virt-xml-validate \
+        --replace xmllint ${libxml2}/bin/xmllint
+
+      substituteInPlace $out/libexec/libvirt-guests.sh \
+        --replace 'ON_BOOT="start"'       'ON_BOOT=''${ON_BOOT:-start}' \
+        --replace 'ON_SHUTDOWN="suspend"' 'ON_SHUTDOWN=''${ON_SHUTDOWN:-suspend}' \
+        --replace "$out/bin"              '${gettext}/bin' \
+        --replace 'lock/subsys'           'lock' \
+        --replace 'gettext.sh'            'gettext.sh
       # Added in nixpkgs:
       gettext() { "${gettext}/bin/gettext" "$@"; }
       '

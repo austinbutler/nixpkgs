@@ -18,18 +18,18 @@ let
     icon = "portfolio";
     comment = "Calculate Investment Portfolio Performance";
     desktopName = "Portfolio Performance";
-    categories = "Office;";
+    categories = [ "Office" ];
   };
 
   runtimeLibs = lib.makeLibraryPath [ gtk3 webkitgtk ];
 in
 stdenv.mkDerivation rec {
   pname = "PortfolioPerformance";
-  version = "0.55.0";
+  version = "0.56.5";
 
   src = fetchurl {
     url = "https://github.com/buchen/portfolio/releases/download/${version}/PortfolioPerformance-${version}-linux.gtk.x86_64.tar.gz";
-    sha256 = "0s7qb7z2wiypiahw1y1lz9pbhxcacj5myzy0qcqjrpnaq7ymvs05";
+    sha256 = "sha256-g/MjOrivqbZ93iSs5mLQT36gn72KCJEOgEssBZER+TA=";
   };
 
   nativeBuildInputs = [

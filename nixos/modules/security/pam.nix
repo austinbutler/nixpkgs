@@ -295,9 +295,14 @@ let
       };
 
       limits = mkOption {
+        default = [];
+        type = limitsType;
         description = ''
           Attribute set describing resource limits.  Defaults to the
           value of <option>security.pam.loginLimits</option>.
+          The meaning of the values is explained in <citerefentry>
+          <refentrytitle>limits.conf</refentrytitle><manvolnum>5</manvolnum>
+          </citerefentry>.
         '';
       };
 
@@ -439,15 +444,15 @@ let
             account sufficient ${pam_krb5}/lib/security/pam_krb5.so
           '' +
           optionalString cfg.googleOsLoginAccountVerification ''
-            account [success=ok ignore=ignore default=die] ${pkgs.google-compute-engine-oslogin}/lib/pam_oslogin_login.so
-            account [success=ok default=ignore] ${pkgs.google-compute-engine-oslogin}/lib/pam_oslogin_admin.so
+            account [success=ok ignore=ignore default=die] ${pkgs.google-guest-oslogin}/lib/security/pam_oslogin_login.so
+            account [success=ok default=ignore] ${pkgs.google-guest-oslogin}/lib/security/pam_oslogin_admin.so
           '' +
           ''
 
             # Authentication management.
           '' +
           optionalString cfg.googleOsLoginAuthentication ''
-            auth [success=done perm_denied=bad default=ignore] ${pkgs.google-compute-engine-oslogin}/lib/pam_oslogin_login.so
+            auth [success=done perm_denied=die default=ignore] ${pkgs.google-guest-oslogin}/lib/security/pam_oslogin_login.so
           '' +
           optionalString cfg.rootOK ''
             auth sufficient pam_rootok.so
@@ -648,6 +653,51 @@ let
          "${domain} ${type} ${item} ${toString value}\n")
          limits);
 
+  limitsType = with lib.types; listOf (submodule ({ ... }: {
+    options = {
+      domain = mkOption {
+        description = "Username, groupname, or wildcard this limit applies to";
+        example = "@wheel";
+        type = str;
+      };
+
+      type = mkOption {
+        description = "Type of this limit";
+        type = enum [ "-" "hard" "soft" ];
+        default = "-";
+      };
+
+      item = mkOption {
+        description = "Item this limit applies to";
+        type = enum [
+          "core"
+          "data"
+          "fsize"
+          "memlock"
+          "nofile"
+          "rss"
+          "stack"
+          "cpu"
+          "nproc"
+          "as"
+          "maxlogins"
+          "maxsyslogins"
+          "priority"
+          "locks"
+          "sigpending"
+          "msgqueue"
+          "nice"
+          "rtprio"
+        ];
+      };
+
+      value = mkOption {
+        description = "Value of this limit";
+        type = oneOf [ str int ];
+      };
+    };
+  }));
+
   motd = pkgs.writeText "motd" config.users.motd;
 
   makePAMService = name: service:
@@ -669,6 +719,7 @@ in
 
     security.pam.loginLimits = mkOption {
       default = [];
+      type = limitsType;
       example =
         [ { domain = "ftp";
             type   = "hard";
@@ -688,7 +739,8 @@ in
           <varname>domain</varname>, <varname>type</varname>,
           <varname>item</varname>, and <varname>value</varname>
           attribute.  The syntax and semantics of these attributes
-          must be that described in the limits.conf(5) man page.
+          must be that described in <citerefentry><refentrytitle>limits.conf</refentrytitle>
+          <manvolnum>5</manvolnum></citerefentry>.
 
           Note that these limits do not apply to systemd services,
           whose limits can be changed via <option>systemd.extraConfig</option>
@@ -983,7 +1035,7 @@ in
         setuid = true;
         owner = "root";
         group = "root";
-        source = "${pkgs.pam}/sbin/unix_chkpwd.orig";
+        source = "${pkgs.pam}/bin/unix_chkpwd";
       };
     };
 
@@ -1020,8 +1072,8 @@ in
     security.apparmor.includes."abstractions/pam" = let
       isEnabled = test: fold or false (map test (attrValues config.security.pam.services));
       in
-      lib.concatMapStringsSep "\n"
-        (name: "r ${config.environment.etc."pam.d/${name}".source},")
+      lib.concatMapStrings
+        (name: "r ${config.environment.etc."pam.d/${name}".source},\n")
         (attrNames config.security.pam.services) +
       ''
       mr ${getLib pkgs.pam}/lib/security/pam_filter/*,
@@ -1039,11 +1091,11 @@ in
         mr ${pam_ccreds}/lib/security/pam_ccreds.so,
       '' +
       optionalString (isEnabled (cfg: cfg.googleOsLoginAccountVerification)) ''
-        mr ${pkgs.google-compute-engine-oslogin}/lib/pam_oslogin_login.so,
-        mr ${pkgs.google-compute-engine-oslogin}/lib/pam_oslogin_admin.so,
+        mr ${pkgs.google-guest-oslogin}/lib/security/pam_oslogin_login.so,
+        mr ${pkgs.google-guest-oslogin}/lib/security/pam_oslogin_admin.so,
       '' +
       optionalString (isEnabled (cfg: cfg.googleOsLoginAuthentication)) ''
-        mr ${pkgs.google-compute-engine-oslogin}/lib/pam_oslogin_login.so,
+        mr ${pkgs.google-guest-oslogin}/lib/security/pam_oslogin_login.so,
       '' +
       optionalString (config.security.pam.enableSSHAgentAuth
                      && isEnabled (cfg: cfg.sshAgentAuth)) ''

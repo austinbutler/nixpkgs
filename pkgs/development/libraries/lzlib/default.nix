@@ -1,18 +1,18 @@
-{ lib, stdenv, fetchurl, texinfo }:
+{ lib, stdenv, fetchurl, texinfo, lzip }:
 
 stdenv.mkDerivation rec {
   pname = "lzlib";
-  version = "1.10";
+  version = "1.13";
   outputs = [ "out" "info" ];
 
-  nativeBuildInputs = [ texinfo ];
+  nativeBuildInputs = [ texinfo lzip ];
 
   src = fetchurl {
-    url = "mirror://savannah/lzip/${pname}/${pname}-${version}.tar.gz";
-    sha256 = "sha256-HWq3gApbQ+Vv0gYH/Sz9qeVQNQ3JX1vrakzhT4W0EEM=";
+    url = "mirror://savannah/lzip/${pname}/${pname}-${version}.tar.lz";
+    sha256 = "sha256-3ea9WzJTXxeyjJrCS2ZgfgJQUGrBQypBEso8c/XWYsM=";
   };
 
-  makeFlags = [ "AR:=$(AR)" "CC:=$(CC)" ];
+  makeFlags = [ "CC:=$(CC)" ];
   doCheck = true;
 
   meta = with lib; {

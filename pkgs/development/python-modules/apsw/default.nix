@@ -1,4 +1,5 @@
 { lib
+, stdenv
 , buildPythonPackage
 , fetchFromGitHub
 , sqlite
@@ -8,7 +9,7 @@
 
 buildPythonPackage rec {
   pname = "apsw";
-  version = "3.36.0-r1";
+  version = "3.37.0-r1";
   format = "setuptools";
 
   disabled = isPyPy;
@@ -17,7 +18,7 @@ buildPythonPackage rec {
     owner = "rogerbinns";
     repo = "apsw";
     rev = version;
-    sha256 = "sha256-kQqJqDikvEC0+PNhQxSNTcjQc+RwvaOSGz9VL3FCetg=";
+    sha256 = "0p6rlbk7p6hj5mbmk1a8phazw3ym6hf5103zkxzg4p1jgjgi0xpl";
   };
 
   buildInputs = [
@@ -39,6 +40,11 @@ buildPythonPackage rec {
     "testVFS"
     "testVFSWithWAL"
     "testdb"
+  ] ++ lib.optionals stdenv.isDarwin [
+    # This is https://github.com/rogerbinns/apsw/issues/277 but
+    # because we use pytestCheckHook we need to blacklist the test
+    # manually
+    "testzzForkChecker"
   ];
 
   pythonImportsCheck = [

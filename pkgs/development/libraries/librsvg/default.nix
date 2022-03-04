@@ -14,6 +14,7 @@
 , libobjc
 , rustPlatform
 , rustc
+, rust
 , cargo
 , gnome
 , vala
@@ -24,13 +25,13 @@
 
 stdenv.mkDerivation rec {
   pname = "librsvg";
-  version = "2.52.3";
+  version = "2.52.5";
 
   outputs = [ "out" "dev" "installedTests" ];
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "Nuf1vIjXhgjqf2wF5K/krMFga5rxPChF1DhQc9CCuKQ=";
+    sha256 = "QHy7q1GBN+oYo/MiC+oYD77nXz5b1roQp6hiwab3TYI=";
   };
 
   cargoVendorDir = "vendor";
@@ -78,7 +79,8 @@ stdenv.mkDerivation rec {
 
     "--enable-installed-tests"
     "--enable-always-build-tests"
-  ] ++ lib.optional stdenv.isDarwin "--disable-Bsymbolic";
+  ] ++ lib.optional stdenv.isDarwin "--disable-Bsymbolic"
+    ++ lib.optional (stdenv.buildPlatform != stdenv.hostPlatform) "RUST_TARGET=${rust.toRustTarget stdenv.hostPlatform}";
 
   makeFlags = [
     "installed_test_metadir=${placeholder "installedTests"}/share/installed-tests/RSVG"

@@ -11,6 +11,7 @@
 , libxml2
 , gtk3
 , libnotify
+, gvfs
 , cinnamon-desktop
 , xapps
 , libexif
@@ -23,7 +24,7 @@
 
 stdenv.mkDerivation rec {
   pname = "nemo";
-  version = "5.2.0";
+  version = "5.2.4";
 
   # TODO: add plugins support (see https://github.com/NixOS/nixpkgs/issues/78327)
 
@@ -31,7 +32,7 @@ stdenv.mkDerivation rec {
     owner = "linuxmint";
     repo = pname;
     rev = version;
-    hash = "sha256-ehcqRlI1d/KWNas36dz+hb7KU1H8wtQHTpg2fz1XdXU=";
+    sha256 = "sha256-v63dFiBKtLCmRnwJ6u814lSv+tfPG+IIJtcWCnOEZjk=";
   };
 
   outputs = [ "out" "dev" ];
@@ -45,6 +46,7 @@ stdenv.mkDerivation rec {
     xapps
     libexif
     exempi
+    gvfs
     gobject-introspection
     libgsf
   ];
@@ -73,3 +75,4 @@ stdenv.mkDerivation rec {
     maintainers = teams.cinnamon.members;
   };
 }
+

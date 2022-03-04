@@ -1,14 +1,14 @@
-{ lib, stdenv, mkDerivation, fetchFromGitHub, qmake, qttools, qttranslations, substituteAll }:
+{ lib, stdenv, fetchFromGitHub, qmake, qttools, qttranslations, qtlocation, wrapQtAppsHook, substituteAll }:
 
-mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "gpxsee";
-  version = "9.12";
+  version = "10.4";
 
   src = fetchFromGitHub {
     owner = "tumic0";
     repo = "GPXSee";
     rev = version;
-    sha256 = "sha256-hIDphwmS4UNSTvE+Icupipo6AmT2fiPdaufT/I3EeJ4=";
+    sha256 = "sha256-3AwUfx8IIWJO4uVAhXJE5Oola+60VUpXUwmALqJo2vw=";
   };
 
   patches = (substituteAll {
@@ -17,7 +17,9 @@ mkDerivation rec {
     inherit qttranslations;
   });
 
-  nativeBuildInputs = [ qmake qttools ];
+  buildInputs = [ qtlocation ];
+
+  nativeBuildInputs = [ qmake qttools wrapQtAppsHook ];
 
   preConfigure = ''
     lrelease gpxsee.pro

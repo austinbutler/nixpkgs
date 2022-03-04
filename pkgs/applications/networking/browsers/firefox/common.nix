@@ -1,16 +1,17 @@
 { pname, version, meta, updateScript ? null
 , binaryName ? "firefox", application ? "browser"
 , src, unpackPhase ? null, patches ? []
-, extraNativeBuildInputs ? [], extraConfigureFlags ? [], extraMakeFlags ? [], tests ? [] }:
+, extraNativeBuildInputs ? [], extraConfigureFlags ? [], extraMakeFlags ? [], tests ? []
+, extraPostPatch ? "", extraPassthru ? {} }:
 
 { lib, stdenv, pkg-config, pango, perl, python3, zip
 , libjpeg, zlib, dbus, dbus-glib, bzip2, xorg
 , freetype, fontconfig, file, nspr, nss
 , yasm, libGLU, libGL, sqlite, unzip, makeWrapper
 , hunspell, libevent, libstartup_notification
-, libvpx_1_8
-, icu69, libpng, glib, pciutils
-, autoconf213, which, gnused, rustPackages
+, libvpx
+, icu70, libpng, glib, pciutils
+, autoconf213, which, gnused, rustPackages, rustPlatform
 , rust-cbindgen, nodejs, nasm, fetchpatch
 , gnum4
 , gtk3, wrapGAppsHook
@@ -27,9 +28,8 @@
 , ltoSupport ? (stdenv.isLinux && stdenv.is64bit), overrideCC, buildPackages
 , gssSupport ? true, libkrb5
 , pipewireSupport ? waylandSupport && webrtcSupport, pipewire
-# Workaround: disabled since currently jemalloc causes crashes with LLVM 13.
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1741454
-, jemallocSupport ? false, jemalloc
+# Jemalloc could reduce memory consumption.
+, jemallocSupport ? true, jemalloc
 
 ## privacy-related options
 
@@ -132,13 +132,9 @@ buildStdenv.mkDerivation ({
   patches = [
   ] ++
   lib.optional (lib.versionAtLeast version "86") ./env_var_for_system_dir-ff86.patch ++
-  lib.optional (lib.versionAtLeast version "90") ./no-buildconfig-ffx90.patch ++
-  # This fixes a race condition causing deadlock.
-  # https://phabricator.services.mozilla.com/D128657
-  lib.optional (lib.versionAtLeast version "94") (fetchpatch {
-    url = "https://raw.githubusercontent.com/archlinux/svntogit-packages/9c7f25d45bb1dd6b1a865780bc249cdaa619aa83/trunk/0002-Bug-1735905-Upgrade-cubeb-pulse-to-fix-a-race-condit.patch";
-    sha256 = "l4bMK/YDXcDpIjPy9DPuUSFyDpzVQca201A4h9eav5g=";
-  }) ++
+  lib.optional (lib.versionAtLeast version "90" && lib.versionOlder version "95") ./no-buildconfig-ffx90.patch ++
+  lib.optional (lib.versionAtLeast version "96") ./no-buildconfig-ffx96.patch ++
+
   patches;
 
   # Ignore trivial whitespace changes in patches, this fixes compatibility of
@@ -154,9 +150,10 @@ buildStdenv.mkDerivation ({
     xorg.xorgproto
     xorg.libXdamage
     xorg.libXext
+    xorg.libXtst
     libevent libstartup_notification /* cairo */
     libpng glib
-    nasm icu69 libvpx_1_8
+    nasm icu70 libvpx
     # >= 66 requires nasm for the AV1 lib dav1d
     # yasm can potentially be removed in future versions
     # https://bugzilla.mozilla.org/show_bug.cgi?id=1501796
@@ -179,7 +176,9 @@ buildStdenv.mkDerivation ({
     rm -rf obj-x86_64-pc-linux-gnu
     substituteInPlace toolkit/xre/glxtest.cpp \
       --replace 'dlopen("libpci.so' 'dlopen("${pciutils}/lib/libpci.so'
- '';
+
+    patchShebangs mach
+  '' + extraPostPatch;
 
   nativeBuildInputs =
     [
@@ -197,6 +196,7 @@ buildStdenv.mkDerivation ({
       which
       unzip
       wrapGAppsHook
+      rustPlatform.bindgenHook
     ]
     ++ lib.optionals buildStdenv.isDarwin [ xcbuild rsync ]
     ++ extraNativeBuildInputs;
@@ -211,28 +211,8 @@ buildStdenv.mkDerivation ({
     rm -f .mozconfig*
     # this will run autoconf213
     configureScript="$(realpath ./mach) configure"
-    export MOZCONFIG=$(pwd)/mozconfig
     export MOZBUILD_STATE_PATH=$(pwd)/mozbuild
 
-    # Set C flags for Rust's bindgen program. Unlike ordinary C
-    # compilation, bindgen does not invoke $CC directly. Instead it
-    # uses LLVM's libclang. To make sure all necessary flags are
-    # included we need to look in a few places.
-    # TODO: generalize this process for other use-cases.
-
-    BINDGEN_CFLAGS="$(< ${buildStdenv.cc}/nix-support/libc-crt1-cflags) \
-      $(< ${buildStdenv.cc}/nix-support/libc-cflags) \
-      $(< ${buildStdenv.cc}/nix-support/cc-cflags) \
-      $(< ${buildStdenv.cc}/nix-support/libcxx-cxxflags) \
-      ${lib.optionalString buildStdenv.cc.isClang "-idirafter ${buildStdenv.cc.cc.lib}/lib/clang/${lib.getVersion buildStdenv.cc.cc}/include"} \
-      ${lib.optionalString buildStdenv.cc.isGNU "-isystem ${lib.getDev buildStdenv.cc.cc}/include/c++/${lib.getVersion buildStdenv.cc.cc} -isystem ${buildStdenv.cc.cc}/include/c++/${lib.getVersion buildStdenv.cc.cc}/${buildStdenv.hostPlatform.config}"} \
-      $NIX_CFLAGS_COMPILE"
-    ${
-    # Bindgen doesn't like the flag added by `separateDebugInfo`.
-    lib.optionalString enableDebugSymbols ''
-      BINDGEN_CFLAGS="''${BINDGEN_CFLAGS/ -Wa,--compress-debug-sections/}"
-    ''}
-    echo "ac_add_options BINDGEN_CFLAGS='$BINDGEN_CFLAGS'" >> $MOZCONFIG
   '' + (lib.optionalString googleAPISupport ''
     # Google API key used by Chromium and Firefox.
     # Note: These are for NixOS/nixpkgs use ONLY. For your own distribution,
@@ -297,6 +277,7 @@ buildStdenv.mkDerivation ({
   ++ lib.optionals enableDebugSymbols [ "--disable-strip" "--disable-install-strip" ]
 
   ++ lib.optional enableOfficialBranding "--enable-official-branding"
+  ++ lib.optional (lib.versionAtLeast version "95") "--without-wasm-sandboxed-libraries"
   ++ extraConfigureFlags;
 
   postConfigure = ''
@@ -375,7 +356,7 @@ buildStdenv.mkDerivation ({
     inherit applicationName;
     inherit tests;
     inherit gtk3;
-  };
+  } // extraPassthru;
 
   hardeningDisable = [ "format" ]; # -Werror=format-security
 

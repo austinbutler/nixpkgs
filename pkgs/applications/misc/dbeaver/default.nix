@@ -20,13 +20,13 @@
 
 stdenv.mkDerivation rec {
   pname = "dbeaver";
-  version = "21.3.0"; # When updating also update fetchedMavenDeps.sha256
+  version = "21.3.5"; # When updating also update fetchedMavenDeps.sha256
 
   src = fetchFromGitHub {
     owner = "dbeaver";
     repo = "dbeaver";
     rev = version;
-    sha256 = "iKxnuMm5hpreP706N+XxaBrDVVwVFRWKNmiCyXkOUCQ=";
+    sha256 = "sha256-xJYC+p8HeY4XOzArZMKRvOafW82npMMfwlqlxsH6Ycg=";
   };
 
   fetchedMavenDeps = stdenv.mkDerivation {
@@ -52,7 +52,7 @@ stdenv.mkDerivation rec {
     dontFixup = true;
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "7Sm1hAoi5xc4MLONOD8ySLLkpao0qmlMRRva/8zR210=";
+    outputHash = "sha256-WAB15d4UvUOkBXT7K/hvAZWOE3V1Lpl/tr+AFNBM4FI=";
   };
 
   nativeBuildInputs = [
@@ -84,7 +84,7 @@ stdenv.mkDerivation rec {
       desktopName = "dbeaver";
       comment = "SQL Integrated Development Environment";
       genericName = "SQL Integrated Development Environment";
-      categories = "Development;";
+      categories = [ "Development" ];
     })
   ];
 

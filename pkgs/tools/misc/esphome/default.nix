@@ -1,8 +1,6 @@
 { lib
-, pkgs
 , python3
 , fetchFromGitHub
-, fetchpatch
 , platformio
 , esptool
 , git
@@ -11,30 +9,21 @@
 let
   python = python3.override {
     packageOverrides = self: super: {
-      esphome-dashboard = pkgs.callPackage ./dashboard.nix {};
+      esphome-dashboard = self.callPackage ./dashboard.nix {};
     };
   };
 in
 with python.pkgs; buildPythonApplication rec {
   pname = "esphome";
-  version = "2021.11.4";
+  version = "2022.2.5";
   format = "setuptools";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = version;
-    sha256 = "sha256-hPnng3Jkb2FucEOar/MIjvWHKbT3NNxEn6CIr3sd1Ng=";
+    sha256 = "sha256-ZHxPiQEqFmW9tYv5SaHutOuBh7gsmN4Ux4+sMAJRIk4=";
   };
-
-  patches = [
-    # fix missing write permissions on src files before modifing them
-    ./fix-src-permissions.patch
-    (fetchpatch {
-      url = "https://github.com/esphome/esphome/commit/fbe1bca1b9896ba8c8b754c5a4faf790bffd887b.patch";
-      sha256 = "sha256-Iyc79iL2YkLGD81TbFK3GaCY2L9nTE9mKz6MQSNQWr8=";
-    })
-  ];
 
   postPatch = ''
     # remove all version pinning (E.g tornado==5.1.1 -> tornado)

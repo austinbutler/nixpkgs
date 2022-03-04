@@ -71,7 +71,7 @@ while [ "$#" -gt 0 ]; do
         j="$1"; shift 1
         extraBuildFlags+=("$i" "$j")
         ;;
-      --show-trace|--keep-failed|-K|--keep-going|-k|--verbose|-v|-vv|-vvv|-vvvv|-vvvvv|--fallback|--repair|--no-build-output|-Q|-j*|-L|--refresh|--no-net|--offline|--impure)
+      --show-trace|--keep-failed|-K|--keep-going|-k|--verbose|-v|-vv|-vvv|-vvvv|-vvvvv|--fallback|--repair|--no-build-output|-Q|-j*|-L|--print-build-logs|--refresh|--no-net|--offline|--impure)
         extraBuildFlags+=("$i")
         ;;
       --option)
@@ -247,6 +247,8 @@ nixFlakeBuild() {
                 local k="$1"; shift 1
                 evalArgs+=("$i" "$j" "$k")
                 ;;
+              --impure) # We don't want this in buildArgs, it's only needed at evaluation time, and unsupported during realisation
+                ;;
               *)
                 buildArgs+=("$i")
                 ;;
@@ -341,11 +343,6 @@ if [[ -n $flake ]]; then
     else
         flakeAttr="nixosConfigurations.\"$flakeAttr\""
     fi
-fi
-
-# Resolve the flake.
-if [[ -n $flake ]]; then
-    flake=$(nix "${flakeFlags[@]}" flake metadata --json "${extraBuildFlags[@]}" "${lockFlags[@]}" -- "$flake" | jq -r .url)
 fi
 
 # Find configuration.nix and open editor instead of building.

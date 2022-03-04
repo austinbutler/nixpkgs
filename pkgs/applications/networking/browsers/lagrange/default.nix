@@ -19,13 +19,13 @@
 
 stdenv.mkDerivation rec {
   pname = "lagrange";
-  version = "1.9.1";
+  version = "1.10.6";
 
   src = fetchFromGitHub {
     owner = "skyjake";
     repo = "lagrange";
     rev = "v${version}";
-    sha256 = "sha256-5mZbx9L7YDG2VwrF/iFhYCw8R/0FOnZz9cRkA5Wl9MA=";
+    sha256 = "sha256-N4NB4lfWIN+jreAuaaGKRdpgwHy2CKrPrGxu1iSCZyU=";
     fetchSubmodules = true;
   };
 
@@ -37,8 +37,6 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ fribidi harfbuzz libunistring libwebp mpg123 openssl pcre SDL2 zlib ]
     ++ lib.optional stdenv.isDarwin AppKit;
-
-  hardeningDisable = lib.optional (!stdenv.cc.isClang) "format";
 
   installPhase = lib.optionalString stdenv.isDarwin ''
     mkdir -p $out/Applications

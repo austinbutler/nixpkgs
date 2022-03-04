@@ -8,6 +8,7 @@
 , numpy
 , osqp
 , pandas
+, setuptools-scm
 , scikit-learn
 , scipy
 , pytestCheckHook
@@ -15,15 +16,16 @@
 
 buildPythonPackage rec {
   pname = "scikit-survival";
-  version = "0.16.0";
+  version = "0.17.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "d3573eb1df9d516c75994a8a82108b6c7a5ca7ea8a9af60b38f3f65c3e227fa7";
+    sha256 = "ba49325f6a31e8bdccfb88337aa85218d209e88a6a704e9c41ef13bf749e0f46";
   };
 
   nativeBuildInputs = [
     cython
+    setuptools-scm
   ];
 
   propagatedBuildInputs = [

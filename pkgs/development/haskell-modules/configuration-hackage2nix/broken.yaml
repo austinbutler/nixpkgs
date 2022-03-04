@@ -88,6 +88,7 @@ broken-packages:
   - aeson-tiled
   - aeson-typescript
   - aeson-utils
+  - aeson-value-parser
   - affection
   - affine-invariant-ensemble-mcmc
   - Agata
@@ -200,6 +201,7 @@ broken-packages:
   - arrow-list
   - arrowp
   - arrowp-qq
+  - arrow-utils
   - ArrowVHDL
   - artery
   - artifact
@@ -221,6 +223,7 @@ broken-packages:
   - assumpta
   - ast-monad
   - astrds
+  - astro
   - async-combinators
   - async-dejafu
   - asynchronous-exceptions
@@ -352,6 +355,7 @@ broken-packages:
   - binary-derive
   - binary-ext
   - binary-indexed-tree
+  - binary-io
   - binary-protocol
   - binary-typed
   - BinderAnn
@@ -410,6 +414,7 @@ broken-packages:
   - bkr
   - blakesum
   - blas
+  - blatex
   - blaze-html-contrib
   - blaze-html-hexpat
   - blaze-html-truncate
@@ -453,6 +458,7 @@ broken-packages:
   - brick-dropdownmenu
   - bricks-internal
   - brillig
+  - broadcast-chan-tests
   - broccoli
   - brok
   - broker-haskell
@@ -569,6 +575,7 @@ broken-packages:
   - capnp
   - capped-list
   - capri
+  - captcha-core
   - caramia
   - carbonara
   - cardano-coin-selection
@@ -751,6 +758,7 @@ broken-packages:
   - compact-socket
   - compact-string
   - compact-string-fix
+  - comparse
   - compdata-dags
   - compdata-param
   - competition
@@ -823,8 +831,8 @@ broken-packages:
   - ContextAlgebra
   - context-free-grammar
   - context-stack
-  - contiguous
   - contiguous-checked
+  - contiguous-fft
   - continue
   - Contract
   - control-iso
@@ -979,7 +987,6 @@ broken-packages:
   - data-validation
   - data-variant
   - DataVersion
-  - dates
   - datetime
   - datetime-sb
   - dawdle
@@ -998,6 +1005,7 @@ broken-packages:
   - dclabel
   - dclabel-eci11
   - dcpu16
+  - ddate
   - ddc-base
   - ddc-code
   - dead-code-detection
@@ -1081,6 +1089,7 @@ broken-packages:
   - DigitalOcean
   - digitalocean-kzs
   - digits
+  - dijkstra-simple
   - DimensionalHash
   - dimensional-tf
   - diophantine
@@ -1112,6 +1121,7 @@ broken-packages:
   - dmcc
   - dmenu
   - dnscache
+  - dns-patterns
   - dnsrbl
   - dnssd
   - dobutok
@@ -1126,6 +1136,7 @@ broken-packages:
   - doctest-discover-configurator
   - doctest-parallel
   - doctest-prop
+  - docusign-base
   - docusign-example
   - docvim
   - doi
@@ -1304,7 +1315,6 @@ broken-packages:
   - event-driven
   - eventful-dynamodb
   - eventful-sql-common
-  - eventlog2html
   - eventloop
   - eventstore
   - ewe
@@ -1556,6 +1566,7 @@ broken-packages:
   - fused-effects-mwc-random
   - fused-effects-resumable
   - fusion
+  - futhark-manifest
   - futun
   - future
   - fuzzy-time-gen
@@ -1674,6 +1685,7 @@ broken-packages:
   - gi-gtksheet
   - gi-handy
   - gi-json
+  - gingersnap
   - ginsu
   - gipeda
   - giphy-api
@@ -1687,7 +1699,6 @@ broken-packages:
   - git-cuk
   - git-date
   - gitdo
-  - github
   - github-backup
   - github-data
   - github-tools
@@ -1780,6 +1791,7 @@ broken-packages:
   - graph-rewriting
   - graph-serialize
   - graphted
+  - graph-trace-dot
   - graphula-core
   - graph-utils
   - graql
@@ -1798,6 +1810,7 @@ broken-packages:
   - gross
   - GroteTrap
   - groundhog-converters
+  - groundhog-inspector
   - groundhog-mysql
   - grouped-list
   - group-theory
@@ -2024,9 +2037,11 @@ broken-packages:
   - hasql-dynamic-statements
   - hasql-generic
   - hasql-simple
+  - hasql-transaction-io
   - hastache
   - haste
   - haste-prim
+  - has-transformers
   - hat
   - hatex-guide
   - hats
@@ -2075,6 +2090,7 @@ broken-packages:
   - hdph-closure
   - hdr-histogram
   - HDRUtils
+  - headed-megaparsec
   - headergen
   - heap-console
   - heapsort
@@ -2104,6 +2120,7 @@ broken-packages:
   - heredocs
   - her-lexer
   - Hermes
+  - hermes-json
   - herms
   - hetero-dict
   - heterogeneous-list-literals
@@ -2235,6 +2252,7 @@ broken-packages:
   - hobbes
   - hocilib
   - hocker
+  - hocon
   - hodatime
   - HODE
   - hoe
@@ -2364,6 +2382,7 @@ broken-packages:
   - hsns
   - hsnsq
   - hsntp
+  - hs-opentelemetry-instrumentation-persistent
   - hsoptions
   - hsoz
   - hsparql
@@ -2394,7 +2413,6 @@ broken-packages:
   - hsseccomp
   - hssh
   - hs-snowtify
-  - hs-speedscope
   - hsSqlite3
   - hssqlppp
   - HsSVN
@@ -2432,7 +2450,6 @@ broken-packages:
   - htssets
   - http2-client
   - http2-grpc-proto-lens
-  - http3
   - http-attoparsec
   - http-client-lens
   - http-client-request-modifiers
@@ -2589,6 +2606,7 @@ broken-packages:
   - introduction
   - intro-prelude
   - invert
+  - invertible
   - invertible-syntax
   - io-capture
   - io-choice
@@ -2714,6 +2732,7 @@ broken-packages:
   - katydid
   - kawaii
   - kawhi
+  - kazura-queue
   - kdesrc-build-extra
   - kd-tree
   - keccak
@@ -2731,6 +2750,8 @@ broken-packages:
   - kmonad
   - kmp-dfa
   - koellner-phonetic
+  - koji-install
+  - koneko
   - Konf
   - kontra-config
   - kparams
@@ -2864,6 +2885,7 @@ broken-packages:
   - libsystemd-daemon
   - libtagc
   - libxls
+  - libxlsxwriter-hs
   - libxslt
   - libyaml-streamly
   - lie
@@ -2984,6 +3006,7 @@ broken-packages:
   - lye
   - lz4-frame-conduit
   - lzip
+  - lzlib
   - lzma-streams
   - lzo
   - maam
@@ -3173,7 +3196,6 @@ broken-packages:
   - monad-mersenne-random
   - monad-mock
   - monad-open
-  - Monadoro
   - monad-parallel-progressbar
   - monad-param
   - monad-persist
@@ -3186,6 +3208,7 @@ broken-packages:
   - monad-ste
   - monad-stlike-io
   - monad-task
+  - monad-throw-exit
   - monad-timing
   - monad-tx
   - monad-unify
@@ -3295,6 +3318,7 @@ broken-packages:
   - nanomsg
   - nanomsg-haskell
   - nanoparsec
+  - nanopass
   - NanoProlog
   - nanovg-simple
   - nanq
@@ -3311,6 +3335,7 @@ broken-packages:
   - NaturalSort
   - naver-translate
   - nbt
+  - ncurses
   - neat
   - needle
   - neet
@@ -3382,7 +3407,6 @@ broken-packages:
   - nix-freeze-tree
   - nixfromnpm
   - nixpkgs-update
-  - nix-thunk
   - nix-tools
   - nkjp
   - nlp-scores
@@ -3418,7 +3442,6 @@ broken-packages:
   - numbered-semigroups
   - NumberSieves
   - NumberTheory
-  - numerals
   - numerals-base
   - numeric-qq
   - numeric-ranges
@@ -3499,6 +3522,8 @@ broken-packages:
   - opentelemetry-http-client
   - opentheory-char
   - opentok
+  - opentracing-jaeger
+  - opentracing-zipkin-v1
   - opentype
   - OpenVGRaw
   - Operads
@@ -3540,6 +3565,7 @@ broken-packages:
   - overloaded
   - overloaded-records
   - overture
+  - owoify-hs
   - pack
   - package-description-remote
   - package-o-tron
@@ -3570,6 +3596,7 @@ broken-packages:
   - pandoc-pyplot
   - pandoc-unlit
   - pandoc-utils
+  - pandora-io
   - pang-a-lambda
   - pangraph
   - pan-os-syslog
@@ -3596,6 +3623,7 @@ broken-packages:
   - pareto
   - parochial
   - Parry
+  - parse
   - parseargs
   - parsec2
   - parsec3
@@ -3724,7 +3752,6 @@ broken-packages:
   - pi-forall
   - pig
   - pi-hoole
-  - pinch
   - pinchot
   - Pipe
   - pipes-async
@@ -3792,8 +3819,9 @@ broken-packages:
   - polydata-core
   - polynom
   - polynomial
-  - polysemy-mocks
-  - polysemy-plugin
+  - polysemy-check
+  - polysemy-http
+  - polysemy-process
   - polysemy-zoo
   - polytypeable
   - pomaps
@@ -3839,11 +3867,13 @@ broken-packages:
   - powerdns
   - powermate
   - powerpc
+  - powerqueue-distributed
   - powerqueue-levelmem
   - pprecord
   - PPrinter
   - pqc
   - praglude
+  - prairie
   - preamble
   - precis
   - precursor
@@ -3866,11 +3896,13 @@ broken-packages:
   - pretty-ncols
   - prettyprinter-vty
   - prim-array
+  - primecount
   - primes-type
   - prim-instances
   - PrimitiveArray-Pretty
   - primitive-atomic
   - primitive-checked
+  - primitive-containers
   - primitive-convenience
   - primitive-foreign
   - primitive-indexed
@@ -3884,6 +3916,7 @@ broken-packages:
   - prints
   - PriorityChansConverger
   - priority-queue
+  - pro-abstract
   - probable
   - process-conduit
   - processing
@@ -3995,7 +4028,6 @@ broken-packages:
   - quiver
   - quokka
   - quoridor-hs
-  - raaz
   - RabbitMQ
   - rad
   - radian
@@ -4068,6 +4100,7 @@ broken-packages:
   - refined-http-api-data
   - reflection-extras
   - reflex-basic-host
+  - reflex-dom-ace
   - reflex-dom-contrib
   - reflex-dom-helper
   - reflex-dom-helpers
@@ -4095,6 +4128,7 @@ broken-packages:
   - regex-posix-unittest
   - regexpr-symbolic
   - regexqq
+  - regex-rure
   - regex-tdfa-pipes
   - regex-tdfa-quasiquoter
   - regex-tdfa-rc
@@ -4175,6 +4209,7 @@ broken-packages:
   - riemann
   - riff
   - ring-buffer
+  - ring-buffers
   - riscv-isa
   - Ritt-Wu
   - rivers
@@ -4371,6 +4406,8 @@ broken-packages:
   - servant-static-th
   - servant-streaming
   - servant-to-elm
+  - servant-tracing
+  - servant-util-beam-pg
   - servant-yaml
   - servant-zeppelin
   - server-generic
@@ -4433,6 +4470,8 @@ broken-packages:
   - show-prettyprint
   - Shpadoinkle-backend-pardiff
   - Shpadoinkle-backend-snabbdom
+  - Shpadoinkle-backend-static
+  - Shpadoinkle-html
   - Shpadoinkle-isreal
   - Shpadoinkle-streaming
   - Shpadoinkle-template
@@ -4782,7 +4821,9 @@ broken-packages:
   - SybWidget
   - syb-with-class-instances-text
   - sydtest-aeson
+  - sydtest-hedgehog
   - sydtest-hedis
+  - sydtest-hspec
   - sydtest-mongo
   - sydtest-persistent-postgresql
   - sydtest-rabbitmq
@@ -4832,6 +4873,7 @@ broken-packages:
   - tagsoup-selection
   - tai
   - tai64
+  - tailwind
   - takahashi
   - Takusen
   - takusen-oracle
@@ -5004,6 +5046,7 @@ broken-packages:
   - tkyprof
   - tmp-proc-example
   - todo
+  - todos
   - tofromxml
   - to-haskell
   - toilet
@@ -5209,6 +5252,7 @@ broken-packages:
   - urxml
   - users-mysql-haskell
   - users-persistent
+  - utc
   - utf
   - utf8-prelude
   - utf8-validator
@@ -5260,6 +5304,7 @@ broken-packages:
   - vector-space-points
   - vector-static
   - Vec-Transform
+  - velma
   - Verba
   - verbalexpressions
   - verdict
@@ -5350,8 +5395,10 @@ broken-packages:
   - wavefront-obj
   - weak-bag
   - weather-api
+  - web3-polkadot
   - webapi
   - webapp
+  - webauthn
   - WebBits
   - webby
   - webcloud
@@ -5392,6 +5439,7 @@ broken-packages:
   - windowslive
   - winerror
   - Wired
+  - wireguard-hs
   - wires
   - wiring
   - witty
@@ -5515,6 +5563,7 @@ broken-packages:
   - yeshql-postgresql-simple
   - yesod-angular
   - yesod-angular-ui
+  - yesod-articles
   - yesod-auth-account
   - yesod-auth-account-fork
   - yesod-auth-bcrypt

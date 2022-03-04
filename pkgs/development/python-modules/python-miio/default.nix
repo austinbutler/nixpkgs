@@ -2,7 +2,7 @@
 , buildPythonPackage
 , pythonOlder
 , fetchPypi
-, poetry
+, poetry-core
 , click
 , cryptography
 , construct
@@ -24,25 +24,18 @@
 
 buildPythonPackage rec {
   pname = "python-miio";
-  version = "0.5.8";
-  disabled = pythonOlder "3.6";
+  version = "0.5.10";
   format = "pyproject";
+
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-16XEah5rgem/L8A/zo1zPrifrU15VMk652rFLZcvjig=";
+    sha256 = "sha256-6iV+uIdVi0Z3FeM9xnp1Ss3VzFVEOm7wykxjSTXUIGM=";
   };
 
-  postPatch = ''
-    substituteInPlace pyproject.toml \
-      --replace 'click = "^7"' 'click = "*"' \
-      --replace 'croniter = "^0"' 'croniter = "*"' \
-      --replace 'cryptography = "^3"' 'cryptography = "*"' \
-      --replace 'defusedxml = "^0.6"' 'defusedxml = "*"'
-  '';
-
   nativeBuildInputs = [
-    poetry
+    poetry-core
   ];
 
   propagatedBuildInputs = [
@@ -59,14 +52,27 @@ buildPythonPackage rec {
     pyyaml
     tqdm
     zeroconf
-  ] ++ lib.optional (pythonOlder "3.8") importlib-metadata;
+  ] ++ lib.optional (pythonOlder "3.8") [
+    importlib-metadata
+  ];
 
   checkInputs = [
     pytestCheckHook
     pytest-mock
   ];
 
-  pythonImportsCheck = [ "miio" ];
+  postPatch = ''
+    substituteInPlace pyproject.toml \
+      --replace 'defusedxml = "^0"' 'defusedxml = "*"' \
+  '';
+
+  pythonImportsCheck = [
+    "miio"
+  ];
+
+  disabledTestPaths = [
+    "miio/tests/test_vacuums.py"
+  ];
 
   meta = with lib; {
     description = "Python library for interfacing with Xiaomi smart appliances";

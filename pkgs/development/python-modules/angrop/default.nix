@@ -9,14 +9,16 @@
 
 buildPythonPackage rec {
   pname = "angrop";
-  version = "9.0.10689";
+  version = "9.1.11752";
+  format = "setuptools";
+
   disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "angr";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-ZWu9Kk/d6Qz9IEDUkuaB0f5cZV0HnZAaEDnYSoiKMDI=";
+    hash = "sha256-nZGAuWp07VMpOvqw38FGSiUhaFjJOfCzOaam4Ex7qbY=";
   };
 
   propagatedBuildInputs = [
@@ -28,7 +30,10 @@ buildPythonPackage rec {
   # Tests have additional requirements, e.g., angr binaries
   # cle is executing the tests with the angr binaries already and is a requirement of angr
   doCheck = false;
-  pythonImportsCheck = [ "angrop" ];
+
+  pythonImportsCheck = [
+    "angrop"
+  ];
 
   meta = with lib; {
     description = "ROP gadget finder and chain builder";

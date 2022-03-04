@@ -1,23 +1,21 @@
-{ lib, buildGo117Module, fetchFromGitHub, olm }:
+{ lib, buildGoModule, fetchFromGitHub, olm }:
 
-buildGo117Module rec {
+buildGoModule rec {
   pname = "mautrix-whatsapp";
-  version = "0.2.1";
+  version = "0.2.4";
 
   src = fetchFromGitHub {
     owner = "mautrix";
     repo = "whatsapp";
     rev = "v${version}";
-    sha256 = "sha256-gCbZGlZDwHw+OAlTx3rHlbd4Ntw+RaCEDTiP/1q0oJs=";
+    sha256 = "lBAnMrU292URrZIxPvPIAO50GAFvvZHfUjKMYxZwGb8=";
   };
 
   buildInputs = [ olm ];
 
-  vendorSha256 = "sha256-4KDLL9FY3DrkGBDlu6G8Fp7XJfXjwLTELspyW+FBGfo=";
+  vendorSha256 = "KiNABUZ92gYprTdNAKKMjygr0BzQGVYVPRPMxvYi1VQ=";
 
   doCheck = false;
-
-  runVend = true;
 
   meta = with lib; {
     homepage = "https://github.com/tulir/mautrix-whatsapp";

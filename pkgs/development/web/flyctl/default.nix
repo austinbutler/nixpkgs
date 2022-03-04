@@ -2,13 +2,13 @@
 
 buildGoModule rec {
   pname = "flyctl";
-  version = "0.0.250";
+  version = "0.0.301";
 
   src = fetchFromGitHub {
     owner = "superfly";
     repo = "flyctl";
     rev = "v${version}";
-    sha256 = "sha256-QhEstfzx0zqC+dDgqfgmi1zOdc491YbzVAgXVaoTVUU=";
+    sha256 = "sha256-UwouKnUfEcYpwtLXxwe93mHzVvj/+72FSQ0OW55oztE=";
   };
 
   preBuild = ''
@@ -17,7 +17,7 @@ buildGoModule rec {
 
   subPackages = [ "." ];
 
-  vendorSha256 = "sha256-JxEl23bwfvd8jNBYqIXBIu1pNu2rt+jvdEl0RdXCidE=";
+  vendorSha256 = "sha256-VKX/Wt7CQy3w4Zv51M/IF1RIPpn7nTCL1T6jJ+oxti4=";
 
   doCheck = false;
 
@@ -27,6 +27,6 @@ buildGoModule rec {
     description = "Command line tools for fly.io services";
     homepage = "https://fly.io/";
     license = licenses.asl20;
-    maintainers = with maintainers; [ aaronjanse ];
+    maintainers = with maintainers; [ aaronjanse jsierles ];
   };
 }

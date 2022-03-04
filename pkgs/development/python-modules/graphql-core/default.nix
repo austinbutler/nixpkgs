@@ -9,7 +9,7 @@
 
 buildPythonPackage rec {
   pname = "graphql-core";
-  version = "3.1.6";
+  version = "3.2.0";
   format = "setuptools";
 
   disabled = pythonOlder "3.6";
@@ -18,7 +18,7 @@ buildPythonPackage rec {
     owner = "graphql-python";
     repo = pname;
     rev = "v${version}";
-    sha256 = "1ip0yrqmnqncgpwvba18x020gkwr7csiw4zdy6mrdnvwf5qyam4x";
+    sha256 = "sha256-71Z+5nVvg+aozJAKmBGJg5Gqq1OIVH7Xv33Q82IHhXg=";
   };
 
   checkInputs = [

@@ -8,14 +8,14 @@
 
 buildPythonPackage rec {
   pname = "frozendict";
-  version = "2.1.0";
+  version = "2.3.0";
   format = "setuptools";
 
   disabled = !isPy3k;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0189168749ddea8601afd648146c502533f93ae33840eb76cd71f694742623cd";
+    sha256 = "1dd0bqhai4k3fj9ydcwmc9hvbmrsklk349ys21w8x4n5xynk2hns";
   };
 
   pythonImportsCheck = [
@@ -27,24 +27,12 @@ buildPythonPackage rec {
   ];
 
   preCheck = ''
-    rm -r frozendict
-    export PYTHONPATH=$out/${python.sitePackages}:$PYTHONPATH
+    pushd test
   '';
 
-  disabledTests = [
-    # TypeError: unsupported operand type(s) for |=: 'frozendict.frozendict' and 'dict'
-    "test_union"
-    # non-standard assertions
-    "test_repr"
-    "test_format"
-    "test_str"
-  ];
-
-  disabledTestPaths = [
-    # unpackaged test dependency: coold
-    "test/test_coold.py"
-    "test/test_coold_subclass.py"
-  ];
+  postCheck = ''
+    popd
+  '';
 
   meta = with lib; {
     homepage = "https://github.com/slezica/python-frozendict";

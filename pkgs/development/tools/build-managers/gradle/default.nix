@@ -3,7 +3,7 @@
 rec {
   gen =
 
-    { version, nativeVersion, sha256, defaultJava ? jdk8 }:
+    { version, nativeVersion, sha256, defaultJava ? jdk8, supportedPlatforms ? null }:
 
     { lib, stdenv, fetchurl, makeWrapper, unzip, java ? defaultJava
     , javaToolchains ? [ ], ncurses5, ncurses6 }:
@@ -87,7 +87,7 @@ rec {
         changelog = "https://docs.gradle.org/${version}/release-notes.html";
         downloadPage = "https://gradle.org/next-steps/?version=${version}";
         license = licenses.asl20;
-        platforms = platforms.unix;
+        platforms = if (supportedPlatforms != null) then supportedPlatforms else platforms.unix;
         maintainers = with maintainers; [ lorenzleutgeb liff ];
       };
     };
@@ -96,17 +96,23 @@ rec {
   # https://docs.gradle.org/current/userguide/compatibility.html
 
   gradle_7 = gen {
-    version = "7.3.1";
-    nativeVersion = "0.22-milestone-21";
-    sha256 = "0rkb9pdmvq0zidv8lv4im2j7gs949lg35r79l1hwf4pwi2k3ryws";
+    version = "7.4";
+    nativeVersion = "0.22-milestone-23";
+    sha256 = "0d56bgd2m64pzmycjk29hwdlhbpn1kkm7fjik1sibn6vslw71hlc";
     defaultJava = jdk17;
+    # Gradle 7 ships some binaries that are only available for some platforms
+    # See https://github.com/gradle/native-platform#supported-platforms
+    supportedPlatforms =  [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" "x86_64-cygwin" "x86_64-windows" "i686-windows"  ];
   };
 
   gradle_6 = gen {
-    version = "6.9.1";
+    version = "6.9.2";
     nativeVersion = "0.22-milestone-20";
-    sha256 = "1zmjfwlh34b65rdx9izgavw3qwqqwm39h5siyj2bf0m55111a4lc";
+    sha256 = "13qyk3f6namw27ynh6nxljxpk9r3l12vxl3f0qpglprdf3c6ydcb";
     defaultJava = jdk11;
+    # Gradle 6 ships some binaries that are only available for some platforms
+    # See https://github.com/gradle/native-platform#supported-platforms
+    supportedPlatforms =  [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" "x86_64-cygwin" "x86_64-windows" "i686-windows"  ];
   };
 
   # NOTE: No GitHub Release for the following versions. `update.sh` will not work.

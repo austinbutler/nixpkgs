@@ -1,12 +1,22 @@
-{ lib, jdk8, buildPythonPackage, fetchPypi, six, py4j }:
+{ lib
+, jdk8
+, buildPythonPackage
+, fetchPypi
+, six
+, py4j
+, pythonOlder
+}:
 
 buildPythonPackage rec {
   pname = "databricks-connect";
-  version = "9.1.4";
+  version = "9.1.10";
+  format = "setuptools";
+
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0e4c9178635d47b18ca12284c8ba970747e0b2e2fb7dd6f0a06d35788e81cb91";
+    sha256 = "sha256-OR3TXO6IzqwqbBbfFf+FGIUbwTa0DoKry84e1hL0I3Q=";
   };
 
   sourceRoot = ".";

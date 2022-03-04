@@ -8,11 +8,11 @@
 
 buildPythonPackage rec {
   pname = "s3fs";
-  version = "2021.11.0";
+  version = "2022.1.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "3c23eac1fa5b685c9d507950b24f75929e8bcd1ea98b9a95cf2a9cb66ee6c9f5";
+    sha256 = "6bafc1f6b4e935ea59512c0f38d5cb9c299dbbfe738e40c3d1de8f67b4ee1fd4";
   };
 
   buildInputs = [

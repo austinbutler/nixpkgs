@@ -12,11 +12,11 @@
 
 buildPythonPackage rec {
   pname = "google-resumable-media";
-  version = "2.1.0";
+  version = "2.3.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "725b989e0dd387ef2703d1cc8e86217474217f4549593c477fd94f4024a0f911";
+    sha256 = "sha256-Gn3OV5CwRRjtwCws4zllVWZg1klXEG1mqUUIbitkJXI=";
   };
 
   propagatedBuildInputs = [ google-auth google-crc32c requests ];

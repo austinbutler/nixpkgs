@@ -1,17 +1,17 @@
-{ lib, buildGoModule, fetchFromGitHub, coreutils, installShellFiles, scdoc }:
+{ lib, buildGoModule, fetchFromGitHub, coreutils, installShellFiles, scdoc, nixosTests }:
 
 buildGoModule rec {
   pname = "maddy";
-  version = "0.5.2";
+  version = "0.5.3";
 
   src = fetchFromGitHub {
     owner = "foxcpp";
     repo = "maddy";
     rev = "v${version}";
-    sha256 = "sha256-b85g8Eu7qWTI+ggMr7JL/2BAVbkXocpsR89P6s6TfMg=";
+    sha256 = "sha256-UB9Y2nNkiN0L3NIfUqnpaJJqNuAnCYIeEyS60TnnIRs=";
   };
 
-  vendorSha256 = "sha256-kzSwqT3r6uGxq1GNzCWCn8VoCxmVtiUb23XLCpsPv/c=";
+  vendorSha256 = "sha256-lL9hlICc9t/2v6eawG8LU6hpAKpY7raTg5l1RagewPs=";
 
   ldflags = [ "-s" "-w" "-X github.com/foxcpp/maddy.Version=${version}" ];
 
@@ -36,6 +36,8 @@ buildGoModule rec {
       --replace "/usr/local/bin/maddy" "$out/bin/maddy" \
       --replace "/bin/kill" "${coreutils}/bin/kill"
   '';
+
+  passthru.tests.nixos = nixosTests.maddy;
 
   meta = with lib; {
     description = "Composable all-in-one mail server";

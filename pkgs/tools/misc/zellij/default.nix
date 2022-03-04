@@ -6,22 +6,24 @@
 , pkg-config
 , libiconv
 , openssl
+, DiskArbitration
+, Foundation
 , zellij
 , testVersion
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "zellij";
-  version = "0.21.0";
+  version = "0.25.0";
 
   src = fetchFromGitHub {
     owner = "zellij-org";
     repo = "zellij";
     rev = "v${version}";
-    sha256 = "1n033qvidahpfsp4k3x30sav3asldhjlsbydb23vg0v7bxjl2c2q";
+    sha256 = "sha256-MTSM8fYAcNcmjg6bkOEN+U5+WilaEy52EJOfyoIy3Zg=";
   };
 
-  cargoSha256 = "1pjmlwx966pgri58xx2zqr84wili0bzpl9gzhjdkvcx0j1f66anb";
+  cargoSha256 = "sha256-2QEDrxTz7I9hF+WfVKkGLXHWZjQ5by/zuO16NGOJSKk=";
 
   nativeBuildInputs = [
     installShellFiles
@@ -32,6 +34,8 @@ rustPlatform.buildRustPackage rec {
     openssl
   ] ++ lib.optionals stdenv.isDarwin [
     libiconv
+    DiskArbitration
+    Foundation
   ];
 
   preCheck = ''
@@ -52,6 +56,6 @@ rustPlatform.buildRustPackage rec {
     homepage = "https://zellij.dev/";
     changelog = "https://github.com/zellij-org/zellij/blob/v${version}/Changelog.md";
     license = with licenses; [ mit ];
-    maintainers = with maintainers; [ therealansh _0x4A6F ];
+    maintainers = with maintainers; [ therealansh _0x4A6F abbe ];
   };
 }

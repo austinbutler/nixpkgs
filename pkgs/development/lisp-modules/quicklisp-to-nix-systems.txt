@@ -60,6 +60,7 @@ cl-l10n
 cl-libuv
 cl-locale
 cl-markup
+cl-mustache
 cl-mysql
 cl-paths-ttf
 cl-pattern
@@ -69,6 +70,7 @@ cl-ppcre-template
 cl-ppcre-unicode
 cl-prevalence
 cl-protobufs
+cl-qrencode
 cl-qprint
 cl-reexport
 cl-shellwords
@@ -135,6 +137,7 @@ fast-io
 file-attributes
 fiveam
 flexi-streams
+float-features
 form-fiddle
 fset
 generic-cl
@@ -160,6 +163,7 @@ lfarm-client
 lfarm-server
 lfarm-ssl
 lift
+lisp-binary
 lisp-namespace
 lla
 local-time
@@ -174,6 +178,7 @@ mgl-pax
 minheap
 misc-extensions
 mk-string-metrics
+mmap
 moptilities
 more-conditions
 mt19937
@@ -203,8 +208,10 @@ salza2
 serapeum
 simple-date
 simple-date-time
+slynk
 smart-buffer
 smug
+spinneret
 split-sequence
 sqlite
 static-vectors

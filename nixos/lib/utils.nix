@@ -1,4 +1,4 @@
-pkgs: with pkgs.lib;
+{ lib, config, pkgs }: with lib;
 
 rec {
 
@@ -149,10 +149,17 @@ rec {
       if [[ -h '${output}' ]]; then
         rm '${output}'
       fi
+
+      inherit_errexit_enabled=0
+      shopt -pq inherit_errexit && inherit_errexit_enabled=1
+      shopt -s inherit_errexit
     ''
     + concatStringsSep
         "\n"
-        (imap1 (index: name: "export secret${toString index}=$(<'${secrets.${name}}')")
+        (imap1 (index: name: ''
+                  secret${toString index}=$(<'${secrets.${name}}')
+                  export secret${toString index}
+                '')
                (attrNames secrets))
     + "\n"
     + "${pkgs.jq}/bin/jq >'${output}' '"
@@ -164,5 +171,11 @@ rec {
       ' <<'EOF'
       ${builtins.toJSON set}
       EOF
+      (( ! $inherit_errexit_enabled )) && shopt -u inherit_errexit
     '';
+
+  systemdUtils = {
+    lib = import ./systemd-lib.nix { inherit lib config pkgs; };
+    unitOptions = import ./systemd-unit-options.nix { inherit lib systemdUtils; };
+  };
 }

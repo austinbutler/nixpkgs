@@ -58,6 +58,7 @@ let
       iris = callPackage ../development/coq-modules/iris {};
       itauto = callPackage ../development/coq-modules/itauto { };
       ITree = callPackage ../development/coq-modules/ITree { };
+      LibHyps = callPackage ../development/coq-modules/LibHyps {};
       ltac2 = callPackage ../development/coq-modules/ltac2 {};
       math-classes = callPackage ../development/coq-modules/math-classes { };
       mathcomp = callPackage ../development/coq-modules/mathcomp {};
@@ -73,6 +74,7 @@ let
       mathcomp-finmap = callPackage ../development/coq-modules/mathcomp-finmap {};
       mathcomp-bigenough = callPackage ../development/coq-modules/mathcomp-bigenough {};
       mathcomp-real-closed = callPackage ../development/coq-modules/mathcomp-real-closed {};
+      mathcomp-word = callPackage ../development/coq-modules/mathcomp-word {};
       mathcomp-zify = callPackage ../development/coq-modules/mathcomp-zify {};
       mathcomp-tarjan = callPackage ../development/coq-modules/mathcomp-tarjan {};
       metalib = callPackage ../development/coq-modules/metalib { };
@@ -95,9 +97,7 @@ let
       topology = callPackage ../development/coq-modules/topology {};
       Velisarios = callPackage ../development/coq-modules/Velisarios {};
       Verdi = callPackage ../development/coq-modules/Verdi {};
-      VST = callPackage ../development/coq-modules/VST {
-        compcert = self.compcert.override { version = "3.9"; };
-      };
+      VST = callPackage ../development/coq-modules/VST {};
       zorns-lemma = callPackage ../development/coq-modules/zorns-lemma {};
       filterPackages = doesFilter: if doesFilter then filterCoqPackages self else self;
     };
@@ -144,6 +144,7 @@ in rec {
   coq_8_12 = mkCoq "8.12";
   coq_8_13 = mkCoq "8.13";
   coq_8_14 = mkCoq "8.14";
+  coq_8_15 = mkCoq "8.15";
 
   coqPackages_8_5 = mkCoqPackages coq_8_5;
   coqPackages_8_6 = mkCoqPackages coq_8_6;
@@ -155,6 +156,7 @@ in rec {
   coqPackages_8_12 = mkCoqPackages coq_8_12;
   coqPackages_8_13 = mkCoqPackages coq_8_13;
   coqPackages_8_14 = mkCoqPackages coq_8_14;
+  coqPackages_8_15 = mkCoqPackages coq_8_15;
   coqPackages = recurseIntoAttrs coqPackages_8_13;
   coq = coqPackages.coq;
 

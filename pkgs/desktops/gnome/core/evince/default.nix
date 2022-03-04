@@ -1,5 +1,7 @@
-{ lib, stdenv
+{ lib
+, stdenv
 , fetchurl
+, fetchpatch
 , meson
 , ninja
 , pkg-config
@@ -42,6 +44,7 @@
 , libgxps
 , supportXPS ? true # Open XML Paper Specification via libgxps
 , withPantheon ? false
+, withLibsecret ? true
 }:
 
 stdenv.mkDerivation rec {
@@ -57,9 +60,12 @@ stdenv.mkDerivation rec {
 
   patches = lib.optionals withPantheon [
     # Make this respect dark mode settings from Pantheon
-    # https://github.com/elementary/evince
-    # The patch currently differs from upstream (updated for evince 41).
-    ./pantheon-dark-style.patch
+    # https://github.com/elementary/evince/pull/21
+    # https://github.com/elementary/evince/pull/31
+    (fetchpatch {
+      url = "https://raw.githubusercontent.com/elementary/evince/c8364019ee2c2dffd2a1bccf79b8f4e526aa22af/dark-style.patch";
+      sha256 = "sha256-nKELRXnM6gMRTGmWdO1Qqlo9ciy+4HOK5z2CYOoi2Lo=";
+    })
   ];
 
   postPatch = ''
@@ -98,13 +104,14 @@ stdenv.mkDerivation rec {
     libarchive
     libhandy
     librsvg
-    libsecret
     libspectre
     libxml2
     pango
     poppler
     t1lib
     texlive.bin.core # kpathsea for DVI support
+  ] ++ lib.optionals withLibsecret [
+    libsecret
   ] ++ lib.optionals supportXPS [
     libgxps
   ] ++ lib.optionals supportMultimedia (with gst_all_1; [
@@ -121,6 +128,8 @@ stdenv.mkDerivation rec {
   mesonFlags = [
     "-Dnautilus=false"
     "-Dps=enabled"
+  ] ++ lib.optionals (!withLibsecret) [
+    "-Dkeyring=disabled"
   ];
 
   NIX_CFLAGS_COMPILE = "-I${glib.dev}/include/gio-unix-2.0";
