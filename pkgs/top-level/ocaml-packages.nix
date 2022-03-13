@@ -140,7 +140,9 @@ let
 
     ocaml_cairo = callPackage ../development/ocaml-modules/ocaml-cairo { };
 
-    cairo2 = callPackage ../development/ocaml-modules/cairo2 { };
+    cairo2 = callPackage ../development/ocaml-modules/cairo2 {
+      inherit (pkgs.darwin.apple_sdk.frameworks) ApplicationServices;
+    };
 
     callipyge = callPackage ../development/ocaml-modules/callipyge { };
 
@@ -307,6 +309,8 @@ let
       else if lib.versionAtLeast ocaml.version "4.02"
       then pkgs.dune_2
       else throw "dune_2 is not available for OCaml ${ocaml.version}";
+
+    dune_3 = callPackage ../development/tools/ocaml/dune/3.nix { };
 
     dune-action-plugin = callPackage ../development/ocaml-modules/dune-action-plugin { };
 
@@ -616,7 +620,7 @@ let
 
     lambdasoup = callPackage ../development/ocaml-modules/lambdasoup { };
 
-    lambdaTerm = callPackage ../development/ocaml-modules/lambda-term { };
+    lambda-term = callPackage ../development/ocaml-modules/lambda-term { };
 
     lens = callPackage ../development/ocaml-modules/lens { };
 
@@ -1055,8 +1059,6 @@ let
 
     ppx_bitstring = callPackage ../development/ocaml-modules/bitstring/ppx.nix { };
 
-    ppxfind = callPackage ../development/ocaml-modules/ppxfind { };
-
     ppxlib = callPackage ../development/ocaml-modules/ppxlib { };
 
     psmt2-frontend = callPackage ../development/ocaml-modules/psmt2-frontend { };
@@ -1190,8 +1192,6 @@ let
     ptmap = callPackage ../development/ocaml-modules/ptmap { };
 
     ptset = callPackage ../development/ocaml-modules/ptset { };
-
-    pycaml = callPackage ../development/ocaml-modules/pycaml { };
 
     pyml = callPackage ../development/ocaml-modules/pyml { };
 
@@ -1539,5 +1539,5 @@ in let inherit (pkgs) callPackage; in rec
 
   ocamlPackages_latest = ocamlPackages_4_13;
 
-  ocamlPackages = ocamlPackages_4_12;
+  ocamlPackages = ocamlPackages_4_13;
 }
