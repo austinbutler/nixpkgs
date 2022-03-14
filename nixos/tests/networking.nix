@@ -246,13 +246,13 @@ let
         networking = {
           useNetworkd = networkd;
           useDHCP = false;
-          bonds.bond = {
+          bonds.bond0 = {
             interfaces = [ "eth1" "eth2" ];
-            driverOptions.mode = "balance-rr";
+            driverOptions.mode = "802.3ad";
           };
           interfaces.eth1.ipv4.addresses = mkOverride 0 [ ];
           interfaces.eth2.ipv4.addresses = mkOverride 0 [ ];
-          interfaces.bond.ipv4.addresses = mkOverride 0
+          interfaces.bond0.ipv4.addresses = mkOverride 0
             [ { inherit address; prefixLength = 30; } ];
         };
       };
@@ -274,6 +274,10 @@ let
 
               client2.wait_until_succeeds("ping -c 2 192.168.1.1")
               client2.wait_until_succeeds("ping -c 2 192.168.1.2")
+
+          with subtest("Verify bonding mode"):
+              for client in client1, client2:
+                  client.succeed('grep -q "Bonding Mode: IEEE 802.3ad Dynamic link aggregation" /proc/net/bonding/bond0')
         '';
     };
     bridge = let
@@ -740,6 +744,7 @@ let
     routes = {
       name = "routes";
       machine = {
+        networking.useNetworkd = networkd;
         networking.useDHCP = false;
         networking.interfaces.eth0 = {
           ipv4.addresses = [ { address = "192.168.1.2"; prefixLength = 24; } ];
@@ -749,7 +754,13 @@ let
             { address = "2001:1470:fffd:2098::"; prefixLength = 64; via = "fdfd:b3f0::1"; }
           ];
           ipv4.routes = [
-            { address = "10.0.0.0"; prefixLength = 16; options = { mtu = "1500"; }; }
+            { address = "10.0.0.0"; prefixLength = 16; options = {
+              mtu = "1500";
+              # Explicitly set scope because iproute and systemd-networkd
+              # disagree on what the scope should be
+              # if the type is the default "unicast"
+              scope = "link";
+            }; }
             { address = "192.168.2.0"; prefixLength = 24; via = "192.168.1.1"; }
           ];
         };
@@ -798,6 +809,7 @@ let
                 ipv6Table, targetIPv6Table
             )
 
+      '' + optionalString (!networkd) ''
         with subtest("test clean-up of the tables"):
             machine.succeed("systemctl stop network-addresses-eth0")
             ipv4Residue = machine.succeed("ip -4 route list dev eth0 | head -n-3").strip()
@@ -856,7 +868,7 @@ let
         print(client.succeed("ip l add name foo type dummy"))
         print(client.succeed("stat /etc/systemd/network/50-foo.link"))
         client.succeed("udevadm settle")
-        assert "mtu 1442" in client.succeed("ip l show dummy0")
+        assert "mtu 1442" in client.succeed("ip l show dev foo")
       '';
     };
     wlanInterface = let

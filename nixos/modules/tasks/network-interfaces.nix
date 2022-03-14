@@ -103,6 +103,11 @@ let
         description = ''
           Other route options. See the symbol <literal>OPTIONS</literal>
           in the <literal>ip-route(8)</literal> manual page for the details.
+          You may also specify <literal>metric</literal>,
+          <literal>src</literal>, <literal>protocol</literal>,
+          <literal>scope</literal>, <literal>from</literal>
+          and <literal>table</literal>, which are technically
+          not route options, in the sense used in the manual.
         '';
       };
 
@@ -208,6 +213,14 @@ let
         type = with types; listOf (submodule (routeOpts 4));
         description = ''
           List of extra IPv4 static routes that will be assigned to the interface.
+          <warning><para>If the route type is the default <literal>unicast</literal>, then the scope
+          is set differently depending on the value of <option>networking.useNetworkd</option>:
+          the script-based backend sets it to <literal>link</literal>, while networkd sets
+          it to <literal>global</literal>.</para></warning>
+          If you want consistency between the two implementations,
+          set the scope of the route manually with
+          <literal>networking.interfaces.eth0.ipv4.routes = [{ options.scope = "global"; }]</literal>
+          for example.
         '';
       };
 
@@ -292,7 +305,7 @@ let
         enable = mkOption {
           type = types.bool;
           default = false;
-          description = "Wether to enable wol on this interface.";
+          description = "Whether to enable wol on this interface.";
         };
       };
     };
@@ -1312,20 +1325,11 @@ in
           val = tempaddrValues.${opt}.sysctl;
          in nameValuePair "net.ipv6.conf.${replaceChars ["."] ["/"] i.name}.use_tempaddr" val));
 
-    # Capabilities won't work unless we have at-least a 4.3 Linux
-    # kernel because we need the ambient capability
-    security.wrappers = if (versionAtLeast (getVersion config.boot.kernelPackages.kernel) "4.3") then {
+    security.wrappers = {
       ping = {
         owner = "root";
         group = "root";
         capabilities = "cap_net_raw+p";
-        source = "${pkgs.iputils.out}/bin/ping";
-      };
-    } else {
-      ping = {
-        setuid = true;
-        owner = "root";
-        group = "root";
         source = "${pkgs.iputils.out}/bin/ping";
       };
     };

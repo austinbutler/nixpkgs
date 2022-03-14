@@ -30,25 +30,23 @@
 
 stdenv.mkDerivation rec {
   pname = "elementary-greeter";
-  version = "6.0.1";
+  version = "6.0.2";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = "greeter";
     rev = version;
-    sha256 = "1f606ds56sp1c58q8dblfpaq9pwwkqw9i4gkwksw45m2xkwlbflq";
+    sha256 = "sha256-0chBM8JuCYgZXHneiSxSICZwBVm2Vgx+bas9wUjbnyg=";
   };
 
-  passthru = {
-    updateScript = nix-update-script {
-      attrPath = "pantheon.${pname}";
-    };
-
-    xgreeters = linkFarm "pantheon-greeter-xgreeters" [{
-      path = "${elementary-greeter}/share/xgreeters/io.elementary.greeter.desktop";
-      name = "io.elementary.greeter.desktop";
-    }];
-  };
+  patches = [
+    ./sysconfdir-install.patch
+    # Needed until https://github.com/elementary/greeter/issues/360 is fixed
+    (substituteAll {
+      src = ./hardcode-fallback-background.patch;
+      default_wallpaper = "${nixos-artwork.wallpapers.simple-dark-gray.gnomeFilePath}";
+    })
+  ];
 
   nativeBuildInputs = [
     desktop-file-utils
@@ -72,7 +70,6 @@ stdenv.mkDerivation rec {
     libhandy
     lightdm
     mutter
-    wingpanel-with-indicators
   ];
 
   mesonFlags = [
@@ -81,15 +78,6 @@ stdenv.mkDerivation rec {
     # baked into the program for discovery of the greeter configuration
     "--sysconfdir=/etc"
     "-Dgsd-dir=${gnome-settings-daemon}/libexec/" # trailing slash is needed
-  ];
-
-  patches = [
-    ./sysconfdir-install.patch
-    # Needed until https://github.com/elementary/greeter/issues/360 is fixed
-    (substituteAll {
-      src = ./hardcode-fallback-background.patch;
-      default_wallpaper = "${nixos-artwork.wallpapers.simple-dark-gray.gnomeFilePath}";
-    })
   ];
 
   preFixup = ''
@@ -117,6 +105,17 @@ stdenv.mkDerivation rec {
     substituteInPlace $out/share/xgreeters/io.elementary.greeter.desktop \
       --replace "Exec=io.elementary.greeter" "Exec=$out/bin/io.elementary.greeter"
   '';
+
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
+    };
+
+    xgreeters = linkFarm "pantheon-greeter-xgreeters" [{
+      path = "${elementary-greeter}/share/xgreeters/io.elementary.greeter.desktop";
+      name = "io.elementary.greeter.desktop";
+    }];
+  };
 
   meta = with lib; {
     description = "LightDM Greeter for Pantheon";

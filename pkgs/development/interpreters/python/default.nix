@@ -133,10 +133,19 @@ with pkgs;
       sourceVersion = {
         major = "3";
         minor = "9";
-        patch = "9";
+        patch = "10";
         suffix = "";
       };
-      sha256 = "sha256-BoKMBKVzwHOk5RxCkqJ8G+SuJmIcPtx8+TGEGM47bSc=";
+      sha256 = "sha256-Co+/tSh+vDoT6brz1U4I+gZ3j/7M9jEa74Ibs6ZYbMg=";
+    };
+    python310 = {
+      sourceVersion = {
+        major = "3";
+        minor = "10";
+        patch = "2";
+        suffix = "";
+      };
+      sha256 = "sha256-F946x9qfJRmqnWQ3jGA6c6DprVjf+ogS5FFgwIbeZMc=";
     };
   };
 
@@ -180,18 +189,11 @@ in {
     inherit passthruFun;
   } // sources.python39);
 
-  python310 = callPackage ./cpython {
+  python310 = callPackage ./cpython ({
     self = python310;
-    sourceVersion = {
-      major = "3";
-      minor = "10";
-      patch = "1";
-      suffix = "";
-    };
-    sha256 = "0xz1wrd6xi20sbli30vm6jclc4rlnnd03irybknf2p8sdrdjdwd7";
     inherit (darwin) configd;
     inherit passthruFun;
-  };
+  } // sources.python310);
 
   python311 = callPackage ./cpython {
     self = python311;
@@ -199,9 +201,9 @@ in {
       major = "3";
       minor = "11";
       patch = "0";
-      suffix = "a2";
+      suffix = "a4";
     };
-    sha256 = "sha256-aKjE1s4lSKe2F9aZ+9s0iTe9rODPltsaoIOEnfXa0T8=";
+    sha256 = "sha256-Q3/nN2w2Pa+vNM6A8ERrQfyaQsDiqMflGdPwoLfPs+0=";
     inherit (darwin) configd;
     inherit passthruFun;
   };
@@ -219,6 +221,7 @@ in {
     sqlite = null;
     configd = null;
     tzdata = null;
+    libffi = pkgs.libffiBoot; # without test suite
     stripConfig = true;
     stripIdlelib = true;
     stripTests = true;
@@ -273,29 +276,29 @@ in {
     sha256 = "sha256-LtAqyecQhZxBvILer7CGGXkruaJ+6qFnbHQe3t0hTdc=";
   };
 
-  pypy27_prebuilt = callPackage ./pypy/prebuilt.nix {
+  pypy27_prebuilt = callPackage ./pypy/prebuilt_2_7.nix {
     # Not included at top-level
     self = pythonInterpreters.pypy27_prebuilt;
     sourceVersion = {
       major = "7";
       minor = "3";
-      patch = "3";
+      patch = "6";
     };
-    sha256 = "1cfpdyvbvzwc0ynjr7248jhwgcpl7073wlp7w3g2v4fnrh1bc4pl"; # linux64
+    sha256 = "sha256-ghJ/Q/rmznXUfWxFOfjB6jcunC2/pA+ui1g1HVInk6Q="; # linux64
     pythonVersion = "2.7";
     inherit passthruFun;
   };
 
-  pypy36_prebuilt = callPackage ./pypy/prebuilt.nix {
+  pypy38_prebuilt = callPackage ./pypy/prebuilt.nix {
     # Not included at top-level
-    self = pythonInterpreters.pypy36_prebuilt;
+    self = pythonInterpreters.pypy38_prebuilt;
     sourceVersion = {
       major = "7";
       minor = "3";
-      patch = "3";
+      patch = "7";
     };
-    sha256 = "02lys9bjky9bqg6ggv8djirbd3zzcsq7755v4yvwm0k4a7fmzf2g"; # linux64
-    pythonVersion = "3.6";
+    sha256 = "sha256-Xe43x8PLixYAKPveOlkBxoBD36VFoWeUUCuJfUvEDX4="; # linux64
+    pythonVersion = "3.8";
     inherit passthruFun;
   };
 

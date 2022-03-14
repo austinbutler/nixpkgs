@@ -25,9 +25,11 @@ let
       "nss-lookup.target"
       "nss-user-lookup.target"
       "time-sync.target"
+    ] ++ (optionals cfg.package.withCryptsetup [
       "cryptsetup.target"
       "cryptsetup-pre.target"
       "remote-cryptsetup.target"
+    ]) ++ [
       "sigpwr.target"
       "timers.target"
       "paths.target"
@@ -210,20 +212,14 @@ let
   makeJobScript = name: text:
     let
       scriptName = replaceChars [ "\\" "@" ] [ "-" "_" ] (shellEscape name);
-      out = pkgs.writeTextFile {
+      out = (pkgs.writeShellScriptBin scriptName ''
+        set -e
+        ${text}
+      '').overrideAttrs (_: {
         # The derivation name is different from the script file name
         # to keep the script file name short to avoid cluttering logs.
         name = "unit-script-${scriptName}";
-        executable = true;
-        destination = "/bin/${scriptName}";
-        text = ''
-          #!${pkgs.runtimeShell} -e
-          ${text}
-        '';
-        checkPhase = ''
-          ${pkgs.stdenv.shell} -n "$out/bin/${scriptName}"
-        '';
-      };
+      });
     in "${out}/bin/${scriptName}";
 
   unitConfig = { config, options, ... }: {
@@ -247,6 +243,8 @@ let
           { Requisite = toString config.requisite; }
         // optionalAttrs (config.restartTriggers != [])
           { X-Restart-Triggers = toString config.restartTriggers; }
+        // optionalAttrs (config.reloadTriggers != [])
+          { X-Reload-Triggers = toString config.reloadTriggers; }
         // optionalAttrs (config.description != "") {
           Description = config.description; }
         // optionalAttrs (config.documentation != []) {
@@ -921,6 +919,9 @@ in
               (optional hasDeprecated
                 "Service '${name}.service' uses the attribute 'StartLimitInterval' in the Service section, which is deprecated. See https://github.com/NixOS/nixpkgs/issues/45786."
               )
+              (optional (service.reloadIfChanged && service.reloadTriggers != [])
+                "Service '${name}.service' has both 'reloadIfChanged' and 'reloadTriggers' set. This is probably not what you want, because 'reloadTriggers' behave the same whay as 'restartTriggers' if 'reloadIfChanged' is set."
+              )
             ]
         )
         cfg.services
@@ -1216,6 +1217,25 @@ in
     boot.kernel.sysctl."kernel.pid_max" = mkIf pkgs.stdenv.is64bit (lib.mkDefault 4194304);
 
     boot.kernelParams = optional (!cfg.enableUnifiedCgroupHierarchy) "systemd.unified_cgroup_hierarchy=0";
+
+    services.logrotate.paths = {
+      "/var/log/btmp" = mapAttrs (_: mkDefault) {
+        frequency = "monthly";
+        keep = 1;
+        extraConfig = ''
+          create 0660 root ${config.users.groups.utmp.name}
+          minsize 1M
+        '';
+      };
+      "/var/log/wtmp" = mapAttrs (_: mkDefault) {
+        frequency = "monthly";
+        keep = 1;
+        extraConfig = ''
+          create 0664 root ${config.users.groups.utmp.name}
+          minsize 1M
+        '';
+      };
+    };
   };
 
   # FIXME: Remove these eventually.

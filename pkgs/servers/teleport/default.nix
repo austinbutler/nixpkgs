@@ -1,11 +1,12 @@
 { lib
-, buildGo117Module
+, buildGoModule
 , rustPlatform
 , fetchFromGitHub
 , makeWrapper
 , protobuf
 , stdenv
 , xdg-utils
+, nixosTests
 
 , withRoleTester ? true
 }:
@@ -15,9 +16,9 @@ let
     owner = "gravitational";
     repo = "teleport";
     rev = "v${version}";
-    sha256 = "sha256-02Wsj2V7RNjKlkgAqj7IqyRGCxml8pw5h0vflqcGAB8=";
+    sha256 = "sha256-ir2NMNIjSpv7l6dVNHczARg6b+doFofinsJy1smEC7o=";
   };
-  version = "8.0.6";
+  version = "8.1.3";
 
   roleTester = rustPlatform.buildRustPackage {
     name = "teleport-roletester";
@@ -38,11 +39,11 @@ let
   webassets = fetchFromGitHub {
     owner = "gravitational";
     repo = "webassets";
-    rev = "240464d54ac498281592eb0b30c871dc3c7ce09b";
-    sha256 = "sha256-8gt8x2fNh8mA1KCop5dEZmpBWBu7HsrTY5zVUlmKDgs=";
+    rev = "ea3c67c941c56cfb6c228612e88100df09fb6f9c";
+    sha256 = "sha256-oKvDXkxA73IJOi+ciBFVLkYcmeRUsTC+3rcYf64vDoY=";
   };
 in
-buildGo117Module rec {
+buildGoModule rec {
   pname = "teleport";
 
   inherit src version;
@@ -94,6 +95,8 @@ buildGo117Module rec {
     $out/bin/tctl version | grep ${version} > /dev/null
     $out/bin/teleport version | grep ${version} > /dev/null
   '';
+
+  passthru.tests = nixosTests.teleport;
 
   meta = with lib; {
     description = "Certificate authority and access plane for SSH, Kubernetes, web applications, and databases";

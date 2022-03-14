@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , fetchFromGitHub
+, fetchpatch
 , nix-update-script
 , pkg-config
 , meson
@@ -31,6 +32,15 @@ stdenv.mkDerivation rec {
     rev = version;
     sha256 = "sha256-4q7YQ4LxuiM/TRae1cc3ncmw7QwE1soC2Sh+GZ+Gpq0=";
   };
+
+  patches = [
+    # Fix build with meson 0.61
+    # https://github.com/elementary/terminal/pull/649
+    (fetchpatch {
+      url = "https://github.com/elementary/terminal/commit/15e3ace08cb25e53941249fa1ee680a1e2f871b4.patch";
+      sha256 = "sha256-XVs+kq5qbX5KlxtkqxwJnatNYNeJiVLBec7sLjQsUxg=";
+    })
+  ];
 
   nativeBuildInputs = [
     appstream
@@ -76,7 +86,7 @@ stdenv.mkDerivation rec {
       smart copy/paste, and little to no configuration.
     '';
     homepage = "https://github.com/elementary/terminal";
-    license = licenses.lgpl3;
+    license = licenses.lgpl3Plus;
     platforms = platforms.linux;
     maintainers = teams.pantheon.members;
     mainProgram = "io.elementary.terminal";

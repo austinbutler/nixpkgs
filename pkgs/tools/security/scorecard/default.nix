@@ -2,13 +2,13 @@
 
 buildGoModule rec {
   pname = "scorecard";
-  version = "3.2.1";
+  version = "4.1.0";
 
   src = fetchFromGitHub {
     owner = "ossf";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-MVFhw/r1sws82oofV4LHmiSlKxyYd8abYq8oFiB0HH8=";
+    sha256 = "sha256-QOWQhuEEnwtHmQwl5WCCHcKMjwhgxn9xerR0Bxi3660=";
     # populate values otherwise taken care of by goreleaser,
     # unfortunately these require us to use git. By doing
     # this in postFetch we can delete .git afterwards and
@@ -27,7 +27,7 @@ buildGoModule rec {
       find "$out" -name .git -print0 | xargs -0 rm -rf
     '';
   };
-  vendorSha256 = "sha256-WrM2aE0z6SnfoPEBqgn1TO6sSGPMrQvL6+ddvOS2w1k=";
+  vendorSha256 = "sha256-AFadBzkRj0D1MXLHzexvomJ0cqirhW82tnNRGx/gChI=";
 
   # Install completions post-install
   nativeBuildInputs = [ installShellFiles ];
@@ -48,6 +48,8 @@ buildGoModule rec {
     getGoDirs() {
       go list ./... | grep -v e2e
     }
+    # Ensure other e2e tests that have escaped the e2e dir dont run
+    export SKIP_GINKGO=1
   '';
 
   postInstall = ''

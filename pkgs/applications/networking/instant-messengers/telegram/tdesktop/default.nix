@@ -70,7 +70,7 @@ let
 in
 env.mkDerivation rec {
   pname = "telegram-desktop";
-  version = "3.4.3";
+  version = "3.5.2";
   # Note: Update via pkgs/applications/networking/instant-messengers/telegram/tdesktop/update.py
 
   # Telegram-Desktop with submodules
@@ -79,7 +79,7 @@ env.mkDerivation rec {
     repo = "tdesktop";
     rev = "v${version}";
     fetchSubmodules = true;
-    sha256 = "0w8llqc4ffhp4gkvk6cyxah16yxm15am0msg3qn39fi2qqnm01x8";
+    sha256 = "05324xvb00yz2jfigyy7izk8wnq8phm3sidw62kf7xqyh63qnrzh";
   };
 
   postPatch = ''
@@ -189,6 +189,6 @@ env.mkDerivation rec {
     platforms = platforms.linux;
     homepage = "https://desktop.telegram.org/";
     changelog = "https://github.com/telegramdesktop/tdesktop/releases/tag/v${version}";
-    maintainers = with maintainers; [ oxalica vanilla ];
+    maintainers = with maintainers; [ oxalica ];
   };
 }

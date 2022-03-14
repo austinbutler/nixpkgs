@@ -98,7 +98,7 @@ We use jbidwatcher as an example for a discontinued project here.
 1. Create a new branch for your change, e.g. `git checkout -b jbidwatcher`
 1. Remove the actual package including its directory, e.g. `rm -rf pkgs/applications/misc/jbidwatcher`
 1. Remove the package from the list of all packages (`pkgs/top-level/all-packages.nix`).
-1. Add an alias for the package name in `pkgs/top-level/aliases.nix` (There is also `pkgs/misc/vim-plugins/aliases.nix`. Package sets typically do not have aliases, so we can't add them there.)
+1. Add an alias for the package name in `pkgs/top-level/aliases.nix` (There is also `pkgs/applications/editors/vim/plugins/aliases.nix`. Package sets typically do not have aliases, so we can't add them there.)
 
     For example in this case:
 
@@ -227,7 +227,7 @@ digraph {
 }
 ```
 
-[This GitHub Action](https://github.com/NixOS/nixpkgs/blob/master/.github/workflows/merge-staging.yml) brings changes from `master` to `staging-next` and from `staging-next` to `staging` every 6 hours.
+[This GitHub Action](https://github.com/NixOS/nixpkgs/blob/master/.github/workflows/periodic-merge-6h.yml) brings changes from `master` to `staging-next` and from `staging-next` to `staging` every 6 hours.
 
 
 ### Master branch {#submitting-changes-master-branch}

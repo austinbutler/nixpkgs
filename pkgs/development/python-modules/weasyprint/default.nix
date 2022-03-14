@@ -27,7 +27,7 @@
 
 buildPythonPackage rec {
   pname = "weasyprint";
-  version = "54.0";
+  version = "54.2";
   disabled = !isPy3k;
 
   format = "pyproject";
@@ -35,7 +35,7 @@ buildPythonPackage rec {
   src = fetchPypi {
     inherit version;
     pname = "weasyprint";
-    sha256 = "0aeda9a045c7881289420cac917cc57115b1243e476187338e66d593dd000853";
+    sha256 = "sha256-1eiqguPiokd6RUPwZG2fsUCAybo0oIWXUesjdXzABGY=";
   };
 
   patches = [
@@ -77,6 +77,9 @@ buildPythonPackage rec {
   disabledTests = [
     # needs the Ahem font (fails on macOS)
     "test_font_stretch"
+    # sensitive to sandbox environments
+    "test_tab_size"
+    "test_tabulation_character"
   ];
 
   FONTCONFIG_FILE = "${fontconfig.out}/etc/fonts/fonts.conf";

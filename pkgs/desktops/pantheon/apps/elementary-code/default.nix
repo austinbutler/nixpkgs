@@ -1,30 +1,30 @@
 { lib
 , stdenv
 , fetchFromGitHub
+, fetchpatch
 , nix-update-script
-, pkg-config
+, appstream
+, desktop-file-utils
 , meson
 , ninja
-, vala
+, pkg-config
+, polkit
 , python3
-, desktop-file-utils
-, gtk3
-, granite
-, libgee
-, libhandy
-, elementary-icon-theme
-, appstream
-, libpeas
+, vala
+, wrapGAppsHook
 , editorconfig-core-c
+, elementary-icon-theme
+, granite
+, gtk3
 , gtksourceview4
 , gtkspell3
+, libgee
+, libgit2-glib
+, libhandy
+, libpeas
 , libsoup
 , vte
-, webkitgtk
 , ctags
-, libgit2-glib
-, wrapGAppsHook
-, polkit
 }:
 
 stdenv.mkDerivation rec {
@@ -38,11 +38,14 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-AXmMcPj2hf33G5v3TUg+eZwaKOdVlRvoVXglMJFHRjw=";
   };
 
-  passthru = {
-    updateScript = nix-update-script {
-      attrPath = "pantheon.${pname}";
-    };
-  };
+  patches = [
+    # Fix build with meson 0.61
+    # https://github.com/elementary/code/pull/1165
+    (fetchpatch {
+      url = "https://github.com/elementary/code/commit/a2607cce3a6b1bb62d02456456d3cbc3c6530bb0.patch";
+      sha256 = "sha256-VKR83IOUYsQhBRlU9JUTlMJtXWv/AyG4wDsjMU2vmU8=";
+    })
+  ];
 
   nativeBuildInputs = [
     appstream
@@ -57,7 +60,6 @@ stdenv.mkDerivation rec {
   ];
 
   buildInputs = [
-    ctags
     editorconfig-core-c
     elementary-icon-theme
     granite
@@ -70,7 +72,6 @@ stdenv.mkDerivation rec {
     libpeas
     libsoup
     vte
-    webkitgtk
   ];
 
   # ctags needed in path by outline plugin
@@ -84,6 +85,12 @@ stdenv.mkDerivation rec {
     chmod +x meson/post_install.py
     patchShebangs meson/post_install.py
   '';
+
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
+    };
+  };
 
   meta = with lib; {
     description = "Code editor designed for elementary OS";

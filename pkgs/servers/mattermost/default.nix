@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchurl, fetchFromGitHub, buildGo117Package, buildEnv
+{ lib, stdenv, fetchurl, fetchFromGitHub, buildGoPackage, buildEnv
 
 # The suffix for the Mattermost version.
 , versionSuffix ? "nixpkgs"
@@ -10,11 +10,11 @@
 , storePathAsBuildHash ? false }:
 
 let
-  version = "6.2.1";
+  version = "6.3.3";
 
   goPackagePath = "github.com/mattermost/mattermost-server";
 
-  mattermost-server-build = buildGo117Package rec {
+  mattermost-server-build = buildGoPackage rec {
     pname = "mattermost-server";
     inherit version goPackagePath;
 
@@ -22,7 +22,7 @@ let
       owner = "mattermost";
       repo = "mattermost-server";
       rev = "v${version}";
-      sha256 = "WjBsbW7aEI+MX2I1LrEJh8JgNQ4Do7PpeshXgaQAk1s=";
+      sha256 = "OSN8Bscgv7rPfKIfZ3ZnegdgsygFpSM7/vGWojj0P3k=";
     };
 
     ldflags = [
@@ -65,7 +65,7 @@ let
 
     src = fetchurl {
       url = "https://releases.mattermost.com/${version}/mattermost-${version}-linux-amd64.tar.gz";
-      sha256 = "pV/MwMCK8vMzASXuM1+ePcarIgrcNAkFLEdmPya911E=";
+      sha256 = "Og9DUGyE4cWYF7EQP/8szIrWM1Ldqnpqc+HW+L7XApo=";
     };
 
     installPhase = ''
@@ -76,6 +76,9 @@ let
         mattermost/fonts \
         mattermost/templates \
         mattermost/config
+
+      # For some reason a bunch of these files are +x...
+      find $out -type f -exec chmod -x {} \;
     '';
   };
 

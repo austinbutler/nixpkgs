@@ -8,17 +8,19 @@
 
 buildDotnetModule rec {
   pname = "discordchatexporter-cli";
-  version = "2.30.1";
+  version = "2.32";
 
   src = fetchFromGitHub {
     owner = "tyrrrz";
     repo = "discordchatexporter";
     rev = version;
-    sha256 = "JSYIhd+DNVOKseHtWNNChECR5hKr+ntu1Yyqtnlg8rM=";
+    sha256 = "xRoF/HJ4ekHL/Uk6ISQP+65nChRT+n9xLTYcZMJxyvo=";
   };
 
+  dotnet-sdk = dotnetCorePackages.sdk_6_0;
+  dotnet-runtime = dotnetCorePackages.runtime_6_0;
+
   projectFile = "DiscordChatExporter.Cli/DiscordChatExporter.Cli.csproj";
-  dotnet-runtime = dotnetCorePackages.runtime_3_1;
   nugetDeps = ./deps.nix;
 
   nativeBuildInputs = [ autoPatchelfHook ];

@@ -20,7 +20,6 @@
 , elementary-dock
 , bamf
 , sqlite
-, libdbusmenu-gtk3
 , zeitgeist
 , glib-networking
 , elementary-icon-theme
@@ -32,7 +31,7 @@
 
 stdenv.mkDerivation rec {
   pname = "elementary-files";
-  version = "6.1.1";
+  version = "6.1.2";
 
   outputs = [ "out" "dev" ];
 
@@ -40,7 +39,7 @@ stdenv.mkDerivation rec {
     owner = "elementary";
     repo = "files";
     rev = version;
-    sha256 = "sha256-5TSzV8MQG81aCCR8yiCPhKJaLrp/fwf4mjP32KkcbbY=";
+    sha256 = "sha256-g9g4wJXjjudk4Qt96XGUiV/X86Ae2lqhM+psh9h+XFE=";
   };
 
   nativeBuildInputs = [
@@ -64,7 +63,6 @@ stdenv.mkDerivation rec {
     gtk3
     libcanberra
     libcloudproviders
-    libdbusmenu-gtk3
     libgee
     libgit2-glib
     libhandy

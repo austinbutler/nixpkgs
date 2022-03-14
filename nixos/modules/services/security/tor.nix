@@ -794,6 +794,11 @@ in
               };
             }));
           };
+          options.ShutdownWaitLength = mkOption {
+            type = types.int;
+            default = 30;
+            description = descriptionGeneric "ShutdownWaitLength";
+          };
           options.SocksPolicy = optionStrings "SocksPolicy" // {
             example = ["accept *:*"];
           };
@@ -957,7 +962,7 @@ in
               '') onion.authorizedClients ++
               optional (onion.secretKey != null) ''
                 install -d -o tor -g tor -m 0700 ${escapeShellArg onion.path}
-                key="$(cut -f1 -d: ${escapeShellArg onion.secretKey})"
+                key="$(cut -f1 -d: ${escapeShellArg onion.secretKey} | head -1)"
                 case "$key" in
                  ("== ed25519v"*"-secret")
                   install -o tor -g tor -m 0400 ${escapeShellArg onion.secretKey} ${escapeShellArg onion.path}/hs_ed25519_secret_key;;
@@ -977,7 +982,7 @@ in
         ExecStart = "${cfg.package}/bin/tor -f ${torrc}";
         ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
         KillSignal = "SIGINT";
-        TimeoutSec = 30;
+        TimeoutSec = cfg.settings.ShutdownWaitLength + 30; # Wait a bit longer than ShutdownWaitLength before actually timing out
         Restart = "on-failure";
         LimitNOFILE = 32768;
         RuntimeDirectory = [

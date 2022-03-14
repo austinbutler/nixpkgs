@@ -87,7 +87,7 @@ let
   fteLibPath = makeLibraryPath [ stdenv.cc.cc gmp ];
 
   # Upstream source
-  version = "11.0.3";
+  version = "11.0.7";
 
   lang = "en-US";
 
@@ -96,16 +96,18 @@ let
       urls = [
         "https://dist.torproject.org/torbrowser/${version}/tor-browser-linux64-${version}_${lang}.tar.xz"
         "https://tor.eff.org/dist/torbrowser/${version}/tor-browser-linux64-${version}_${lang}.tar.xz"
+        "https://tor.calyxinstitute.org/dist/torbrowser/${version}/tor-browser-linux64-${version}_${lang}.tar.xz"
       ];
-      sha256 = "1a2nxxmjg1gk8p0bxxjqx2g9bwv4ivz8hndabg31nglzv83r7p35";
+      sha256 = "197yf0abcb98kqds0xvki0b52rlhzyzdc98zmhrn7y8gmahc84cz";
     };
 
     i686-linux = fetchurl {
       urls = [
         "https://dist.torproject.org/torbrowser/${version}/tor-browser-linux32-${version}_${lang}.tar.xz"
         "https://tor.eff.org/dist/torbrowser/${version}/tor-browser-linux32-${version}_${lang}.tar.xz"
+        "https://tor.calyxinstitute.org/dist/torbrowser/${version}/tor-browser-linux32-${version}_${lang}.tar.xz"
       ];
-      sha256 = "0fjq6bj2b6rd66ky9i4p7asda0ghdcm6q0fnr92yan5x77pji73m";
+      sha256 = "0yylfsgmnfn6zww0r6kp1d1wmmb0lfa4lqwkgr7d8rzi6q9spmqk";
     };
   };
 in
@@ -125,7 +127,7 @@ stdenv.mkDerivation rec {
     desktopName = "Tor Browser";
     genericName = "Web Browser";
     comment = meta.description;
-    categories = "Network;WebBrowser;Security;";
+    categories = [ "Network" "WebBrowser" "Security" ];
   };
 
   buildCommand = ''

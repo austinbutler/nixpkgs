@@ -1,31 +1,32 @@
 { lib
 , buildPythonPackage
 , pythonOlder
-, fetchFromGitHub
+, fetchPypi
 , pyaes
 , pysocks
 , async-lru
+, tgcrypto
 , pytestCheckHook
 , pytest-asyncio
 }:
 
 buildPythonPackage rec {
   pname = "pyrogram";
-  version = "1.3.0";
+  version = "1.4.8";
 
   disabled = pythonOlder "3.6";
 
-  src = fetchFromGitHub {
-    owner = "pyrogram";
-    repo = "pyrogram";
-    rev = "v${version}";
-    sha256 = "09rxdd5bl1yby76xd3wcyrmlb4glixs637nj1w05gh2rp3gppkf8";
+  src = fetchPypi {
+    pname = "Pyrogram";
+    inherit version;
+    hash = "sha256-mUJEV8DLYhXNvYiuiVDCfgMmZRDCNZuydngj9C9FvQU=";
   };
 
   propagatedBuildInputs = [
     pyaes
     pysocks
     async-lru
+    tgcrypto
   ];
 
   checkInputs = [

@@ -41,11 +41,6 @@ self: super: {
   ghcjs-base = null;
   ghcjs-prim = null;
 
-  # enable using a local hoogle with extra packagages in the database
-  # nix-shell -p "haskellPackages.hoogleLocal { packages = with haskellPackages; [ mtl lens ]; }"
-  # $ hoogle server
-  hoogleLocal = { packages ? [] }: self.callPackage ./hoogle.nix { inherit packages; };
-
   # Needs older QuickCheck version
   attoparsec-varword = dontCheck super.attoparsec-varword;
 
@@ -59,14 +54,20 @@ self: super: {
   # There's an open PR updating the lower bound for `network`:
   # > https://github.com/abhinav/pinch/pull/46
   # With that said version tracked for `network` right now is 3.1.1.1 so we're
-  # replacing the network pinch uses with `network_3_1_2_5` for now.
+  # replacing the network pinch uses with `network_3_1_2_7` for now.
   pinch = super.pinch.overrideScope (self : super: {
-    network = self.network_3_1_2_5;
+    network = self.network_3_1_2_7;
   });
 
   # We can remove this once fakedata version gets to 1.0.1 as the test suite
   # works fine there.
   fakedata = dontCheck super.fakedata;
+
+  # The latest release on hackage has an upper bound on containers which
+  # breaks the build, though it works with the version of containers present
+  # and the upper bound doesn't exist in code anymore:
+  # > https://github.com/roelvandijk/numerals
+  numerals = doJailbreak (dontCheck super.numerals);
 
   # This test keeps being aborted because it runs too quietly for too long
   Lazy-Pbkdf2 = if pkgs.stdenv.isi686 then dontCheck super.Lazy-Pbkdf2 else super.Lazy-Pbkdf2;
@@ -82,7 +83,7 @@ self: super: {
       name = "git-annex-${super.git-annex.version}-src";
       url = "git://git-annex.branchable.com/";
       rev = "refs/tags/" + super.git-annex.version;
-      sha256 = "1x2d0gfqxxfygzigm34n0spaxh8bwipxs9317f6c5lkpj916p957";
+      sha256 = "11idvicisp4wnw15lk7f9fs0kqpssngs1j8f98050f3jrqsccj0j";
       # delete android and Android directories which cause issues on
       # darwin (case insensitive directory). Since we don't need them
       # during the build process, we can delete it to prevent a hash
@@ -91,6 +92,12 @@ self: super: {
         rm -r $out/doc/?ndroid*
       '';
     };
+
+    # Git annex provides a restricted login shell. Setting
+    # passthru.shellPath here allows a user's login shell to be set to
+    # `git-annex-shell` by making `shell = haskellPackages.git-annex`.
+    # https://git-annex.branchable.com/git-annex-shell/
+    passthru.shellPath = "/bin/git-annex-shell";
   }) super.git-annex;
 
   # Fix test trying to access /home directory
@@ -186,6 +193,7 @@ self: super: {
   # base bound
   digit = doJailbreak super.digit;
 
+  # hnix.patch needed until the next release is bumped
   hnix = generateOptparseApplicativeCompletion "hnix"
     (overrideCabal (drv: {
       # 2020-06-05: HACK: does not pass own build suite - `dontCheck`
@@ -311,7 +319,6 @@ self: super: {
   network-dbus = dontCheck super.network-dbus;
   notcpp = dontCheck super.notcpp;
   ntp-control = dontCheck super.ntp-control;
-  numerals = dontCheck super.numerals;
   odpic-raw = dontCheck super.odpic-raw; # needs a running oracle database server
   opaleye = dontCheck super.opaleye;
   openpgp = dontCheck super.openpgp;
@@ -1114,14 +1121,16 @@ self: super: {
   # https://github.com/elliottt/hsopenid/issues/15
   openid = markBroken super.openid;
 
-  # The test suite needs the packages's executables in $PATH to succeed.
-  arbtt = overrideCabal (drv: {
+  # Version constraints on test dependency tasty-golden need to be relaxed:
+  # https://github.com/nomeata/arbtt/pull/146
+  arbtt = doJailbreak (overrideCabal (drv: {
+    # The test suite needs the packages's executables in $PATH to succeed.
     preCheck = ''
       for i in $PWD/dist/build/*; do
         export PATH="$i:$PATH"
       done
     '';
-  }) super.arbtt;
+  }) super.arbtt);
 
   # https://github.com/erikd/hjsmin/issues/32
   hjsmin = dontCheck super.hjsmin;
@@ -1190,7 +1199,6 @@ self: super: {
   # The test suite depends on an impure cabal-install installation in
   # $HOME, which we don't have in our build sandbox.
   cabal-install-parsers = dontCheck super.cabal-install-parsers;
-  cabal-install-parsers_0_4_2 = dontCheck super.cabal-install-parsers_0_4_2;
 
   # 2021-08-18: Erroneously  claims that it needs a newer HStringTemplate (>= 0.8.8) than stackage.
   gitit = doJailbreak super.gitit;
@@ -1265,13 +1273,6 @@ self: super: {
 
   # Tests disabled and broken override needed because of missing lib chrome-test-utils: https://github.com/reflex-frp/reflex-dom/issues/392
   reflex-dom-core = doDistribute (unmarkBroken (dontCheck (doJailbreak super.reflex-dom-core)));
-
-  # add unreleased commit fixing version constraint as a patch
-  # Can be removed if https://github.com/lpeterse/haskell-utc/issues/8 is resolved
-  utc = appendPatch (pkgs.fetchpatch {
-    url = "https://github.com/lpeterse/haskell-utc/commit/e4502c08591e80d411129bb7c0414539f6302aaf.diff";
-    sha256 = "0v6kv1d4syjzgzc2s7a76c6k4vminlcq62n7jg3nn9xd00gwmmv7";
-  }) super.utc;
 
   # Tests disabled because they assume to run in the whole jsaddle repo and not the hackage tarbal of jsaddle-warp.
   jsaddle-warp = dontCheck super.jsaddle-warp;
@@ -1456,10 +1457,6 @@ self: super: {
   # 2021-11-20: Testsuite hangs.
   # https://github.com/haskell/haskell-language-server/issues/2375
   hls-pragmas-plugin = dontCheck super.hls-pragmas-plugin;
-
-  # 2021-11-23: Too strict bounds on ghcide, pending new release
-  hls-rename-plugin = assert super.hls-rename-plugin.version == "1.0.0.0";
-    doJailbreak super.hls-rename-plugin;
 
   # 2021-03-21: Test hangs
   # https://github.com/haskell/haskell-language-server/issues/1562
@@ -1747,6 +1744,8 @@ self: super: {
   # Too strict version bounds on ghc-events
   # https://github.com/haskell/ThreadScope/issues/118
   threadscope = doJailbreak super.threadscope;
+  # https://github.com/mpickering/hs-speedscope/issues/16
+  hs-speedscope = doJailbreak super.hs-speedscope;
 
   # Too strict version bounds on tasty
   # Can likely be removed next week (2021-04-09) when 1.1.1.1 is released.
@@ -1867,29 +1866,22 @@ self: super: {
   # 2021-05-09: Restrictive bound on hspec-golden. Dep removed in newer versions.
   tomland = assert super.tomland.version == "1.3.2.0"; doJailbreak super.tomland;
 
-  # 2021-05-09 haskell-ci pins ShellCheck 0.7.1
-  # https://github.com/haskell-CI/haskell-ci/issues/507
-  # 2021-09-05 haskell-ci needs Cabal 3.4,
-  # cabal-install-parsers uses Cabal 3.6 since 0.4.3
-  haskell-ci = super.haskell-ci.override {
-    ShellCheck = self.ShellCheck_0_7_1;
-    cabal-install-parsers = self.cabal-install-parsers_0_4_2;
-  };
+  # 2022-01-16 haskell-ci needs Cabal 3.6,
+  haskell-ci = super.haskell-ci.overrideScope (self: super: {
+    attoparsec = self.attoparsec_0_14_4;
+    Cabal = self.Cabal_3_6_2_0;
+  });
 
-  # Build haskell-ci from git repository, including some useful fixes,
-  # e. g. required for generating the workflows for the cabal2nix repository
-  haskell-ci-unstable = (overrideSrc rec {
-    version = "0.13.20211116-${builtins.substring 0 7 src.rev}";
+  # Build haskell-ci from git repository
+  haskell-ci-unstable = overrideSrc rec {
+    version = "0.14.1-${builtins.substring 0 7 src.rev}";
     src = pkgs.fetchFromGitHub {
       owner = "haskell-CI";
       repo = "haskell-ci";
-      rev = "b61df11e7f6010ce09920c231321ab1545a990b5";
-      sha256 = "0v6mqpavz5v161milq6a3x9gzap0pgksd3h4rwi2s3f9b15sczcy";
+      rev = "8311a999b8e8be3aa31f65f314def256aa2d5535";
+      sha256 = "169jaqm4xs2almmvqsk567wayxs0g6kn0l5877c03hzr3d9ykrav";
     };
-  } super.haskell-ci).overrideScope (self: super: {
-    attoparsec = self.attoparsec_0_14_3;
-    Cabal = self.Cabal_3_6_2_0;
-  });
+  } self.haskell-ci;
 
   Frames-streamly = super.Frames-streamly.override {
     relude = super.relude_1_0_0_1;
@@ -2010,7 +2002,7 @@ self: super: {
   ghcup = doJailbreak (super.ghcup.overrideScope (self: super: {
     hspec-golden-aeson = self.hspec-golden-aeson_0_9_0_0;
     optics = self.optics_0_4;
-    streamly = self.streamly_0_8_1_1;
+    streamly = doJailbreak self.streamly_0_8_1_1;
     Cabal = self.Cabal_3_6_2_0;
     libyaml-streamly = markUnbroken super.libyaml-streamly;
   }));
@@ -2046,13 +2038,13 @@ self: super: {
   # 2021-08-18: streamly-posix was released with hspec 2.8.2, but it works with older versions too.
   streamly-posix = doJailbreak super.streamly-posix;
 
-  # 2021-09-13: hls 1.3 needs a newer lsp than stackage-lts. (lsp >= 1.2.0.1)
+  # 2021-09-13: hls 1.6 needs a newer lsp than stackage-lts. (lsp >= 1.2.0.1)
   # (hls is nearly the only consumer, but consists of 18 packages, so we bump lsp globally.)
-  lsp = doDistribute self.lsp_1_2_0_1;
-  lsp-types = doDistribute self.lsp-types_1_3_0_1;
+  lsp = doDistribute self.lsp_1_4_0_0;
+  lsp-types = doDistribute self.lsp-types_1_4_0_1;
   # Not running the "example" test because it requires a binary from lsps test
   # suite which is not part of the output of lsp.
-  lsp-test = doDistribute (overrideCabal (old: { testTarget = "tests func-test"; }) self.lsp-test_0_14_0_1);
+  lsp-test = doDistribute (overrideCabal (old: { testTarget = "tests func-test"; }) self.lsp-test_0_14_0_2);
 
   # 2021-09-14: Tests are flaky.
   hls-splice-plugin = dontCheck super.hls-splice-plugin;
@@ -2070,11 +2062,11 @@ self: super: {
 
   # Needs network >= 3.1.2
   quic = super.quic.overrideScope (self: super: {
-    network = self.network_3_1_2_5;
+    network = self.network_3_1_2_7;
   });
 
   http3 = super.http3.overrideScope (self: super: {
-    network = self.network_3_1_2_5;
+    network = self.network_3_1_2_7;
   });
 
   # Fixes https://github.com/NixOS/nixpkgs/issues/140613
@@ -2109,7 +2101,7 @@ self: super: {
 
   # Needs brick > 0.64
   nix-tree = super.nix-tree.override {
-    brick = self.brick_0_65;
+    brick = self.brick_0_67;
   };
 
   # build newer version for `pkgs.shellcheck`
@@ -2229,6 +2221,16 @@ self: super: {
   # Invalid CPP in test suite: https://github.com/cdornan/memory-cd/issues/1
   memory-cd = dontCheck super.memory-cd;
 
+  # raaz-0.3 onwards uses backpack and it does not play nicely with
+  # parallel builds using -j
+  #
+  # See: https://gitlab.haskell.org/ghc/ghc/-/issues/17188
+  #
+  # Overwrite the build cores
+  raaz = overrideCabal (drv: {
+    enableParallelBuilding = false;
+  }) super.raaz;
+
   # https://github.com/andreymulik/sdp/issues/3
   sdp = disableLibraryProfiling super.sdp;
   sdp-binary = disableLibraryProfiling super.sdp-binary;
@@ -2240,6 +2242,10 @@ self: super: {
   sdp4text = disableLibraryProfiling super.sdp4text;
   sdp4unordered = disableLibraryProfiling super.sdp4unordered;
   sdp4vector = disableLibraryProfiling super.sdp4vector;
+
+  # Test suite fails to compile
+  # https://github.com/kuribas/mfsolve/issues/8
+  mfsolve = dontCheck super.mfsolve;
 
   hie-bios = appendPatches [
     # Accounts for a breaking change in GHC 9.0.2 via CPP

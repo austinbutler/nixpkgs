@@ -1,8 +1,8 @@
-{ lib, buildGo117Module, fetchurl, fetchFromGitHub, nixosTests, tzdata, wire }:
+{ lib, buildGoModule, fetchurl, fetchFromGitHub, nixosTests, tzdata, wire }:
 
-buildGo117Module rec {
+buildGoModule rec {
   pname = "grafana";
-  version = "8.3.3";
+  version = "8.4.3";
 
   excludedPackages = "\\(alert_webhook_listener\\|clean-swagger\\|release_publisher\\|slow_proxy\\|slow_proxy_mac\\|macaron\\)";
 
@@ -10,15 +10,15 @@ buildGo117Module rec {
     rev = "v${version}";
     owner = "grafana";
     repo = "grafana";
-    sha256 = "sha256-kfeYAEwHal5bfCmNe2l5iBLM4D3eYFaVtVhXdN90o+I=";
+    sha256 = "sha256-+d4pcuNLbM2PY1rFpnIjoakpr63kMqI/SjpTRZecRXw=";
   };
 
   srcStatic = fetchurl {
     url = "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz";
-    sha256 = "sha256-iUKMUg4AS8ufr3YY3UyB/2JJYGTL8urT4bnbz0dsbxg=";
+    sha256 = "sha256-l3GPSUci812KbHKMXHtS4OlvYyuKlBOeQCLtLvvkhzI=";
   };
 
-  vendorSha256 = "sha256-FHVlCL4ZyHO7Ebi31K1wXcMiN6hiQjVz+5jkJx8R7jc=";
+  vendorSha256 = "sha256-RugV5cHlpR739CA1C/7FkXasvkv18m7pPsK6mxfSkC0=";
 
   nativeBuildInputs = [ wire ];
 
