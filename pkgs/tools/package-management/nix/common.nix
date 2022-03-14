@@ -179,7 +179,7 @@ stdenv.mkDerivation {
 
   # socket path becomes too long otherwise
   preInstallCheck = lib.optionalString stdenv.isDarwin ''
-    export TMPDIR=$NIX_BUILD_TOP
+    export TMPDIR=/tmp
   ''
   # See https://github.com/NixOS/nix/issues/5687
   + lib.optionalString (atLeast25 && stdenv.isDarwin) ''
