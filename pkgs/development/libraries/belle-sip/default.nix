@@ -1,4 +1,4 @@
-{ antlr3_4
+{ belr
 , bctoolbox
 , cmake
 , fetchFromGitLab
@@ -11,7 +11,7 @@
 
 stdenv.mkDerivation rec {
   pname = "belle-sip";
-  version = "4.5.14";
+  version = "5.1.0";
 
   src = fetchFromGitLab {
     domain = "gitlab.linphone.org";
@@ -19,10 +19,10 @@ stdenv.mkDerivation rec {
     group = "BC";
     repo = pname;
     rev = version;
-    sha256 = "sha256-L6dhgBJrzYgBuMNd2eMZJCqB/GIZjKipfn1SffxBFWw=";
+    sha256 = "sha256-ORscgDMPKj9kpcxXOk7BWbReDBhoVkUsBEEG3pMlTuQ=";
   };
 
-  nativeBuildInputs = [ antlr3_4 cmake ];
+  nativeBuildInputs = [ belr cmake ];
 
   buildInputs = [ zlib ];
 
