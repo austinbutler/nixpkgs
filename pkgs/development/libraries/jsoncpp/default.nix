@@ -2,7 +2,7 @@
 
 stdenv.mkDerivation rec {
   pname = "jsoncpp";
-  version = "1.9.4";
+  version = "1.9.5";
 
   outputs = ["out" "dev"];
 
@@ -10,16 +10,8 @@ stdenv.mkDerivation rec {
     owner = "open-source-parsers";
     repo = "jsoncpp";
     rev = version;
-    sha256 = "0qnx5y6c90fphl9mj9d20j2dfgy6s5yr5l0xnzid0vh71zrp6jwv";
+    sha256 = "sha256-OyfJD19g8cT9wOD0hyJyEw4TbaxZ9eY04396U/7R+hs=";
   };
-
-  patches = [
-    # Fix for https://github.com/open-source-parsers/jsoncpp/issues/1235.
-    (fetchpatch {
-      url = "https://github.com/open-source-parsers/jsoncpp/commit/ac2870298ed5b5a96a688d9df07461b31f83e906.patch";
-      sha256 = "02wswhiwypmf1jn3rj9q1fw164kljiv4l8h0q6wyijzr77hq4wsg";
-    })
-  ];
 
   /* During darwin bootstrap, we have a cp that doesn't understand the
    * --reflink=auto flag, which is used in the default unpackPhase for dirs
@@ -43,7 +35,7 @@ stdenv.mkDerivation rec {
   cmakeFlags = [
     "-DBUILD_SHARED_LIBS=ON"
     "-DBUILD_STATIC_LIBS=OFF"
-    "-DBUILD_OBJECT_LIBS=OFF"
+    "-DBUILD_OBJECT_LIBS=ON"
     "-DJSONCPP_WITH_CMAKE_PACKAGE=ON"
   ] ++ lib.optional (stdenv.buildPlatform != stdenv.hostPlatform) "-DJSONCPP_WITH_TESTS=OFF";
 
