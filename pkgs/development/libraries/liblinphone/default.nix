@@ -16,6 +16,7 @@
 , graphviz
 , gtk2
 , intltool
+, jsoncpp
 , libexosip
 , libmatroska
 , libnotify
@@ -47,7 +48,7 @@
 
 stdenv.mkDerivation rec {
   pname = "liblinphone";
-  version = "4.5.17";
+  version = "5.1.13";
 
   src = fetchFromGitLab {
     domain = "gitlab.linphone.org";
@@ -55,7 +56,7 @@ stdenv.mkDerivation rec {
     group = "BC";
     repo = pname;
     rev = version;
-    sha256 = "sha256-ryyT4bG3lnE72ydvCAoiT3IeHY4mZwX9nCqaTRC1wyc=";
+    sha256 = "sha256-xzoUDPo88D8GyhyGqVEe9iNWUyOJVxYuFORyopJ5GJs=";
   };
 
   # Do not build static libraries
@@ -78,6 +79,7 @@ stdenv.mkDerivation rec {
     gdk-pixbuf
     glib
     gtk2
+    jsoncpp
     libX11
     libexosip
     libmatroska
