@@ -50,6 +50,7 @@ with lib; let
     DisplayServerThreads auto
     DisplayEncoderThreads auto
     EnableDirectXSupport 0
+    WaylandModes "compositor,drm"
   '';
 in {
   options.services.nxserver = {
@@ -136,7 +137,7 @@ in {
       };
     };
 
-    networking.firewall.allowedTCPPorts = mkIf (cfg.openFirewall) [4000];
+    networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall [4000];
 
     systemd.services.nxserver = {
       description = "NoMachine Server daemon";
