@@ -16,11 +16,11 @@
 
 stdenv.mkDerivation rec {
   pname = "expat";
-  version = "2.4.4";
+  version = "2.4.7";
 
   src = fetchurl {
     url = "https://github.com/libexpat/libexpat/releases/download/R_${lib.replaceStrings ["."] ["_"] version}/${pname}-${version}.tar.xz";
-    sha256 = "sha256-tdJdbjczUcLtGbVitHMtAdJYmsjI6eeWLY3xIHzDEbg=";
+    sha256 = "0zbss0dssn17mjmvk17qfi5cmvm0lcyzs62cwvqr219hhl864xcq";
   };
 
   outputs = [ "out" "dev" ]; # TODO: fix referrers
@@ -45,6 +45,7 @@ stdenv.mkDerivation rec {
 
   passthru.tests = {
     inherit python3;
+    inherit (python3.pkgs) xmltodict;
     inherit (haskellPackages) hexpat;
     inherit (perlPackages) XMLSAXExpat XMLParser;
     inherit (luaPackages) luaexpat;

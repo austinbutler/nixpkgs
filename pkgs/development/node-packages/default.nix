@@ -127,7 +127,15 @@ let
     # ../../applications/video/epgstation
     epgstation = super."epgstation-../../applications/video/epgstation".override (drv: {
       meta = drv.meta // {
-        broken = true; # not really broken, see the comment above
+        platforms = pkgs.lib.platforms.none;
+      };
+    });
+
+    # NOTE: this is a stub package to fetch npm dependencies for
+    # ../../applications/video/epgstation/client
+    epgstation-client = super."epgstation-client-../../applications/video/epgstation/client".override (drv: {
+      meta = drv.meta // {
+        platforms = pkgs.lib.platforms.none;
       };
     });
 
@@ -228,7 +236,7 @@ let
 
     near-cli = super.near-cli.override {
       nativeBuildInputs = with pkgs; [
-        libusb
+        libusb1
         nodePackages.prebuild-install
         nodePackages.node-gyp-build
         pkg-config
@@ -269,6 +277,14 @@ let
           (fetchpatch {
             url = "https://github.com/svanderburg/node2nix/commit/e4c951971df6c9f9584c7252971c13b55c369916.patch";
             sha256 = "0w8fcyr12g2340rn06isv40jkmz2khmak81c95zpkjgipzx7hp7w";
+          })
+          # handle package alias in dependencies
+          # https://github.com/svanderburg/node2nix/pull/240
+          #
+          # TODO: remove after node2nix 1.10.0
+          (fetchpatch {
+            url = "https://github.com/svanderburg/node2nix/commit/644e90c0304038a446ed53efc97e9eb1e2831e71.patch";
+            sha256 = "sha256-sQgVf80H1ouUjzHq+2d9RO4a+o++kh+l+FOTNXfPBH0=";
           })
         ];
       };
@@ -327,15 +343,22 @@ let
         wrapProgram "$out/bin/postcss" \
           --prefix NODE_PATH : ${self.postcss}/lib/node_modules \
           --prefix NODE_PATH : ${self.autoprefixer}/lib/node_modules
+        ln -s '${self.postcss}/lib/node_modules/postcss' "$out/lib/node_modules/postcss"
       '';
       passthru.tests = {
         simple-execution = pkgs.callPackage ./package-tests/postcss-cli.nix {
           inherit (self) postcss-cli;
         };
       };
-      meta.mainProgram = "postcss";
+      meta = {
+        mainProgram = "postcss";
+        maintainers = with lib.maintainers; [ Luflosi ];
+      };
     };
 
+    # To update prisma, please first update prisma-engines to the latest
+    # version. Then change the correct hash to this package. The PR should hold
+    # two commits: one for the engines and the other one for the node package.
     prisma = super.prisma.override rec {
       nativeBuildInputs = [ pkgs.makeWrapper ];
 
@@ -343,7 +366,7 @@ let
 
       src = fetchurl {
         url = "https://registry.npmjs.org/prisma/-/prisma-${version}.tgz";
-        sha512 = "sha512-dAld12vtwdz9Rz01nOjmnXe+vHana5PSog8t0XGgLemKsUVsaupYpr74AHaS3s78SaTS5s2HOghnJF+jn91ZrA==";
+        sha512 = "sha512-ltCMZAx1i0i9xuPM692Srj8McC665h6E5RqJom999sjtVSccHSD8Z+HSdBN2183h9PJKvC5dapkn78dd0NWMBg==";
       };
       postInstall = with pkgs; ''
         wrapProgram "$out/bin/prisma" \
@@ -416,12 +439,36 @@ let
       '';
     };
 
+    thelounge-plugin-closepms = super.thelounge-plugin-closepms.override {
+      nativeBuildInputs = [ self.node-pre-gyp ];
+    };
+
+    thelounge-theme-flat-blue = super.thelounge-theme-flat-blue.override {
+      nativeBuildInputs = [ self.node-pre-gyp ];
+    };
+
+    thelounge-theme-flat-dark = super.thelounge-theme-flat-dark.override {
+      nativeBuildInputs = [ self.node-pre-gyp ];
+    };
+
     tsun = super.tsun.overrideAttrs (oldAttrs: {
       buildInputs = oldAttrs.buildInputs ++ [ pkgs.makeWrapper ];
       postInstall = ''
         wrapProgram "$out/bin/tsun" \
         --prefix NODE_PATH : ${self.typescript}/lib/node_modules
       '';
+    });
+
+    ts-node = super.ts-node.overrideAttrs (oldAttrs: {
+      buildInputs = oldAttrs.buildInputs ++ [ pkgs.makeWrapper ];
+      postInstall = ''
+        wrapProgram "$out/bin/ts-node" \
+        --prefix NODE_PATH : ${self.typescript}/lib/node_modules
+      '';
+    });
+
+    typescript = super.typescript.overrideAttrs (oldAttrs: {
+      meta = oldAttrs.meta // { mainProgram = "tsc"; };
     });
 
     typescript-language-server = super.typescript-language-server.override {

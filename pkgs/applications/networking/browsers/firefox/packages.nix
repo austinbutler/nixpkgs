@@ -7,16 +7,16 @@ in
 rec {
   firefox = common rec {
     pname = "firefox";
-    version = "97.0.1";
+    version = "99.0.1";
     src = fetchurl {
       url = "mirror://mozilla/firefox/releases/${version}/source/firefox-${version}.source.tar.xz";
-      sha512 = "8620aace77167593aab5acd230860eb3e67eeddc49c0aad0491b5dc20bd0ddb6089dbb8975aed241426f57b2ad772238b04d03b95390175f580cbd80bb6d5f6c";
+      sha512 = "0006b773ef1057a6e0b959d4f39849ad4a79272b38d565da98062b9aaf0effd2b729349c1f9fa10fccf7d2462d2c536b02c167ae6ad4556d6e519c6d22c25a7f";
     };
 
     meta = {
       description = "A web browser built from Firefox source tree";
       homepage = "http://www.mozilla.com/en-US/firefox/";
-      maintainers = with lib.maintainers; [ eelco lovesegfault hexa ];
+      maintainers = with lib.maintainers; [ lovesegfault hexa ];
       platforms = lib.platforms.unix;
       badPlatforms = lib.platforms.darwin;
       broken = stdenv.buildPlatform.is32bit; # since Firefox 60, build on 32-bit platforms fails with "out of memory".
@@ -32,10 +32,10 @@ rec {
 
   firefox-esr-91 = common rec {
     pname = "firefox-esr";
-    version = "91.6.0esr";
+    version = "91.8.0esr";
     src = fetchurl {
       url = "mirror://mozilla/firefox/releases/${version}/source/firefox-${version}.source.tar.xz";
-      sha512 = "3dd1929f93cdd087a93fc3597f32d9005c986b59832954e01a8c2472b179c92ad611eaa73d3fc000a08b838a0b70da73ff5ba82d6009160655ba6894cf04520e";
+      sha512 = "edea2c7d4d3d0322091b20b623019ef041090d9f89f33c8e3140f66a54624261f278257393db70d2038154de8ee02da0bee6ecf85c281f3558338da71fc173c3";
     };
 
     meta = {
@@ -78,5 +78,6 @@ rec {
   }).override {
     crashreporterSupport = false;
     enableOfficialBranding = false;
+    pgoSupport = false; # Profiling gets stuck and doesn't terminate.
   };
 }

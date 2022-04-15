@@ -119,15 +119,13 @@ stdenv.mkDerivation rec {
     # https://trac.sagemath.org/ticket/32959
     ./patches/linbox-1.7-upgrade.patch
 
-    # To emit better tracebacks, IPython 8 parses Python files using the ast
-    # module (via the stack_data package). Since Cython is a superset of Python,
-    # this results in no Cython code being printed in tracebacks. Fixing this
-    # properly is tracked in https://github.com/alexmojaki/stack_data/issues/21,
-    # but for now we just disable the corresponding test. An alternative would
-    # be to revert IPython's IPython/core/ultratb.py, but this would need to be
-    # Sage-specific (since it would worsen tracebacks for pure Python code).
-    # Sage tracks this at https://trac.sagemath.org/ticket/33170
-    ./patches/no-cython-sources-in-tracebacks-on-ipython8.patch
+    # https://trac.sagemath.org/ticket/33170
+    (fetchSageDiff {
+      base = "9.6.beta5";
+      name = "ipython-8.1-update.patch";
+      rev = "4d2b53f1541375861310af3a7f7109c1c2ed475d";
+      sha256 = "sha256-ELda/VBzsQH7NdFas69fQ35QPUoJCeLx/gxT1j7qGR8=";
+    })
 
     # https://trac.sagemath.org/ticket/32968
     (fetchSageDiff {
@@ -154,6 +152,25 @@ stdenv.mkDerivation rec {
       name = "sphinx-4.4-warnings.patch";
       rev = "97d7958bed441cf2ccc714d88f83d3a8426bc085";
       sha256 = "sha256-y1STE0oxswnijGCsBw8eHWWqpmT1XMznIfA0vvX9pFA=";
+    })
+
+    # adapted from https://trac.sagemath.org/ticket/23712#comment:22
+    ./patches/tachyon-renamed-focallength.patch
+
+    # https://trac.sagemath.org/ticket/33336
+    (fetchSageDiff {
+      base = "9.6.beta2";
+      name = "scipy-1.8-update.patch";
+      rev = "9c8235e44ffb509efa8a3ca6cdb55154e2b5066d";
+      sha256 = "sha256-bfc4ljNOxVnhlmxIuNbjbKl4vJXYq2tlF3Z8bbC8PWw=";
+    })
+
+    # https://trac.sagemath.org/ticket/33495
+    (fetchSageDiff {
+      base = "9.6.beta5";
+      name = "networkx-2.7-update.patch";
+      rev = "8452003846a7303100847d8d0ed642fc642c11d6";
+      sha256 = "sha256-A/XMouPlc2sjFp30L+56fBGJXydS2EtzfPOV98FCDqI=";
     })
   ];
 

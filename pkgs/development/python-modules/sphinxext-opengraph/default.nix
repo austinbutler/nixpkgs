@@ -8,13 +8,13 @@
 
 buildPythonPackage rec {
   pname = "sphinxext-opengraph";
-  version = "0.6.1";
+  version = "0.6.3";
 
   src = fetchFromGitHub {
     owner = "wpilibsuite";
     repo = "sphinxext-opengraph";
     rev = "v${version}";
-    sha256 = "sha256-kaKOKeztP89SLF4yrUFW1TTAEyAaCTm2XCcOH0b+Dzc=";
+    sha256 = "sha256-YR6TlsmND5IhLdbPbmtVhRN2vSZfx70g2a6Yn6y6L/M=";
   };
 
   propagatedBuildInputs = [

@@ -24,6 +24,9 @@ let
     customMemoryManagement = false;
   }).overrideDerivation (args: {
     patches = (args.patches or [ ]) ++ [ ./patches/aws-sdk-cpp-TransferManager-ContentEncoding.patch ];
+
+    # only a stripped down version is build which takes a lot less resources to build
+    requiredSystemFeatures = null;
   });
 
   common = args:
@@ -62,16 +65,32 @@ in lib.makeExtensible (self: {
     sha256 = "sha256-E9iQ7f+9Z6xFcUvvfksTEfn8LsDfzmwrcRBC//5B3V0=";
   };
 
-  stable = self.nix_2_6;
+  nix_2_7 = common {
+    version = "2.7.0";
+    sha256 = "sha256-m8tqCS6uHveDon5GSro5yZor9H+sHeh+v/veF1IGw24=";
+    patches = [
+      # remove when there's a 2.7.1 release
+      # https://github.com/NixOS/nix/pull/6297
+      # https://github.com/NixOS/nix/issues/6243
+      # https://github.com/NixOS/nixpkgs/issues/163374
+      (fetchpatch {
+        url = "https://github.com/NixOS/nix/commit/c9afca59e87afe7d716101e6a75565b4f4b631f7.patch";
+        sha256 = "sha256-xz7QnWVCI12lX1+K/Zr9UpB93b10t1HS9y/5n5FYf8Q=";
+      })
+    ];
+
+  };
+
+  stable = self.nix_2_7;
 
   unstable = lib.lowPrio (common rec {
-    version = "2.7";
-    suffix = "pre20220221_${lib.substring 0 7 src.rev}";
+    version = "2.8";
+    suffix = "pre20220411_${lib.substring 0 7 src.rev}";
     src = fetchFromGitHub {
       owner = "NixOS";
       repo = "nix";
-      rev = "caf51729450d4c57d48ddbef8e855e9bf65f8792";
-      sha256 = "sha256-2fbza6fWPjyTyVEqWIp0jk/Z4epjSDe1u4lbEu+v7Iw=";
+      rev = "f7276bc948705f452b2bfcc2a08bc44152f1d5a8";
+      sha256 = "sha256-brqGGdr2CzqufY3NXU8tGm6QbCTSFGfboruU2cUWhu8=";
     };
   });
 })

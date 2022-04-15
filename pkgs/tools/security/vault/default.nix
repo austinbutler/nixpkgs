@@ -6,16 +6,16 @@
 
 buildGoModule rec {
   pname = "vault";
-  version = "1.9.3";
+  version = "1.10.0";
 
   src = fetchFromGitHub {
     owner = "hashicorp";
     repo = "vault";
     rev = "v${version}";
-    sha256 = "sha256-2pysQsJynuedqX9Yi4BjTnWuJZ5XTq11UEgkSh7eZyw=";
+    sha256 = "sha256-XgrEtAVfMcXbmAjwgIWME/v85QHJ11fUXapAZtS/lSw=";
   };
 
-  vendorSha256 = "sha256-LNN0u48B6xGjrUasxGF+4sw1HxiR22hj8H2/mSyh1SI=";
+  vendorSha256 = "sha256-Bo0+HSG7NqaweMKPdl+kzB6RdbQsy2FAzmr7ZZVgcsg=";
 
   subPackages = [ "." ];
 
@@ -46,6 +46,6 @@ buildGoModule rec {
     changelog = "https://github.com/hashicorp/vault/blob/v${version}/CHANGELOG.md";
     platforms = platforms.linux ++ platforms.darwin;
     license = licenses.mpl20;
-    maintainers = with maintainers; [ rushmorem lnl7 offline pradeepchhetri Chili-Man ];
+    maintainers = with maintainers; [ rushmorem lnl7 offline pradeepchhetri Chili-Man techknowlogick ];
   };
 }

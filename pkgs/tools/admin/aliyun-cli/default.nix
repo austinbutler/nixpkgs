@@ -2,21 +2,21 @@
 
 buildGoModule rec {
   pname = "aliyun-cli";
-  version = "3.0.109";
+  version = "3.0.116";
 
   src = fetchFromGitHub {
     rev = "v${version}";
     owner = "aliyun";
     repo = pname;
     fetchSubmodules = true;
-    sha256 = "sha256-YlJGYt/depabhMPQtS1dwmFSxoThUEXOWi7KSWx7cRo=";
+    sha256 = "sha256-KZZT7XVhJLfrQ7L3FFOTw9bLT5GqewvDTGQQd/ovjbg=";
   };
 
-  vendorSha256 = "sha256-c7LsCNcxdHwDBEknXJt9AyrmFcem8YtUYy06vNDBdDY=";
+  vendorSha256 = "sha256-f3GXkAvTe8rPFWCR5TM4mDK/VOQWt2lrZrfJ/Wvw8Uc=";
 
   subPackages = [ "main" ];
 
-  ldFlags = [ "-s" "-w" "-X github.com/aliyun/aliyun-cli/cli.Version=${version}" ];
+  ldflags = [ "-s" "-w" "-X github.com/aliyun/aliyun-cli/cli.Version=${version}" ];
 
   postInstall = ''
     mv $out/bin/main $out/bin/aliyun
@@ -25,7 +25,7 @@ buildGoModule rec {
   meta = with lib; {
     description = "Tool to manage and use Alibaba Cloud resources through a command line interface";
     homepage = "https://github.com/aliyun/aliyun-cli";
-    changelog = "https://github.com/aliyun/aliyun-cli/raw/v${version}/CHANGELOG.md";
+    changelog = "https://github.com/aliyun/aliyun-cli/releases/tag/v${version}";
     license = licenses.asl20;
     maintainers = with maintainers; [ ornxka ];
   };

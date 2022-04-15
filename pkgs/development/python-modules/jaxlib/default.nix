@@ -18,11 +18,6 @@
 , wheel
 , which
 
-  # Build-time and runtime CUDA dependencies:
-, cudatoolkit ? null
-, cudnn ? null
-, nccl ? null
-
   # Python dependencies:
 , absl-py
 , flatbuffers
@@ -42,12 +37,15 @@
   # CUDA flags:
 , cudaCapabilities ? [ "sm_35" "sm_50" "sm_60" "sm_70" "sm_75" "compute_80" ]
 , cudaSupport ? false
+, cudaPackages ? {}
 
   # MKL:
 , mklSupport ? true
 }:
 
 let
+
+  inherit (cudaPackages) cudatoolkit cudnn nccl;
 
   pname = "jaxlib";
   version = "0.3.0";
@@ -259,7 +257,13 @@ buildPythonPackage {
 
   src = "${bazel-build}/jaxlib-${version}-cp${builtins.replaceStrings ["."] [""] python.pythonVersion}-none-manylinux2010_${stdenv.targetPlatform.linuxArch}.whl";
 
+  # Note that cudatoolkit is necessary since jaxlib looks for "ptxas" in $PATH.
+  # See https://github.com/NixOS/nixpkgs/pull/164176#discussion_r828801621 for
+  # more info.
   postInstall = lib.optionalString cudaSupport ''
+    mkdir -p $out/bin
+    ln -s ${cudatoolkit}/bin/ptxas $out/bin/ptxas
+
     find $out -type f \( -name '*.so' -or -name '*.so.*' \) | while read lib; do
       addOpenGLRunpath "$lib"
       patchelf --set-rpath "${cudatoolkit}/lib:${cudatoolkit.lib}/lib:${cudnn}/lib:${nccl}/lib:$(patchelf --print-rpath "$lib")" "$lib"

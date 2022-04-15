@@ -1,5 +1,5 @@
 { newScope, config, stdenv, fetchurl, makeWrapper
-, llvmPackages_13, llvmPackages_14, ed, gnugrep, coreutils, xdg-utils
+, llvmPackages_14, ed, gnugrep, coreutils, xdg-utils
 , glib, gtk3, gnome, gsettings-desktop-schemas, gn, fetchgit
 , libva, pipewire, wayland
 , gcc, nspr, nss, runCommand
@@ -8,8 +8,6 @@
 # package customization
 # Note: enable* flags should not require full rebuilds (i.e. only affect the wrapper)
 , channel ? "stable"
-, gnomeSupport ? false, gnome2 ? null
-, gnomeKeyringSupport ? false
 , proprietaryCodecs ? true
 , enableWideVine ? false
 , ungoogled ? false # Whether to build chromium or ungoogled-chromium
@@ -19,7 +17,7 @@
 }:
 
 let
-  llvmPackages = llvmPackages_13;
+  llvmPackages = llvmPackages_14;
   stdenv = llvmPackages.stdenv;
 
   upstream-info = (lib.importJSON ./upstream-info.json).${channel};
@@ -46,7 +44,7 @@ let
 
     mkChromiumDerivation = callPackage ./common.nix ({
       inherit channel chromiumVersionAtLeast versionRange;
-      inherit gnome2 gnomeSupport gnomeKeyringSupport proprietaryCodecs
+      inherit proprietaryCodecs
               cupsSupport pulseSupport ungoogled;
       gnChromium = gn.overrideAttrs (oldAttrs: {
         inherit (upstream-info.deps.gn) version;
@@ -54,9 +52,6 @@ let
           inherit (upstream-info.deps.gn) url rev sha256;
         };
       });
-    } // lib.optionalAttrs (chromiumVersionAtLeast "99") rec {
-      llvmPackages = llvmPackages_14;
-      stdenv = llvmPackages_14.stdenv;
     });
 
     browser = callPackage ./browser.nix {
@@ -160,8 +155,8 @@ let
     else browser;
 
 in stdenv.mkDerivation {
-  name = lib.optionalString ungoogled "ungoogled-"
-    + "chromium${suffix}-${version}";
+  pname = lib.optionalString ungoogled "ungoogled-"
+    + "chromium${suffix}";
   inherit version;
 
   nativeBuildInputs = [

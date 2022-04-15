@@ -15,13 +15,13 @@
 
 stdenv.mkDerivation rec {
   pname = "berry";
-  version = "0.1.9";
+  version = "0.1.11";
 
   src = fetchFromGitHub {
     owner = "JLErvin";
     repo = pname;
     rev = version;
-    hash = "sha256-E1kjqSv2eylJ/9EGcxQrJ2P7VaehyUiirk0TxlPWSnM=";
+    hash = "sha256-cs1NVwaANMIteCQuGqPcEWuUbfJulhjmfWnlU8Eb2OM=";
   };
 
   nativeBuildInputs = [
@@ -55,6 +55,7 @@ stdenv.mkDerivation rec {
   ];
 
   meta = with lib; {
+    homepage = "https://berrywm.org/";
     description = "A healthy, bite-sized window manager";
     longDescription = ''
       berry is a healthy, bite-sized window manager written in C for unix
@@ -69,11 +70,8 @@ stdenv.mkDerivation rec {
       - Intuitively place new windows in unoccupied spaces.
       - Virtual desktops.
     '';
-    homepage = "https://berrywm.org/";
     license = licenses.mit;
     maintainers = [ maintainers.AndersonTorres ];
     platforms = platforms.linux;
   };
 }
-# TODO: report upstream that `which` is not POSIX; the `command` shell builtin
-# should be used instead

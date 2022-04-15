@@ -8,24 +8,26 @@
 , pytestCheckHook
 , pytest-asyncio
 , pythonOlder
+, setuptools
 }:
 
 buildPythonPackage rec {
   pname = "google-cloud-speech";
-  version = "2.13.0";
+  version = "2.13.1";
   format = "setuptools";
 
   disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-NO2oxVszbm2KYiN2NCn3edIyBx+E++sttJTgZd/yXzQ=";
+    hash = "sha256-JxhIC4OMsXjdJYNDomEhmHPUCzveFS0oeDWsX/wd5zA=";
   };
 
   propagatedBuildInputs = [
     libcst
     google-api-core
     proto-plus
+    setuptools
   ];
 
   checkInputs = [

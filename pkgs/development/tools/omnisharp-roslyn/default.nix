@@ -63,18 +63,23 @@ let
   '';
 
 in stdenv.mkDerivation rec {
-
   pname = "omnisharp-roslyn";
-  version = "1.38.0";
+  version = "1.38.2";
 
   src = fetchFromGitHub {
     owner = "OmniSharp";
     repo = pname;
     rev = "v${version}";
-    sha256 = "00V+7Z1IoCSuSM0RClM81IslzCzC/FNYxHIKtnI9QDg=";
+    sha256 = "7XJIdotfffu8xo+S6xlc1zcK3oY9QIg1CJhCNJh5co0=";
   };
 
   nativeBuildInputs = [ makeWrapper dotnet-sdk ];
+
+  postPatch = ''
+    # Relax the version requirement
+    substituteInPlace global.json \
+      --replace '6.0.100' '${dotnet-sdk.version}'
+  '';
 
   buildPhase = ''
     runHook preBuild

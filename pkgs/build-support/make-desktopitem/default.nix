@@ -1,4 +1,4 @@
-{ lib, writeTextFile, desktop-file-utils }:
+{ lib, writeTextFile, buildPackages }:
 
 # All possible values as defined by the spec, version 1.4.
 # Please keep in spec order for easier maintenance.
@@ -34,24 +34,19 @@
 , extraConfig ? {} # Additional values to be added literally to the final item, e.g. vendor extensions
 }:
 let
-  # FIXME: workaround until https://github.com/NixOS/nixpkgs/pull/162246 lands
-  cleanName = if lib.hasInfix " " name
-                then throw "Name must not contain spaces!"
-                else name;
-
   # There are multiple places in the FDO spec that make "boolean" values actually tristate,
   # e.g. StartupNotify, where "unset" is literally defined as "do something reasonable".
   # So, handle null values separately.
   boolOrNullToString = value:
     if value == null then null
     else if builtins.isBool value then lib.boolToString value
-    else throw "Value must be a boolean or null!";
+    else throw "makeDesktopItem: value must be a boolean or null!";
 
   # Multiple values are represented as one string, joined by semicolons.
   # Technically, it's possible to escape semicolons in values with \;, but this is currently not implemented.
-  renderList = value:
-    if !builtins.isList value then throw "Value must be a list!"
-    else if builtins.any (item: lib.hasInfix ";" item) value then throw "Values in list must not contain semicolons!"
+  renderList = key: value:
+    if !builtins.isList value then throw "makeDesktopItem: value for ${key} must be a list!"
+    else if builtins.any (item: lib.hasInfix ";" item) value then throw "makeDesktopItem: values in ${key} list must not contain semicolons!"
     else if value == [] then null
     else builtins.concatStringsSep ";" value;
 
@@ -65,18 +60,18 @@ let
     "NoDisplay" = boolOrNullToString noDisplay;
     "Comment" = comment;
     "Icon" = icon;
-    "OnlyShowIn" = renderList onlyShowIn;
-    "NotShowIn" = renderList notShowIn;
+    "OnlyShowIn" = renderList "onlyShowIn" onlyShowIn;
+    "NotShowIn" = renderList "notShowIn" notShowIn;
     "DBusActivatable" = boolOrNullToString dbusActivatable;
     "TryExec" = tryExec;
     "Exec" = exec;
     "Path" = path;
     "Terminal" = boolOrNullToString terminal;
-    "Actions" = renderList (builtins.attrNames actions);
-    "MimeType" = renderList mimeTypes;
-    "Categories" = renderList categories;
-    "Implements" = renderList implements;
-    "Keywords" = renderList keywords;
+    "Actions" = renderList "actions" (builtins.attrNames actions);
+    "MimeType" = renderList "mimeTypes" mimeTypes;
+    "Categories" = renderList "categories" categories;
+    "Implements" = renderList "implements" implements;
+    "Keywords" = renderList "keywords" keywords;
     "StartupNotify" = boolOrNullToString startupNotify;
     "StartupWMClass" = startupWMClass;
     "URL" = url;
@@ -116,8 +111,8 @@ let
   content = [ mainSectionRendered ] ++ actionsRendered;
 in
 writeTextFile {
-  name = "${cleanName}.desktop";
-  destination = "/share/applications/${cleanName}.desktop";
+  name = "${name}.desktop";
+  destination = "/share/applications/${name}.desktop";
   text = builtins.concatStringsSep "\n" content;
-  checkPhase = "${desktop-file-utils}/bin/desktop-file-validate $target";
+  checkPhase = ''${buildPackages.desktop-file-utils}/bin/desktop-file-validate "$target"'';
 }

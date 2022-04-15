@@ -23,7 +23,7 @@
 , libusb1, re2
 , ffmpeg, libxslt, libxml2
 , nasm
-, nspr, nss, systemd
+, nspr, nss
 , util-linux, alsa-lib
 , bison, gperf, libkrb5
 , glib, gtk3, dbus-glib
@@ -39,14 +39,14 @@
 , glibc # gconv + locale
 
 # Package customization:
-, gnomeSupport ? false, gnome2 ? null
-, gnomeKeyringSupport ? false, libgnome-keyring3 ? null
 , cupsSupport ? true, cups ? null
 , proprietaryCodecs ? true
 , pulseSupport ? false, libpulseaudio ? null
 , ungoogled ? false, ungoogled-chromium
 # Optional dependencies:
-, libgcrypt ? null # gnomeSupport || cupsSupport
+, libgcrypt ? null # cupsSupport
+, systemdSupport ? stdenv.isLinux
+, systemd
 }:
 
 buildFun:
@@ -114,7 +114,7 @@ let
   };
 
   base = rec {
-    name = "${packageName}-unwrapped-${version}";
+    pname = "${packageName}-unwrapped";
     inherit (upstream-info) version;
     inherit packageName buildType buildPath;
 
@@ -139,7 +139,7 @@ let
       libusb1 re2
       ffmpeg libxslt libxml2
       nasm
-      nspr nss systemd
+      nspr nss
       util-linux alsa-lib
       bison gperf libkrb5
       glib gtk3 dbus-glib
@@ -151,8 +151,7 @@ let
       libdrm wayland mesa.drivers libxkbcommon
       curl
       libepoxy
-    ] ++ optionals gnomeSupport [ gnome2.GConf libgcrypt ]
-      ++ optional gnomeKeyringSupport libgnome-keyring3
+    ] ++ optional systemdSupport systemd
       ++ optionals cupsSupport [ libgcrypt cups ]
       ++ optional pulseSupport libpulseaudio;
 
@@ -204,9 +203,10 @@ let
       sed -i -e 's@"\(#!\)\?.*xdg-@"\1${xdg-utils}/bin/xdg-@' \
         chrome/browser/shell_integration_linux.cc
 
+    '' + lib.optionalString systemdSupport ''
       sed -i -e '/lib_loader.*Load/s!"\(libudev\.so\)!"${lib.getLib systemd}/lib/\1!' \
         device/udev_linux/udev?_loader.cc
-
+    '' + ''
       sed -i -e '/libpci_loader.*Load/s!"\(libpci\.so\)!"${pciutils}/lib/\1!' \
         gpu/config/gpu_info_collector_linux.cc
 
@@ -266,8 +266,8 @@ let
       google_api_key = "AIzaSyDGi15Zwl11UNe6Y-5XW_upsfyw31qwZPI";
 
       # Optional features:
-      use_gio = gnomeSupport || chromiumVersionAtLeast "99";
-      use_gnome_keyring = gnomeKeyringSupport;
+      use_gio = true;
+      use_gnome_keyring = false; # Superseded by libsecret
       use_cups = cupsSupport;
 
       # Feature overrides:
@@ -279,6 +279,9 @@ let
       enable_widevine = true;
       # Provides the enable-webrtc-pipewire-capturer flag to support Wayland screen capture:
       rtc_use_pipewire = true;
+    } // optionalAttrs (chromiumVersionAtLeast "101") {
+      # Disable PGO because the profile data requires a newer compiler version (LLVM 14 isn't sufficient):
+      chrome_pgo_phase = 0;
     } // optionalAttrs proprietaryCodecs {
       # enable support for the H.264 codec
       proprietary_codecs = true;
@@ -287,24 +290,8 @@ let
     } // optionalAttrs pulseSupport {
       use_pulseaudio = true;
       link_pulseaudio = true;
-    } // optionalAttrs ungoogled {
-      chrome_pgo_phase = 0;
-      enable_hangout_services_extension = false;
-      enable_js_type_check = false;
-      enable_mdns = false;
-      enable_one_click_signin = false;
-      enable_reading_list = false;
-      enable_remoting = false;
-      enable_reporting = false;
-      enable_service_discovery = false;
-      exclude_unwind_tables = true;
-      google_api_key = "";
-      google_default_client_id = "";
-      google_default_client_secret = "";
-      safe_browsing_mode = 0;
-      use_official_google_api_keys = false;
-      use_unofficial_version_number = false;
-    } // (extraAttrs.gnFlags or {}));
+    } // optionalAttrs ungoogled (importTOML ./ungoogled-flags.toml)
+    // (extraAttrs.gnFlags or {}));
 
     configurePhase = ''
       runHook preConfigure

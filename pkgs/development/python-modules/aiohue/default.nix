@@ -1,26 +1,35 @@
 { lib
-, buildPythonPackage
-, fetchPypi
 , aiohttp
 , asyncio-throttle
+, awesomeversion
+, buildPythonPackage
+, fetchFromGitHub
+, pytestCheckHook
 , pythonOlder
 }:
 
 buildPythonPackage rec {
   pname = "aiohue";
-  version = "4.2.1";
+  version = "4.4.1";
   format = "setuptools";
 
   disabled = pythonOlder "3.8";
 
-  src = fetchPypi {
-    inherit pname version;
-    hash = "sha256-bcSCYNJt9xYBMmuZYM6s+PWV0TAUFOn3ibHE0KRX+iw=";
+  src = fetchFromGitHub {
+    owner = "home-assistant-libs";
+    repo = pname;
+    rev = version;
+    hash = "sha256-zXjfPd40yYyAuuW4CmaGRvJuORyQJa+6CFQaO6RQPZo=";
   };
 
   propagatedBuildInputs = [
+    awesomeversion
     aiohttp
     asyncio-throttle
+  ];
+
+  checkInputs = [
+    pytestCheckHook
   ];
 
   pythonImportsCheck = [
@@ -28,8 +37,10 @@ buildPythonPackage rec {
     "aiohue.discovery"
   ];
 
-  # Project has no tests
-  doCheck = false;
+  disabledTestPaths = [
+    # File are prefixed with test_
+    "examples/"
+  ];
 
   meta = with lib; {
     description = "Python package to talk to Philips Hue";

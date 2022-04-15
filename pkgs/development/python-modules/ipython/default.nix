@@ -26,15 +26,15 @@
 , testpath
 }:
 
-buildPythonPackage (rec {
+buildPythonPackage rec {
   pname = "ipython";
-  version = "8.0.1";
+  version = "8.1.0";
   format = "pyproject";
   disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0x19sj4dlq7r4p1mqnpx9245r8dwvpjwd8n34snfm37a452lsmmb";
+    sha256 = "sha256-QsI+kLLequYxJmiF3hZWpRehZz1+HbV+jrOku2zVzhs=";
   };
 
   buildInputs = [
@@ -76,14 +76,15 @@ buildPythonPackage (rec {
     testpath
   ];
 
+  disabledTests = lib.optionals (stdenv.isDarwin) [
+    # FileNotFoundError: [Errno 2] No such file or directory: 'pbpaste'
+    "test_clipboard_get"
+  ];
+
   meta = with lib; {
     description = "IPython: Productive Interactive Computing";
     homepage = "http://ipython.org/";
     license = licenses.bsd3;
     maintainers = with maintainers; [ bjornfor fridh ];
   };
-} // lib.optionalAttrs stdenv.isDarwin {
-  disabledTests = [
-    "test_clipboard_get" # uses pbpaste
-  ];
-})
+}

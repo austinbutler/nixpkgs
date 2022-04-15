@@ -18,12 +18,12 @@
 
 buildPythonPackage rec {
   pname = "google-cloud-bigquery";
-  version = "2.34.1";
+  version = "2.34.2";
   format = "setuptools";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-gzWuWmcSYeuBcFQpVUNwsLVGSF2+h4JulN4bIkUBWaM=";
+    sha256 = "sha256-DriC3zCgD1oe89M5ojpnAjCACyqySUWVkafmharWcU8=";
   };
 
   propagatedBuildInputs = [
@@ -70,6 +70,9 @@ buildPythonPackage rec {
     "test_parameterized_types_round_trip"
     "test_structs"
     "test_table_snapshots"
+    "test__initiate_resumable_upload"
+    "test__initiate_resumable_upload_mtls"
+    "test__initiate_resumable_upload_with_retry"
   ];
 
   pythonImportsCheck = [

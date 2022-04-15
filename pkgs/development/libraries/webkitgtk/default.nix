@@ -60,11 +60,12 @@
 , addOpenGLRunpath
 , enableGeoLocation ? true
 , withLibsecret ? true
+, systemdSupport ? stdenv.isLinux
 }:
 
 stdenv.mkDerivation rec {
   pname = "webkitgtk";
-  version = "2.34.6";
+  version = "2.36.0";
 
   outputs = [ "out" "dev" ];
 
@@ -72,7 +73,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "https://webkitgtk.org/releases/${pname}-${version}.tar.xz";
-    sha256 = "sha256-a8j9A0qtBDKiRZzk/H7iWtZaSSTGGL+Nk7UrDBqEwfY=";
+    sha256 = "sha256-uHfMofEFI19d1Xx6wrLCvjxraR/0RPk5JcclTPFWxk0=";
   };
 
   patches = lib.optionals stdenv.isLinux [
@@ -158,9 +159,10 @@ stdenv.mkDerivation rec {
     bubblewrap
     libseccomp
     libmanette
-    systemd
     wayland
     xdg-dbus-proxy
+  ] ++ lib.optionals systemdSupport [
+    systemd
   ] ++ lib.optionals enableGeoLocation [
     geoclue2
   ] ++ lib.optionals withLibsecret [
@@ -193,7 +195,7 @@ stdenv.mkDerivation rec {
     "-DUSE_APPLE_ICU=OFF"
     "-DUSE_OPENGL_OR_ES=OFF"
     "-DUSE_SYSTEM_MALLOC=ON"
-  ] ++ lib.optionals (!stdenv.isLinux) [
+  ] ++ lib.optionals (!systemdSupport) [
     "-DUSE_SYSTEMD=OFF"
   ] ++ lib.optionals (stdenv.isLinux && enableGLES) [
     "-DENABLE_GLES2=ON"

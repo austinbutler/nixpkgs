@@ -8,13 +8,13 @@
 
 buildPythonPackage rec {
   pname = "pyisy";
-  version = "3.0.3";
+  version = "3.0.6";
 
   src = fetchFromGitHub {
     owner = "automicus";
     repo = "PyISY";
-    rev = "v${version}";
-    hash = "sha256-zQ0IBfbWEGv5t+b3EKF+6tEpmwfAWFMndPqSNSQZ5b4=";
+    rev = "refs/tags/v${version}";
+    hash = "sha256-4thCP9Xc3dtL6IaP863sW/L4aj4+QIPFv6p0kFLGh7E=";
   };
 
   postPatch = ''

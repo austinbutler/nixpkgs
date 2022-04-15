@@ -144,6 +144,8 @@ lib.makeScope pkgs.newScope (self: with self; {
 
     phing = callPackage ../development/php-packages/phing { };
 
+    phive = callPackage ../development/php-packages/phive { };
+
     php-cs-fixer = callPackage ../development/php-packages/php-cs-fixer { };
 
     php-parallel-lint = callPackage ../development/php-packages/php-parallel-lint { };
@@ -178,6 +180,8 @@ lib.makeScope pkgs.newScope (self: with self; {
     blackfire = pkgs.callPackage ../development/tools/misc/blackfire/php-probe.nix { inherit php; };
 
     couchbase = callPackage ../development/php-packages/couchbase { };
+
+    datadog_trace = callPackage ../development/php-packages/datadog_trace { };
 
     ds = callPackage ../development/php-packages/ds { };
 

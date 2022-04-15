@@ -83,8 +83,6 @@ let
     bls12-381-unix = callPackage ../development/ocaml-modules/bls12-381/unix.nix { };
     bls12-381-legacy = callPackage ../development/ocaml-modules/bls12-381/legacy.nix { };
 
-    bolt = callPackage ../development/ocaml-modules/bolt { };
-
     bos = callPackage ../development/ocaml-modules/bos { };
 
     bz2 = callPackage ../development/ocaml-modules/bz2 { };
@@ -330,6 +328,8 @@ let
 
     duration =  callPackage ../development/ocaml-modules/duration { };
 
+    dyn =  callPackage ../development/ocaml-modules/dyn { };
+
     earley = callPackage ../development/ocaml-modules/earley { };
 
     earlybird = callPackage ../development/ocaml-modules/earlybird { };
@@ -357,8 +357,6 @@ let
     encore = callPackage ../development/ocaml-modules/encore { };
 
     emile = callPackage ../development/ocaml-modules/emile { };
-
-    enumerate = callPackage ../development/ocaml-modules/enumerate { };
 
     eqaf = callPackage ../development/ocaml-modules/eqaf { };
 
@@ -390,13 +388,38 @@ let
     ff-pbt = callPackage ../development/ocaml-modules/ff/pbt.nix { };
     ff-sig = callPackage ../development/ocaml-modules/ff/sig.nix { };
 
-    fiat-p256 = callPackage ../development/ocaml-modules/fiat-p256 { };
+    ffmpeg = callPackage ../development/ocaml-modules/ffmpeg { };
+    ffmpeg-avutil = callPackage ../development/ocaml-modules/ffmpeg/ffmpeg-avutil.nix {
+      inherit (pkgs) ffmpeg;
+    };
+    ffmpeg-avcodec = callPackage ../development/ocaml-modules/ffmpeg/ffmpeg-avcodec.nix {
+      inherit (pkgs) ffmpeg;
+    };
+    ffmpeg-avfilter = callPackage ../development/ocaml-modules/ffmpeg/ffmpeg-avfilter.nix {
+      inherit (pkgs) ffmpeg;
+    };
+    ffmpeg-swscale = callPackage ../development/ocaml-modules/ffmpeg/ffmpeg-swscale.nix {
+      inherit (pkgs) ffmpeg;
+    };
+    ffmpeg-swresample = callPackage ../development/ocaml-modules/ffmpeg/ffmpeg-swresample.nix {
+      inherit (pkgs) ffmpeg;
+    };
+    ffmpeg-av = callPackage ../development/ocaml-modules/ffmpeg/ffmpeg-av.nix {
+      inherit (pkgs) ffmpeg;
+    };
+    ffmpeg-avdevice = callPackage ../development/ocaml-modules/ffmpeg/ffmpeg-avdevice.nix {
+      inherit (pkgs) ffmpeg;
+    };
 
     fileutils = callPackage ../development/ocaml-modules/fileutils { };
 
     findlib = callPackage ../development/tools/ocaml/findlib { };
 
     fix = callPackage ../development/ocaml-modules/fix { };
+
+    flac = callPackage ../development/ocaml-modules/flac {
+      inherit (pkgs) flac;
+    };
 
     fmt = callPackage ../development/ocaml-modules/fmt { };
 
@@ -682,8 +705,6 @@ let
 
     magic-mime = callPackage ../development/ocaml-modules/magic-mime { };
 
-    magick = callPackage ../development/ocaml-modules/magick { };
-
     mariadb = callPackage ../development/ocaml-modules/mariadb {
       inherit (pkgs) mariadb;
     };
@@ -851,8 +872,6 @@ let
 
     parmap = callPackage ../development/ocaml-modules/parmap { };
 
-    comparelib = callPackage ../development/ocaml-modules/comparelib { };
-
     ocamlbuild =
     if lib.versionOlder "4.03" ocaml.version then
     callPackage ../development/tools/ocaml/ocamlbuild { }
@@ -860,8 +879,6 @@ let
     null;
 
     ocaml_cryptgps = callPackage ../development/ocaml-modules/cryptgps { };
-
-    ocaml_data_notation = callPackage ../development/ocaml-modules/odn { };
 
     ocaml_expat =
     if lib.versionAtLeast ocaml.version "4.02"
@@ -965,6 +982,14 @@ let
 
     ocsigen-toolkit = callPackage ../development/ocaml-modules/ocsigen-toolkit { };
 
+    ocsipersist = callPackage ../development/ocaml-modules/ocsipersist {};
+
+    ocsipersist-lib = callPackage ../development/ocaml-modules/ocsipersist/lib.nix { };
+
+    ocsipersist-pgsql = callPackage ../development/ocaml-modules/ocsipersist/pgsql.nix { };
+
+    ocsipersist-sqlite = callPackage ../development/ocaml-modules/ocsipersist/sqlite.nix { };
+
     octavius = callPackage ../development/ocaml-modules/octavius { };
 
     odate = callPackage ../development/ocaml-modules/odate { };
@@ -1000,6 +1025,10 @@ let
     opti = callPackage ../development/ocaml-modules/opti { };
 
     optint = callPackage ../development/ocaml-modules/optint { };
+
+    opus = callPackage ../development/ocaml-modules/opus { };
+
+    ordering = callPackage ../development/ocaml-modules/ordering { };
 
     otfm = callPackage ../development/ocaml-modules/otfm { };
 
@@ -1081,9 +1110,17 @@ let
 
     seq = callPackage ../development/ocaml-modules/seq { };
 
+    shine = callPackage ../development/ocaml-modules/shine {
+      inherit (pkgs) shine;
+    };
+
     sosa = callPackage ../development/ocaml-modules/sosa { };
 
     spacetime_lib = callPackage ../development/ocaml-modules/spacetime_lib { };
+
+    speex = callPackage ../development/ocaml-modules/speex {
+      inherit (pkgs) speex;
+    };
 
     tar-unix = callPackage ../development/ocaml-modules/tar/unix.nix { };
 
@@ -1109,18 +1146,6 @@ let
       inherit (pkgs.python3Packages) pytorch;
     };
 
-    type_conv_108_08_00 = callPackage ../development/ocaml-modules/type_conv/108.08.00.nix { };
-    type_conv_109_60_01 = callPackage ../development/ocaml-modules/type_conv/109.60.01.nix { };
-    type_conv_112_01_01 = callPackage ../development/ocaml-modules/type_conv/112.01.01.nix { };
-    type_conv =
-      if lib.versionOlder "4.02" ocaml.version
-      then type_conv_112_01_01
-      else if lib.versionOlder "4.00" ocaml.version
-      then type_conv_109_60_01
-      else if lib.versionOlder "3.12" ocaml.version
-      then type_conv_108_08_00
-      else null;
-
     ocaml-protoc = callPackage ../development/ocaml-modules/ocaml-protoc { };
 
     ocaml_extlib = ocaml_extlib-1-7-8;
@@ -1132,6 +1157,8 @@ let
     ocb-stubblr = callPackage ../development/ocaml-modules/ocb-stubblr { };
 
     ocurl = callPackage ../development/ocaml-modules/ocurl { };
+
+    ogg = callPackage ../development/ocaml-modules/ogg { };
 
     parany = callPackage ../development/ocaml-modules/parany { };
 
@@ -1266,8 +1293,6 @@ let
 
     spelll = callPackage ../development/ocaml-modules/spelll { };
 
-    sqlite3EZ = callPackage ../development/ocaml-modules/sqlite3EZ { };
-
     srt = callPackage ../development/ocaml-modules/srt {
       inherit (pkgs) srt;
     };
@@ -1277,6 +1302,8 @@ let
     stdcompat = callPackage ../development/ocaml-modules/stdcompat { };
 
     stdlib-shims = callPackage ../development/ocaml-modules/stdlib-shims { };
+
+    stdune = callPackage ../development/ocaml-modules/stdune { };
 
     stog = callPackage ../applications/misc/stog { };
 
@@ -1349,6 +1376,8 @@ let
     tezos-version = callPackage ../development/ocaml-modules/tezos/version.nix { };
     tezos-workers = callPackage ../development/ocaml-modules/tezos/workers.nix { };
 
+    theora = callPackage ../development/ocaml-modules/theora { };
+
     toml = callPackage ../development/ocaml-modules/toml { };
 
     topkg = callPackage ../development/ocaml-modules/topkg { };
@@ -1370,6 +1399,8 @@ let
     sawja = callPackage ../development/ocaml-modules/sawja { };
 
     stdint = callPackage ../development/ocaml-modules/stdint { };
+
+    unionFind = callPackage ../development/ocaml-modules/unionFind { };
 
     unstrctrd = callPackage ../development/ocaml-modules/unstrctrd { };
 
@@ -1393,6 +1424,8 @@ let
     vg = callPackage ../development/ocaml-modules/vg { };
 
     vlq = callPackage ../development/ocaml-modules/vlq { };
+
+    vorbis = callPackage ../development/ocaml-modules/vorbis { };
 
     visitors = callPackage ../development/ocaml-modules/visitors { };
 
@@ -1537,7 +1570,9 @@ in let inherit (pkgs) callPackage; in rec
 
   ocamlPackages_4_13 = mkOcamlPackages (callPackage ../development/compilers/ocaml/4.13.nix { });
 
-  ocamlPackages_latest = ocamlPackages_4_13;
+  ocamlPackages_4_14 = mkOcamlPackages (callPackage ../development/compilers/ocaml/4.14.nix { });
+
+  ocamlPackages_latest = ocamlPackages_4_14;
 
   ocamlPackages = ocamlPackages_4_13;
 }
