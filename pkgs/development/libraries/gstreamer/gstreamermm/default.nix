@@ -1,21 +1,24 @@
-{ lib, stdenv, fetchurl, pkg-config, file, glibmm, gst_all_1, gnome }:
+{ lib, stdenv, fetchFromGitLab, pkg-config, file, libsigcxx, gettext, glibmm, gst_all_1, gnome, autoconf, automake, autoreconfHook, mm-common, libtool, libxmlxx, intltool}:
 stdenv.mkDerivation rec {
   pname = "gstreamermm";
-  version = "1.10.0";
+  version = "dfd80ddb4eac02ae6c48a076a9cd9a1dc9e7bed2";
 
-  src = fetchurl {
-    url = "mirror://gnome/sources/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "0q4dx9sncqbwgpzma0zvj6zssc279yl80pn8irb95qypyyggwn5y";
+  src = fetchFromGitLab {
+    domain = "gitlab.gnome.org";
+    owner = "GNOME";
+    repo = pname;
+    rev = version;
+    sha256 = "sha256-4VwVyu0RzvtsTq/UWZ3//KCY0qxfMrdqDCpMnEGe9YA=";
   };
-
   outputs = [ "out" "dev" ];
 
-  nativeBuildInputs = [ pkg-config file ];
+  nativeBuildInputs = [ autoconf automake intltool libtool libxmlxx libsigcxx mm-common pkg-config file ];
 
-  propagatedBuildInputs = [ glibmm gst_all_1.gst-plugins-base ];
+  propagatedBuildInputs = [ gettext glibmm gst_all_1.gstreamer gst_all_1.gst-plugins-base gst_all_1.gst-plugins-good gst_all_1.gst-plugins-ugly gst_all_1.gst-plugins-bad ];
 
-  enableParallelBuilding = true;
-
+  enableParallelBuilding = false;
+  #preConfigure = "NO_CONFIGURE=1 ./autogen.sh";
+  configureFlags = [ "--disable-documentation" ];
   passthru = {
     updateScript = gnome.updateScript {
       attrPath = "gst_all_1.gstreamermm";
