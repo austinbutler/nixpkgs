@@ -17,7 +17,7 @@ stdenv.mkDerivation rec {
   propagatedBuildInputs = [ gettext glibmm gst_all_1.gstreamer gst_all_1.gst-plugins-base gst_all_1.gst-plugins-good gst_all_1.gst-plugins-ugly gst_all_1.gst-plugins-bad ];
 
   enableParallelBuilding = false;
-  #preConfigure = "NO_CONFIGURE=1 ./autogen.sh";
+  preConfigure = "NOCONFIGURE=1 ./autogen.sh";
   configureFlags = [ "--disable-documentation" ];
   passthru = {
     updateScript = gnome.updateScript {
