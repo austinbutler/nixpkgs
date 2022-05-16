@@ -1374,7 +1374,7 @@ final: prev:
 
   coc-nvim = buildVimPluginFrom2Nix {
     pname = "coc.nvim";
-    version = "2022-05-01";
+    version = "2022-05-14";
     src = fetchFromGitHub {
       owner = "neoclide";
       repo = "coc.nvim";
