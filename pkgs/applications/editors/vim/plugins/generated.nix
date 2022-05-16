@@ -1378,8 +1378,8 @@ final: prev:
     src = fetchFromGitHub {
       owner = "neoclide";
       repo = "coc.nvim";
-      rev = "83a5f083d7ed76899729f25063a5ab9c326e5f02";
-      sha256 = "1pwi1l4h6hdr45z5lnw3mjbpr3jx6iipnaz5bla64cq7cgf98nw6";
+      rev = "d161b344e69d7412f2a89f46f47c46c8f2a5658c";
+      sha256 = "sha256-QPSQ2jwmbfzmeddnRTfwM0yC2aBr+zyqO/DMt/fMkmU=";
     };
     meta.homepage = "https://github.com/neoclide/coc.nvim/";
   };
