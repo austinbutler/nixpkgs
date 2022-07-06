@@ -16,7 +16,7 @@
 }:
 stdenv.mkDerivation rec {
   pname = "roon-server";
-  version = "1.8-923";
+  version = "1.8-970";
 
   src =
     let
@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
     in
     fetchurl {
       url = "http://download.roonlabs.com/builds/RoonServer_linuxx64_${urlVersion}.tar.bz2";
-      hash = "sha256-txf8W7SoPb20S7KcQDfExPEn5dubu9JVEX89dWngYFU=";
+      hash = "sha256-A1DT3cVdUksszp+25D5JYHrxIGFPXJ/J14oQOfShbak=";
     };
 
   dontConfigure = true;
@@ -63,7 +63,7 @@ stdenv.mkDerivation rec {
             --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ alsa-lib icu66 ffmpeg openssl ]}" \
             --prefix PATH : "$dotnetDir" \
             --prefix PATH : "${lib.makeBinPath [ alsa-utils cifs-utils ffmpeg ]}" \
-            --run "cd $binDir" \
+            --chdir "$binDir" \
             --set DOTNET_ROOT "$dotnetDir"
         )
       '';
@@ -82,7 +82,7 @@ stdenv.mkDerivation rec {
       ${wrapBin "$out/Server/RoonServer"}
 
       mkdir -p $out/bin
-      makeWrapper "$out/Server/RoonServer" "$out/bin/RoonServer" --run "cd $out"
+      makeWrapper "$out/Server/RoonServer" "$out/bin/RoonServer" --chdir "$out"
 
       runHook postInstall
     '';
@@ -91,6 +91,7 @@ stdenv.mkDerivation rec {
     description = "The music player for music lovers";
     changelog = "https://community.roonlabs.com/c/roon/software-release-notes/18";
     homepage = "https://roonlabs.com";
+    sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     license = licenses.unfree;
     maintainers = with maintainers; [ lovesegfault steell ];
     platforms = [ "x86_64-linux" ];

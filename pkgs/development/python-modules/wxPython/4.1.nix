@@ -48,12 +48,14 @@ buildPythonPackage rec {
     doxygen
     wxGTK.gtk
     pkg-config
+  ] ++ lib.optionals stdenv.isLinux [
     autoPatchelfHook
   ];
 
   buildInputs = [
     wxGTK.gtk
     ncurses
+  ] ++ lib.optionals stdenv.isLinux [
     libXinerama
     libSM
     libXxf86vm
@@ -92,6 +94,7 @@ buildPythonPackage rec {
   '';
 
   meta = with lib; {
+    broken = stdenv.isDarwin;
     description = "Cross platform GUI toolkit for Python, Phoenix version";
     homepage = "http://wxpython.org/";
     license = licenses.wxWindows;

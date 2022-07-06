@@ -73,7 +73,8 @@ stdenv.mkDerivation rec {
   meta = with lib; {
     homepage = "https://pinegrow.com";
     description = "UI Web Editor";
-    platforms = platforms.linux;
+    platforms = [ "x86_64-linux" ];
+    sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     license = with licenses; [ unfreeRedistributable ];
     maintainers = with maintainers; [ gador ];
   };

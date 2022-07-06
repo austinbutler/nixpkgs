@@ -8,7 +8,7 @@
 , jre
 , makeWrapper
 , crowdin-cli
-, testVersion
+, testers
 , unzip
 }:
 
@@ -38,12 +38,13 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  passthru.tests.version = testVersion { package = crowdin-cli; };
+  passthru.tests.version = testers.testVersion { package = crowdin-cli; };
 
   meta = with lib; {
     mainProgram = "crowdin";
     homepage = "https://github.com/crowdin/crowdin-cli/";
     description = "A command-line client for the Crowdin API";
+    sourceProvenance = with sourceTypes; [ binaryBytecode ];
     license = licenses.mit;
     maintainers = with maintainers; [ DamienCassou ];
   };

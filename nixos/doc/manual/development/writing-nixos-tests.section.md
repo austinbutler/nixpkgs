@@ -159,34 +159,42 @@ The following methods are available on machine objects:
 `execute`
 
 :   Execute a shell command, returning a list `(status, stdout)`.
+
+    Commands are run with `set -euo pipefail` set:
+
+    -   If several commands are separated by `;` and one fails, the
+        command as a whole will fail.
+
+    -   For pipelines, the last non-zero exit status will be returned
+        (if there is one; otherwise zero will be returned).
+
+    -   Dereferencing unset variables fails the command.
+
+    -   It will wait for stdout to be closed.
+
     If the command detaches, it must close stdout, as `execute` will wait
     for this to consume all output reliably. This can be achieved by
     redirecting stdout to stderr `>&2`, to `/dev/console`, `/dev/null` or
     a file. Examples of detaching commands are `sleep 365d &`, where the
     shell forks a new process that can write to stdout and `xclip -i`, where
     the `xclip` command itself forks without closing stdout.
+
     Takes an optional parameter `check_return` that defaults to `True`.
     Setting this parameter to `False` will not check for the return code
     and return -1 instead. This can be used for commands that shut down
     the VM and would therefore break the pipe that would be used for
     retrieving the return code.
 
+    A timeout for the command can be specified (in seconds) using the optional
+    `timeout` parameter, e.g., `execute(cmd, timeout=10)` or
+    `execute(cmd, timeout=None)`. The default is 900 seconds.
+
 `succeed`
 
 :   Execute a shell command, raising an exception if the exit status is
-    not zero, otherwise returning the standard output. Commands are run
-    with `set -euo pipefail` set:
-
-    -   If several commands are separated by `;` and one fails, the
-        command as a whole will fail.
-
-    -   For pipelines, the last non-zero exit status will be returned
-        (if there is one, zero will be returned otherwise).
-
-    -   Dereferencing unset variables fail the command.
-
-    -   It will wait for stdout to be closed. See `execute` for the
-        implications.
+    not zero, otherwise returning the standard output. Similar to `execute`,
+    except that the timeout is `None` by default. See `execute` for details on
+    command execution.
 
 `fail`
 
@@ -196,10 +204,13 @@ The following methods are available on machine objects:
 `wait_until_succeeds`
 
 :   Repeat a shell command with 1-second intervals until it succeeds.
+    Has a default timeout of 900 seconds which can be modified, e.g.
+    `wait_until_succeeds(cmd, timeout=10)`. See `execute` for details on
+    command execution.
 
 `wait_until_fails`
 
-:   Repeat a shell command with 1-second intervals until it fails.
+:   Like `wait_until_succeeds`, but repeating the command until it fails.
 
 `wait_for_unit`
 
@@ -321,6 +332,19 @@ repository):
     '';
 ```
 
+Similarly, the type checking of test scripts can be disabled in the following
+way:
+
+```nix
+import ./make-test-python.nix {
+  skipTypeCheck = true;
+  nodes.machine =
+    { config, pkgs, ... }:
+    { configuration…
+    };
+}
+```
+
 ## Failing tests early {#ssec-failing-tests-early}
 
 To fail tests early when certain invariables are no longer met (instead of waiting for the build to time out), the decorator `polling_condition` is provided. For example, if we are testing a program `foo` that should not quit after being started, we might write the following:
@@ -369,3 +393,25 @@ with foo_running:
     def foo_running():
         machine.succeed("pgrep -x foo")
     ```
+
+## Adding Python packages to the test script {#ssec-python-packages-in-test-script}
+
+When additional Python libraries are required in the test script, they can be
+added using the parameter `extraPythonPackages`. For example, you could add
+`numpy` like this:
+
+```nix
+import ./make-test-python.nix
+{
+  extraPythonPackages = p: [ p.numpy ];
+
+  nodes = { };
+
+  testScript = ''
+    import numpy as np
+    assert str(np.zeros(4) == "array([0., 0., 0., 0.])")
+  '';
+}
+```
+
+In that case, `numpy` is chosen from the generic `python3Packages`.

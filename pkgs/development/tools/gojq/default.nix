@@ -1,21 +1,21 @@
-{ lib, buildGoModule, fetchFromGitHub, testVersion, gojq }:
+{ lib, buildGoModule, fetchFromGitHub, testers, gojq }:
 
 buildGoModule rec {
   pname = "gojq";
-  version = "0.12.7";
+  version = "0.12.8";
 
   src = fetchFromGitHub {
     owner = "itchyny";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-aQZLuwMFnggtwHZaE6KGBKJSbtmAz+Cs1RqLgvIsO24=";
+    sha256 = "sha256-WcPvsThYgXwYXwXyylOqopTZOfsXmDU4wbhEdS3neA8=";
   };
 
-  vendorSha256 = "sha256-b7TQywIOxzFnUNwgxGFR3W++QGHYUROBG7P/lTRmhGc=";
+  vendorSha256 = "sha256-fFW+gWdGMxDApcyR6dy0491WvQcVMAJ5dgMQqgNmOkw=";
 
   ldflags = [ "-s" "-w" ];
 
-  passthru.tests.version = testVersion {
+  passthru.tests.version = testers.testVersion {
     package = gojq;
   };
 

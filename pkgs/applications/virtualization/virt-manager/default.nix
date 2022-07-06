@@ -1,11 +1,9 @@
 { lib, fetchFromGitHub, python3, intltool, file, wrapGAppsHook, gtk-vnc
 , vte, avahi, dconf, gobject-introspection, libvirt-glib, system-libvirt
 , gsettings-desktop-schemas, libosinfo, gnome, gtksourceview4, docutils, cpio
-, e2fsprogs, findutils, gzip, cdrtools, xorriso
+, e2fsprogs, findutils, gzip, cdrtools, xorriso, fetchpatch
 , spiceSupport ? true, spice-gtk ? null
 }:
-
-with lib;
 
 python3.pkgs.buildPythonApplication rec {
   pname = "virt-manager";
@@ -29,13 +27,23 @@ python3.pkgs.buildPythonApplication rec {
     libvirt-glib vte dconf gtk-vnc gnome.adwaita-icon-theme avahi
     gsettings-desktop-schemas libosinfo gtksourceview4
     gobject-introspection # Temporary fix, see https://github.com/NixOS/nixpkgs/issues/56943
-  ] ++ optional spiceSupport spice-gtk;
+  ] ++ lib.optional spiceSupport spice-gtk;
 
   propagatedBuildInputs = with python3.pkgs; [
-    pygobject3 ipaddress libvirt libxml2 requests cdrtools
+    pygobject3 libvirt libxml2 requests cdrtools
   ];
 
-  patchPhase = ''
+   patches = [
+     # due to a recent change in setuptools-61, "packages=[]" needs to be included
+     # this patch can hopefully be removed, once virt-manager has an upstream version bump
+    (fetchpatch {
+      name = "fix-for-setuptools-61.patch";
+      url = "https://github.com/virt-manager/virt-manager/commit/46dc0616308a73d1ce3ccc6d716cf8bbcaac6474.patch";
+      sha256 = "sha256-/RZG+7Pmd7rmxMZf8Fvg09dUggs2MqXZahfRQ5cLcuM=";
+    })
+  ];
+
+  postPatch = ''
     sed -i 's|/usr/share/libvirt/cpu_map.xml|${system-libvirt}/share/libvirt/cpu_map.xml|g' virtinst/capabilities.py
     sed -i "/'install_egg_info'/d" setup.py
   '';
@@ -53,7 +61,7 @@ python3.pkgs.buildPythonApplication rec {
 
     gappsWrapperArgs+=(--set PYTHONPATH "$PYTHONPATH")
     # these are called from virt-install in initrdinject.py
-    gappsWrapperArgs+=(--prefix PATH : "${makeBinPath [ cpio e2fsprogs file findutils gzip ]}")
+    gappsWrapperArgs+=(--prefix PATH : "${lib.makeBinPath [ cpio e2fsprogs file findutils gzip ]}")
 
     makeWrapperArgs+=("''${gappsWrapperArgs[@]}")
   '';

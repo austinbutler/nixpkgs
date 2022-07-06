@@ -13,16 +13,20 @@
 , pyopengl
 , seaborn
 , pytorch
+, pythonOlder
 , torchvision
 }:
 
 buildPythonPackage rec {
   pname = "boxx";
-  version = "0.9.10";
+  version = "0.10.5";
+  format = "setuptools";
+
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-Iw6jRhKAroqfWmbXhD7YTn4s8FrE/Iyd31EOP0tMdkQ=";
+    hash = "sha256-6qO/aPegHk+1PAu8qzIkC3fULh2WjgJcqNui+XEaLQw=";
   };
 
   propagatedBuildInputs = [
@@ -37,11 +41,14 @@ buildPythonPackage rec {
     seaborn
   ];
 
-  pythonImportsCheck = [ "boxx" ];
   checkInputs = [
     xvfb-run
     pytorch
     torchvision
+  ];
+
+  pythonImportsCheck = [
+    "boxx"
   ];
 
   checkPhase = ''
@@ -49,7 +56,7 @@ buildPythonPackage rec {
   '';
 
   meta = with lib; {
-    description = "Tool-box for efficient build and debug in Python. Especially for Scientific Computing and Computer Vision.";
+    description = "Tool-box for efficient build and debug for Scientific Computing and Computer Vision";
     homepage = "https://github.com/DIYer22/boxx";
     license = licenses.mit;
     maintainers = with maintainers; [ lucasew ];

@@ -2,16 +2,16 @@
 
 buildGoModule rec {
   pname = "argocd-autopilot";
-  version = "0.3.2";
+  version = "0.3.7";
 
   src = fetchFromGitHub {
     owner = "argoproj-labs";
     repo = "argocd-autopilot";
     rev = "v${version}";
-    sha256 = "sha256-9si2zqYhmAqzhdUWMkfQ/yLeyNcZSAWypvZTbDDrPvA=";
+    sha256 = "sha256-dLmJQCASdWkzWOPQ0bdJLe2AD06+L2ghP2yWry1XL1k=";
   };
 
-  vendorSha256 = "sha256-UfZCGG24JjPoc5nbX9vPeFCP8YGMNF5oUrdwTC6RpKI=";
+  vendorSha256 = "sha256-0v/HTiQf/mZUU1b55jAnSj86NEFOUaiM+/MrVvwJYBM=";
 
   proxyVendor = true;
 
@@ -24,7 +24,7 @@ buildGoModule rec {
       "-X ${package_url}.version=${src.rev}"
       "-X ${package_url}.buildDate=unknown"
       "-X ${package_url}.gitCommit=${src.rev}"
-      "-X ${package_url}.installationManifestURL=github.com/argoproj-labs/argocd-autopilot/manifests/base?ref=${src.rev}"
+      "-X ${package_url}.installationManifestsURL=github.com/argoproj-labs/argocd-autopilot/manifests/base?ref=${src.rev}"
       "-X ${package_url}.installationManifestsNamespacedURL=github.com/argoproj-labs/argocd-autopilot/manifests/insecure?ref=${src.rev}"
     ];
 

@@ -55,6 +55,8 @@ let
     homepage = "https://github.com/google/jax";
     license = licenses.asl20;
     maintainers = with maintainers; [ ndl ];
+    platforms = [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin"];
+    hydraPlatforms = ["x86_64-linux" ]; # Don't think anybody is checking the darwin builds
   };
 
   cudatoolkit_joined = symlinkJoin {
@@ -214,9 +216,9 @@ let
     fetchAttrs = {
       sha256 =
         if cudaSupport then
-          "1k0rjxqjm703gd9navwzx5x3874b4dxamr62m1fxhm79d271zxis"
+          "sha256-Ald+vplRx/DDG/7TfHAqD4Gktb1BGnf7FSCCJzSI0eo="
         else
-          "0ivah1w41jcj13jm740qzwx5h0ia8vbj71pjgd0zrfk3c92kll41";
+          "sha256-6acSbBNcUBw177HMVOmpV7pUfP1aFSe5cP6/zWFdGFo=";
     };
 
     buildAttrs = {

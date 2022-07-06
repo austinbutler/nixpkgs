@@ -1,34 +1,36 @@
 { lib
 , aiohttp
+, async-lru
 , buildPythonPackage
 , fetchFromGitHub
 , oauthlib
-, requests
-, pythonOlder
-, vcrpy
 , pytestCheckHook
-, requests_oauthlib
+, pythonOlder
+, requests
+, requests-oauthlib
+, vcrpy
 }:
 
 buildPythonPackage rec {
   pname = "tweepy";
-  version = "4.8.0";
+  version = "4.10.0";
   format = "setuptools";
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = "refs/tags/v${version}";
-    sha256 = "sha256-RaM2JN2WOHyZY+AxzgQLvhXg6UnevDbSFSR4jFLsYrc=";
+    hash = "sha256-D/cArsGzWr+rCC9iW9qOfc5fT7UKZDupeR/rQMNK5I4=";
   };
 
   propagatedBuildInputs = [
     aiohttp
+    async-lru
     oauthlib
     requests
-    requests_oauthlib
+    requests-oauthlib
   ];
 
   checkInputs = [
@@ -41,8 +43,8 @@ buildPythonPackage rec {
   ];
 
   meta = with lib; {
-    homepage = "https://github.com/tweepy/tweepy";
     description = "Twitter library for Python";
+    homepage = "https://github.com/tweepy/tweepy";
     license = licenses.mit;
     maintainers = with maintainers; [ ];
   };

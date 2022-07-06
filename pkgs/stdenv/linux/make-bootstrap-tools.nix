@@ -1,9 +1,6 @@
-{ localSystem ? { system = builtins.currentSystem; }
-, crossSystem ? null
-}:
+{ pkgs ? import ../../.. {} }:
 
 let
-  pkgs = import ../../.. { inherit localSystem crossSystem; };
   libc = pkgs.stdenv.cc.libc;
 in with pkgs; rec {
 
@@ -37,7 +34,7 @@ in with pkgs; rec {
   bootBinutils = binutils.bintools.override {
     withAllTargets = false;
     # Don't need two linkers, disable whatever's not primary/default.
-    gold = false;
+    enableGold = false;
     # bootstrap is easier w/static
     enableShared = false;
   };
@@ -175,7 +172,7 @@ in with pkgs; rec {
         for i in as ld ar ranlib nm strip readelf objdump; do
           cp ${bootBinutils.out}/bin/$i $out/bin
         done
-        cp '${lib.getLib binutils.bintools}'/lib/* "$out/lib/"
+        cp -r '${lib.getLib binutils.bintools}'/lib/* "$out/lib/"
 
         chmod -R u+w $out
 
@@ -189,6 +186,7 @@ in with pkgs; rec {
 
         nuke-refs $out/bin/*
         nuke-refs $out/lib/*
+        nuke-refs $out/lib/*/*
         nuke-refs $out/libexec/gcc/*/*/*
         nuke-refs $out/lib/gcc/*/*/*
         nuke-refs $out/lib/gcc/*/*/include-fixed/*{,/*}
@@ -234,7 +232,7 @@ in with pkgs; rec {
 
   bootstrapTools =
     let extraAttrs = lib.optionalAttrs
-      (config.contentAddressedByDefault or false)
+      config.contentAddressedByDefault
       {
         __contentAddressed = true;
         outputHashAlgo = "sha256";

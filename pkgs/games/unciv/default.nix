@@ -25,11 +25,11 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "unciv";
-  version = "3.19.12";
+  version = "3.19.14";
 
   src = fetchurl {
     url = "https://github.com/yairm210/Unciv/releases/download/${version}/Unciv.jar";
-    sha256 = "sha256-PALrOyaUYXyNH+QdE8oy1TM5U4SZjw1N0NJ2BKiqjtU=";
+    sha256 = "sha256-Q0OiXjqZ6RmQg3Ob6k4NjaHsc+K50a0bAGBaaaUcP3I=";
   };
 
   dontUnpack = true;
@@ -53,6 +53,7 @@ stdenv.mkDerivation rec {
     description = "An open-source Android/Desktop remake of Civ V";
     homepage = "https://github.com/yairm210/Unciv";
     maintainers = with maintainers; [ tex ];
+    sourceProvenance = with sourceTypes; [ binaryBytecode ];
     license = licenses.mpl20;
     platforms = [ "x86_64-linux" ];
   };

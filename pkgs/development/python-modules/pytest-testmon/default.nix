@@ -8,24 +8,19 @@
 
 buildPythonPackage rec {
   pname = "pytest-testmon";
-  version = "1.3.0";
+  version = "1.3.3";
   disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-1Qyroq6Dv11EaCGRAj19bKQBfRz26XSh5TJY7xA/vBE=";
+    sha256 = "sha256-Csg5wIm9+ZdAQYdZozlx09rMaVz3GazeS5Z/f4jRECw=";
   };
 
-  propagatedBuildInputs = [ coverage ];
+  propagatedBuildInputs = [ pytest coverage ];
 
-  checkInputs = [ pytest ];
-
-  # avoid tests which try to import unittest_mixins
-  # unittest_mixins doesn't seem to be very active
-  checkPhase = ''
-    cd test
-    pytest test_{core,process_code,pytest_assumptions}.py
-  '';
+  # The project does not include tests since version 1.3.0
+  doCheck = false;
+  pythonImportsCheck = [ "testmon" ];
 
   meta = with lib; {
     homepage = "https://github.com/tarpas/pytest-testmon/";

@@ -19,6 +19,7 @@ top-level attribute to `top-level/all-packages.nix`.
 , bison, cups ? null, harfbuzz, libGL, perl
 , gstreamer, gst-plugins-base, gtk3, dconf
 , darwin
+, buildPackages
 
   # options
 , developerBuild ? false
@@ -126,13 +127,6 @@ let
       ./qtwebkit-darwin-no-qos-classes.patch
     ];
     qttools = [ ./qttools.patch ];
-    qtwayland = [
-      ./qtwayland-libdrm-build.patch
-      # NixOS-specific, ensure that app_id is correctly determined for
-      # wrapped executables from `wrapQtAppsHook` (see comment in patch for further
-      # context).  Beware: shared among different Qt5 versions.
-      ../modules/qtwayland-app_id.patch
-    ];
   };
 
   addPackages = self: with self;
@@ -151,7 +145,7 @@ let
         }
         { inherit self srcs patches; };
 
-      callPackage = self.newScope { inherit qtCompatVersion qtModule srcs; };
+      callPackage = self.newScope { inherit qtCompatVersion qtModule srcs stdenv; };
     in {
 
       inherit callPackage qtCompatVersion qtModule srcs;
@@ -241,7 +235,7 @@ let
       } ../hooks/qmake-hook.sh;
 
       wrapQtAppsHook = makeSetupHook {
-        deps = [ self.qtbase.dev makeWrapper ]
+        deps = [ self.qtbase.dev buildPackages.makeWrapper ]
           ++ lib.optional stdenv.isLinux self.qtwayland.dev;
       } ../hooks/wrap-qt-apps-hook.sh;
     };

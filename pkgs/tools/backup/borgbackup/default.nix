@@ -13,11 +13,12 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "borgbackup";
-  version = "1.2.0";
+  version = "1.2.1";
+  format = "pyproject";
 
   src = python3.pkgs.fetchPypi {
     inherit pname version;
-    sha256 = "sha256-45pVR5Au9FYQGqTHefpms0W9pw0WeI6L0Y5Fj5Ovf2c=";
+    sha256 = "sha256-n5zi0ZI8szoUfubQgXfYYJdFZ3IbEUL8pnkUoC5kxjM=";
   };
 
   postPatch = ''
@@ -27,6 +28,7 @@ python3.pkgs.buildPythonApplication rec {
   '';
 
   nativeBuildInputs = with python3.pkgs; [
+    cython
     setuptools-scm
     # For building documentation:
     sphinx
@@ -43,12 +45,9 @@ python3.pkgs.buildPythonApplication rec {
   ];
 
   propagatedBuildInputs = with python3.pkgs; [
-    cython
-    llfuse
     msgpack
     packaging
-  ] ++ lib.optionals (!stdenv.isDarwin) [
-    pyfuse3
+    (if stdenv.isLinux then pyfuse3 else llfuse)
   ];
 
   preConfigure = ''
@@ -90,7 +89,6 @@ python3.pkgs.buildPythonApplication rec {
   ];
 
   pytestFlagsArray = [
-    "--numprocesses" "$NIX_BUILD_CORES"
     "--benchmark-skip"
     "--pyargs" "borg.testsuite"
   ];
@@ -109,6 +107,8 @@ python3.pkgs.buildPythonApplication rec {
     "test_get_keys_dir"
     "test_get_security_dir"
     "test_get_config_dir"
+    # https://github.com/borgbackup/borg/issues/6573
+    "test_basic_functionality"
   ];
 
   preCheck = ''
@@ -126,6 +126,7 @@ python3.pkgs.buildPythonApplication rec {
     homepage = "https://www.borgbackup.org";
     license = licenses.bsd3;
     platforms = platforms.unix; # Darwin and FreeBSD mentioned on homepage
+    mainProgram = "borg";
     maintainers = with maintainers; [ flokli dotlambda globin ];
   };
 }

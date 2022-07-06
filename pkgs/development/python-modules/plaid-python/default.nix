@@ -9,14 +9,14 @@
 
 buildPythonPackage rec {
   pname = "plaid-python";
-  version = "9.2.0";
+  version = "9.7.0";
   format = "setuptools";
 
   disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-3yFfANMkn8CXCheNHU77WGeYxPV4gs2jvOl/rV+/6vY=";
+    hash = "sha256-yNjrWjlTF7cfEpFbPP6b/L6foNuhNa6JFNv6ImbAZ5k=";
   };
 
   propagatedBuildInputs = [

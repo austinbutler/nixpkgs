@@ -9,33 +9,7 @@
 let
   py = python3.override {
     packageOverrides = self: super: {
-      django = super.django_3;
-      graphql-core = super.graphql-core.overridePythonAttrs (old: rec {
-        version = "3.1.7";
-        src = fetchFromGitHub {
-          owner = "graphql-python";
-          repo = old.pname;
-          rev = "v${version}";
-          sha256 = "1mwwh55qd5bcpvgy6pyliwn8jkmj4yk4d2pqb6mdkgqhdic2081l";
-        };
-      });
-      jsonschema = super.jsonschema.overridePythonAttrs (old: rec {
-        version = "3.2.0";
-        src = self.fetchPypi {
-          pname = old.pname;
-          inherit version;
-          sha256 = "c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a";
-        };
-      });
-      lxml = super.lxml.overridePythonAttrs (old: rec {
-        pname = "lxml";
-        version = "4.6.5";
-
-        src = self.fetchPypi {
-          inherit pname version;
-          sha256 = "6e84edecc3a82f90d44ddee2ee2a2630d4994b8471816e226d2b771cda7ac4ca";
-        };
-      });
+      django = super.django_4;
     };
   };
 
@@ -43,13 +17,13 @@ let
 in
 py.pkgs.buildPythonApplication rec {
     pname = "netbox";
-    version = "3.1.10";
+    version = "3.2.1";
 
     src = fetchFromGitHub {
       owner = "netbox-community";
       repo = pname;
       rev = "v${version}";
-      sha256 = "sha256-qREq4FJHHTA9Vm6f9kSfiYqur2omFmdsoZ4OdaPFcpU=";
+      sha256 = "sha256-iA0KIgaHQh0OsN/tXmTATIlvnf0aLRdjeQ6VkiR9VJ4=";
     };
 
     format = "other";
@@ -57,10 +31,11 @@ py.pkgs.buildPythonApplication rec {
     patches = [
       # Allow setting the STATIC_ROOT from within the configuration and setting a custom redis URL
       ./config.patch
+      ./graphql-3_2_0.patch
     ];
 
     propagatedBuildInputs = with py.pkgs; [
-      django_3
+      django_4
       django-cors-headers
       django-debug-toolbar
       django-filter
@@ -75,6 +50,7 @@ py.pkgs.buildPythonApplication rec {
       django-timezone-field
       djangorestframework
       drf-yasg
+      swagger-spec-validator # from drf-yasg[validation]
       graphene-django
       jinja2
       markdown

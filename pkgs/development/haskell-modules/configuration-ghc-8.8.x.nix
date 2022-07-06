@@ -42,7 +42,9 @@ self: super: {
   time = null;
   transformers = null;
   unix = null;
-  xhtml = null;
+  # GHC only bundles the xhtml library if haddock is enabled, check if this is
+  # still the case when updating: https://gitlab.haskell.org/ghc/ghc/-/blob/0198841877f6f04269d6050892b98b5c3807ce4c/ghc.mk#L463
+  xhtml = if self.ghc.hasHaddock or true then null else self.xhtml_3000_2_2_1;
 
   # GHC 8.8.x can build haddock version 2.23.*
   haddock = self.haddock_2_23_1;
@@ -116,7 +118,7 @@ self: super: {
   liquidhaskell = markBroken super.liquidhaskell;
 
   # This became a core library in ghc 8.10., so we don‘t have an "exception" attribute anymore.
-  exceptions = super.exceptions_0_10_4;
+  exceptions = super.exceptions_0_10_5;
 
   # ghc versions which don‘t match the ghc-lib-parser-ex version need the
   # additional dependency to compile successfully.
@@ -131,18 +133,23 @@ self: super: {
 
   mime-string = disableOptimization super.mime-string;
 
+  # Older compilers need the latest ghc-lib to build this package.
+  hls-hlint-plugin = addBuildDepend self.ghc-lib (overrideCabal (drv: {
+      # Workaround for https://github.com/haskell/haskell-language-server/issues/2728
+      postPatch = ''
+        sed -i 's/(GHC.RealSrcSpan x,/(GHC.RealSrcSpan x Nothing,/' src/Ide/Plugin/Hlint.hs
+      '';
+    })
+     super.hls-hlint-plugin);
+
   haskell-language-server = appendConfigureFlags [
-      "-f-fourmolu"
       "-f-stylishhaskell"
       "-f-brittany"
-      "-f-hlint"
     ]
-  (super.haskell-language-server.override {
-    # Not buildable on 8.8
-    hls-fourmolu-plugin = null;
-    # https://github.com/haskell/haskell-language-server/issues/2728
-    hls-hlint-plugin = null;
-  });
+  super.haskell-language-server;
+
+  # has a restrictive lower bound on Cabal
+  fourmolu = doJailbreak super.fourmolu;
 
   # OneTuple needs hashable instead of ghc-prim for GHC < 9
   OneTuple = super.OneTuple.override {
@@ -157,4 +164,7 @@ self: super: {
 
   # https://github.com/fpco/inline-c/issues/127 (recommend to upgrade to Nixpkgs GHC >=9.0)
   inline-c-cpp = (if isDarwin then dontCheck else x: x) super.inline-c-cpp;
+
+  # Depends on OneTuple for GHC < 9.0
+  universe-base = addBuildDepends [ self.OneTuple ] super.universe-base;
 }

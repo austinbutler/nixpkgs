@@ -22,6 +22,9 @@ let
     favorite-apps=[ 'org.gnome.Epiphany.desktop', 'org.gnome.Geary.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Music.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Nautilus.desktop' ]
   '';
 
+  nixos-background-ligtht = pkgs.nixos-artwork.wallpapers.simple-blue;
+  nixos-background-dark = pkgs.nixos-artwork.wallpapers.simple-dark-gray;
+
   nixos-gsettings-desktop-schemas = let
     defaultPackages = with pkgs; [ gsettings-desktop-schemas gnome.gnome-shell ];
   in
@@ -42,11 +45,11 @@ let
      chmod -R a+w $out/share/gsettings-schemas/nixos-gsettings-overrides
      cat - > $out/share/gsettings-schemas/nixos-gsettings-overrides/glib-2.0/schemas/nixos-defaults.gschema.override <<- EOF
        [org.gnome.desktop.background]
-       picture-uri='file://${pkgs.nixos-artwork.wallpapers.simple-blue.gnomeFilePath}'
-       picture-uri-dark='file://${pkgs.nixos-artwork.wallpapers.simple-dark-gray.gnomeFilePath}'
+       picture-uri='file://${nixos-background-ligtht.gnomeFilePath}'
+       picture-uri-dark='file://${nixos-background-dark.gnomeFilePath}'
 
        [org.gnome.desktop.screensaver]
-       picture-uri='file://${pkgs.nixos-artwork.wallpapers.simple-dark-gray-bottom.gnomeFilePath}'
+       picture-uri='file://${nixos-background-dark.gnomeFilePath}'
 
        ${cfg.favoriteAppsOverride}
 
@@ -55,6 +58,26 @@ let
 
      ${pkgs.glib.dev}/bin/glib-compile-schemas $out/share/gsettings-schemas/nixos-gsettings-overrides/glib-2.0/schemas/
     '';
+
+  nixos-background-info = pkgs.writeTextFile rec {
+    name = "nixos-background-info";
+    text = ''
+      <?xml version="1.0"?>
+      <!DOCTYPE wallpapers SYSTEM "gnome-wp-list.dtd">
+      <wallpapers>
+        <wallpaper deleted="false">
+          <name>Blobs</name>
+          <filename>${nixos-background-ligtht.gnomeFilePath}</filename>
+          <filename-dark>${nixos-background-dark.gnomeFilePath}</filename-dark>
+          <options>zoom</options>
+          <shade_type>solid</shade_type>
+          <pcolor>#3a4ba0</pcolor>
+          <scolor>#2f302f</scolor>
+        </wallpaper>
+      </wallpapers>
+    '';
+    destination = "/share/gnome-background-properties/nixos.xml";
+  };
 
   flashbackEnabled = cfg.flashback.enableMetacity || length cfg.flashback.customSessions > 0;
   flashbackWms = optional cfg.flashback.enableMetacity {
@@ -166,7 +189,6 @@ in
 
           Note that this should be a last resort; patching the package is preferred (see GPaste).
         '';
-        apply = list: list ++ [ pkgs.gnome.gnome-shell pkgs.gnome.gnome-shell-extensions ];
       };
 
       favoriteAppsOverride = mkOption {
@@ -344,6 +366,10 @@ in
       services.upower.enable = config.powerManagement.enable;
       services.xserver.libinput.enable = mkDefault true; # for controlling touchpad settings via gnome control center
 
+      # Explicitly enabled since GNOME will be severely broken without these.
+      xdg.mime.enable = true;
+      xdg.icons.enable = true;
+
       xdg.portal.enable = true;
       xdg.portal.extraPortals = [
         pkgs.xdg-desktop-portal-gnome
@@ -377,6 +403,18 @@ in
     })
 
     (mkIf serviceCfg.core-shell.enable {
+      services.xserver.desktopManager.gnome.sessionPath =
+        let
+          mandatoryPackages = [
+            pkgs.gnome.gnome-shell
+          ];
+          optionalPackages = [
+            pkgs.gnome.gnome-shell-extensions
+          ];
+        in
+        mandatoryPackages
+        ++ utils.removePackagesByName optionalPackages config.environment.gnome.excludePackages;
+
       services.colord.enable = mkDefault true;
       services.gnome.chrome-gnome-shell.enable = mkDefault true;
       services.gnome.glib-networking.enable = true;
@@ -429,27 +467,31 @@ in
       ];
 
       # Adapt from https://gitlab.gnome.org/GNOME/gnome-build-meta/blob/gnome-3-38/elements/core/meta-gnome-core-shell.bst
-      environment.systemPackages = with pkgs.gnome; [
-        adwaita-icon-theme
-        gnome-backgrounds
-        gnome-bluetooth
-        gnome-color-manager
-        gnome-control-center
-        gnome-shell
-        gnome-shell-extensions
-        gnome-themes-extra
-        pkgs.gnome-tour # GNOME Shell detects the .desktop file on first log-in.
-        pkgs.nixos-artwork.wallpapers.simple-dark-gray
-        pkgs.nixos-artwork.wallpapers.simple-dark-gray-bottom
-        pkgs.gnome-user-docs
-        pkgs.orca
-        pkgs.glib # for gsettings
-        pkgs.gnome-menus
-        pkgs.gtk3.out # for gtk-launch
-        pkgs.hicolor-icon-theme
-        pkgs.shared-mime-info # for update-mime-database
-        pkgs.xdg-user-dirs # Update user dirs as described in http://freedesktop.org/wiki/Software/xdg-user-dirs/
-      ];
+      environment.systemPackages =
+        let
+          mandatoryPackages = with pkgs.gnome; [
+            gnome-shell
+          ];
+          optionalPackages = with pkgs.gnome; [
+            adwaita-icon-theme
+            nixos-background-info
+            gnome-backgrounds
+            gnome-bluetooth
+            gnome-color-manager
+            gnome-control-center
+            gnome-shell-extensions
+            gnome-themes-extra
+            pkgs.gnome-tour # GNOME Shell detects the .desktop file on first log-in.
+            pkgs.gnome-user-docs
+            pkgs.orca
+            pkgs.glib # for gsettings program
+            pkgs.gnome-menus
+            pkgs.gtk3.out # for gtk-launch program
+            pkgs.xdg-user-dirs # Update user dirs as described in http://freedesktop.org/wiki/Software/xdg-user-dirs/
+          ];
+        in
+        mandatoryPackages
+        ++ utils.removePackagesByName optionalPackages config.environment.gnome.excludePackages;
     })
 
     # Adapt from https://gitlab.gnome.org/GNOME/gnome-build-meta/blob/gnome-3-38/elements/core/meta-gnome-core-utilities.bst

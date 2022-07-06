@@ -1,67 +1,158 @@
-{ lib, stdenv
+{ lib
+, stdenv
 , buildPythonPackage
-, fetchpatch
+, pythonOlder
 , fetchPypi
 , python
-, zope_interface
-, incremental
-, automat
-, constantly
-, hyperlink
-, pyhamcrest
+, appdirs
 , attrs
+, automat
+, bcrypt
+, constantly
+, contextvars
+, cryptography
+, git
+, glibcLocales
+, h2
+, hyperlink
+, idna
+, incremental
+, priority
+, pyasn1
+, pyhamcrest
+, pynacl
 , pyopenssl
+, pyserial
 , service-identity
 , setuptools
-, idna
 , typing-extensions
+, zope_interface
+
+  # for passthru.tests
+, cassandra-driver
+, klein
+, magic-wormhole
+, scrapy
+, treq
+, txaio
+, txamqp
+, txrequests
+, txtorcon
+, thrift
+, nixosTests
 }:
+
 buildPythonPackage rec {
-  pname = "Twisted";
-  version = "22.2.0";
+  pname = "twisted";
+  version = "22.4.0";
+  format = "setuptools";
+
+  disabled = pythonOlder "3.6";
 
   src = fetchPypi {
-    inherit pname version;
+    pname = "Twisted";
+    inherit version;
     extension = "tar.gz";
-    sha256 = "1wml02jxni8k15984pskks7d6yin81w4d2ac026cpyiqd0gjpwsp";
+    sha256 = "sha256-oEeZD1ffrh4L0rffJSbU8W3NyEN3TcEIt4xS8qXxNoA=";
   };
 
-  patches = [
-    (fetchpatch {
-      # https://github.com/twisted/twisted/security/advisories/GHSA-c2jg-hw38-jrqq
-      name = "CVE-2022-24801.patch";
-      url = "https://github.com/twisted/twisted/commit/592217e951363d60e9cd99c5bbfd23d4615043ac.patch";
-      hash = "sha256-psX5vAM9myuILuTazpebSk8QTT52CB6N7RXAY4MAV8g=";
-      excludes = [
-        "src/twisted/web/newsfragments/10323.bugfix"
-      ];
-    })
+  propagatedBuildInputs = [
+    attrs
+    automat
+    constantly
+    hyperlink
+    incremental
+    setuptools
+    typing-extensions
+    zope_interface
   ];
 
-  propagatedBuildInputs = [ zope_interface incremental automat constantly hyperlink pyhamcrest attrs setuptools typing-extensions ];
+  postPatch = ''
+    echo 'ListingTests.test_localeIndependent.skip = "Timezone issue"'>> src/twisted/conch/test/test_cftp.py
+    echo 'ListingTests.test_newFile.skip = "Timezone issue"'>> src/twisted/conch/test/test_cftp.py
+    echo 'ListingTests.test_newSingleDigitDayOfMonth.skip = "Timezone issue"'>> src/twisted/conch/test/test_cftp.py
+    echo 'ListingTests.test_oldFile.skip = "Timezone issue"'>> src/twisted/conch/test/test_cftp.py
+    echo 'ListingTests.test_oldSingleDigitDayOfMonth.skip = "Timezone issue"'>> src/twisted/conch/test/test_cftp.py
 
-  passthru.extras.tls = [ pyopenssl service-identity idna ];
+    echo 'PTYProcessTestsBuilder_AsyncioSelectorReactorTests.test_openFileDescriptors.skip = "invalid syntax"'>> src/twisted/internet/test/test_process.py
+    echo 'PTYProcessTestsBuilder_SelectReactorTests.test_openFileDescriptors.skip = "invalid syntax"'>> src/twisted/internet/test/test_process.py
 
-  # Patch t.p._inotify to point to libc. Without this,
-  # twisted.python.runtime.platform.supportsINotify() == False
-  postPatch = lib.optionalString stdenv.isLinux ''
+    echo 'UNIXTestsBuilder_AsyncioSelectorReactorTests.test_sendFileDescriptorTriggersPauseProducing.skip = "sendFileDescriptor producer was not paused"'>> src/twisted/internet/test/test_unix.py
+    echo 'UNIXTestsBuilder_SelectReactorTests.test_sendFileDescriptorTriggersPauseProducing.skip = "sendFileDescriptor producer was not paused"'>> src/twisted/internet/test/test_unix.py
+
+    echo 'FileObserverTests.test_getTimezoneOffsetEastOfUTC.skip = "mktime argument out of range"'>> src/twisted/test/test_log.py
+    echo 'FileObserverTests.test_getTimezoneOffsetWestOfUTC.skip = "mktime argument out of range"'>> src/twisted/test/test_log.py
+    echo 'FileObserverTests.test_getTimezoneOffsetWithoutDaylightSavingTime.skip = "tuple differs, values not"'>> src/twisted/test/test_log.py
+
+    echo 'MulticastTests.test_joinLeave.skip = "No such device"'>> src/twisted/test/test_udp.py
+    echo 'MulticastTests.test_loopback.skip = "No such device"'>> src/twisted/test/test_udp.py
+    echo 'MulticastTests.test_multicast.skip = "Reactor was unclean"'>> src/twisted/test/test_udp.py
+    echo 'MulticastTests.test_multiListen.skip = "No such device"'>> src/twisted/test/test_udp.py
+
+    echo 'DomishExpatStreamTests.test_namespaceWithWhitespace.skip = "syntax error: line 1, column 0"'>> src/twisted/words/test/test_domish.py
+
+    # not packaged
+    substituteInPlace src/twisted/test/test_failure.py \
+      --replace "from cython_test_exception_raiser import raiser  # type: ignore[import]" "raiser = None"
+  '' + lib.optionalString stdenv.isLinux ''
+    echo 'PTYProcessTestsBuilder_EPollReactorTests.test_openFileDescriptors.skip = "invalid syntax"'>> src/twisted/internet/test/test_process.py
+    echo 'PTYProcessTestsBuilder_PollReactorTests.test_openFileDescriptors.skip = "invalid syntax"'>> src/twisted/internet/test/test_process.py
+    echo 'UNIXTestsBuilder_EPollReactorTests.test_sendFileDescriptorTriggersPauseProducing.skip = "sendFileDescriptor producer was not paused"'>> src/twisted/internet/test/test_unix.py
+    echo 'UNIXTestsBuilder_PollReactorTests.test_sendFileDescriptorTriggersPauseProducing.skip = "sendFileDescriptor producer was not paused"'>> src/twisted/internet/test/test_unix.py
+
+    # Patch t.p._inotify to point to libc. Without this,
+    # twisted.python.runtime.platform.supportsINotify() == False
     substituteInPlace src/twisted/python/_inotify.py --replace \
-      "ctypes.util.find_library(\"c\")" "'${stdenv.glibc.out}/lib/libc.so.6'"
+      "ctypes.util.find_library(\"c\")" "'${stdenv.cc.libc}/lib/libc.so.6'"
   '';
 
-  # Generate Twisted's plug-in cache.  Twisted users must do it as well.  See
+  # Generate Twisted's plug-in cache. Twisted users must do it as well. See
   # http://twistedmatrix.com/documents/current/core/howto/plugin.html#auto3
-  # and http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=477103 for
-  # details.
+  # and http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=477103 for details.
   postFixup = ''
     $out/bin/twistd --help > /dev/null
   '';
 
+  checkInputs = [
+    git
+    glibcLocales
+    pyhamcrest
+  ]
+  ++ passthru.optional-dependencies.conch
+  ++ passthru.optional-dependencies.tls;
+
   checkPhase = ''
-    ${python.interpreter} -m unittest discover -s src/twisted/test
+    export SOURCE_DATE_EPOCH=315532800
+    export PATH=$out/bin:$PATH
+    # race conditions when running in paralell
+    ${python.interpreter} -m twisted.trial twisted
   '';
-  # Tests require network
-  doCheck = false;
+
+  passthru = {
+    optional-dependencies = rec {
+      conch = [ appdirs bcrypt cryptography pyasn1 ];
+      conch_nacl = conch ++ [ pynacl ];
+      contextvars = lib.optionals (pythonOlder "3.7") [ contextvars ];
+      http2 = [ h2 priority ];
+      serial = [ pyserial ];
+      tls = [ idna pyopenssl service-identity ];
+    };
+
+    tests = {
+      inherit
+        cassandra-driver
+        klein
+        magic-wormhole
+        scrapy
+        treq
+        txaio
+        txamqp
+        txrequests
+        txtorcon
+        thrift;
+      inherit (nixosTests) buildbot matrix-synapse;
+    };
+  };
 
   meta = with lib; {
     homepage = "https://github.com/twisted/twisted";
@@ -71,6 +162,6 @@ buildPythonPackage rec {
       and licensed under the MIT license.
     '';
     license = licenses.mit;
-    maintainers = [ ];
+    maintainers = with maintainers; [ SuperSandro2000 ];
   };
 }

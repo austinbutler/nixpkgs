@@ -4,48 +4,51 @@
 , buildGoModule
 , runCommand
 , nix-update-script
+, fetchurl
+, testers
+, python3
+, curl
+, jq
+, p7zip
 , dsq
-, diffutils
 }:
 
 buildGoModule rec {
   pname = "dsq";
-  version = "0.13.0";
+  version = "0.21.0";
 
   src = fetchFromGitHub {
     owner = "multiprocessio";
     repo = "dsq";
     rev = version;
-    hash = "sha256-6Rdw/bXIcIoQ/PsVtJKSlwIhCxSlISPmmb2lGbp8vVM=";
+    hash = "sha256-jwJw56Z/Y0vnsybE/FfXXHtz0W0J80Q5rrRRoINbjkM=";
   };
 
-  vendorSha256 = "sha256-hZeI1XqW1lk9F66TVirkpvCZrJb9MO8aS1Sx/R92ddc=";
+  vendorSha256 = "sha256-7KQDaDM151OFfTYRPOit4MAmwgEzvLOYFWCjXhVmFT0=";
 
-  nativeBuildInputs = [ diffutils ];
+  ldflags = [ "-X" "main.Version=${version}" ];
+
+  checkInputs = [ python3 curl jq p7zip ];
+
+  preCheck = ''
+    substituteInPlace scripts/test.py \
+      --replace 'dsq latest' 'dsq ${version}'
+  '';
+
+  checkPhase = ''
+    runHook preCheck
+
+    7z e testdata/taxi.csv.7z
+    cp "$GOPATH/bin/dsq" .
+    python3 scripts/test.py
+
+    runHook postCheck
+  '';
 
   passthru = {
     updateScript = nix-update-script { attrPath = pname; };
 
-    tests = {
-      pretty-csv = runCommand "${pname}-test" { } ''
-        mkdir "$out"
-        cat <<EOF > "$out/input.csv"
-        first,second
-        1,a
-        2,b
-        EOF
-        cat <<EOF > "$out/expected.txt"
-        +-------+--------+
-        | first | second |
-        +-------+--------+
-        |     1 | a      |
-        |     2 | b      |
-        +-------+--------+
-        EOF
-        ${dsq}/bin/dsq --pretty "$out/input.csv" 'select first, second from {}' > "$out/actual.txt"
-        diff "$out/expected.txt" "$out/actual.txt"
-      '';
-    };
+    tests.version = testers.testVersion { package = dsq; };
   };
 
   meta = with lib; {

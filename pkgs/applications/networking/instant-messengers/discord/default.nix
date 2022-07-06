@@ -1,10 +1,9 @@
-{ branch ? "stable", pkgs, lib, stdenv }:
+{ branch ? "stable", callPackage, fetchurl, lib, stdenv }:
 let
-  inherit (pkgs) callPackage fetchurl;
   versions = if stdenv.isLinux then {
-    stable = "0.0.17";
+    stable = "0.0.18";
     ptb = "0.0.29";
-    canary = "0.0.134";
+    canary = "0.0.135";
   } else {
     stable = "0.0.264";
     ptb = "0.0.59";
@@ -21,7 +20,7 @@ let
       stable = fetchurl {
         url =
           "https://dl.discordapp.net/apps/linux/${version}/discord-${version}.tar.gz";
-        sha256 = "058k0cmbm4y572jqw83bayb2zzl2fw2aaz0zj1gvg6sxblp76qil";
+        sha256 = "1hl01rf3l6kblx5v7rwnwms30iz8zw6dwlkjsx2f1iipljgkh5q4";
       };
       ptb = fetchurl {
         url =
@@ -31,7 +30,7 @@ let
       canary = fetchurl {
         url =
           "https://dl-canary.discordapp.net/apps/linux/${version}/discord-canary-${version}.tar.gz";
-        sha256 = "sha256-HyJa6lGcKMPKWffO/pnNcn8fDTJj6O4J8Y5RA23a1kM=";
+        sha256 = "sha256-dmG+3BWS1BMHHQAv4fsXuObVeAJBeD+TqnyQz69AMac=";
       };
     };
     x86_64-darwin = {
@@ -55,14 +54,23 @@ let
     description = "All-in-one cross-platform voice and text chat for gamers";
     homepage = "https://discordapp.com/";
     downloadPage = "https://discordapp.com/download";
+    sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     license = licenses.unfree;
     maintainers = with maintainers; [ ldesgoui MP2E devins2518 ];
     platforms = [ "x86_64-linux" "x86_64-darwin" ]
       ++ lib.optionals (branch == "ptb") [ "aarch64-darwin" ];
   };
   package = if stdenv.isLinux then ./linux.nix else ./darwin.nix;
+
+  openasar = callPackage ./openasar.nix { };
+
   packages = (builtins.mapAttrs
-    (_: value: callPackage package (value // { inherit src version; meta = meta // { mainProgram = value.binaryName; }; }))
+    (_: value: callPackage package
+      (value // {
+        inherit src version openasar;
+        meta = meta // { mainProgram = value.binaryName; };
+      })
+    )
     {
       stable = rec {
         pname = "discord";

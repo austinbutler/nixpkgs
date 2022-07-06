@@ -6,7 +6,7 @@
 , pythonPackages
 , emacs
 , ruby
-, testVersion
+, testers
 , which, dtach, openssl, bash, gdb, man
 , withEmacs ? true
 , withRuby ? true
@@ -14,11 +14,11 @@
 
 stdenv.mkDerivation rec {
   pname = "notmuch";
-  version = "0.35";
+  version = "0.36";
 
   src = fetchurl {
     url = "https://notmuchmail.org/releases/notmuch-${version}.tar.xz";
-    sha256 = "0fdc81m24xrbhfrhw00g12ak4b8hap4961sq7ap6q2pjqhac8cd8";
+    sha256 = "0h6f6mh9m9vrijm638x5sbsl321b74a25cdasbxhx67x62w320hk";
   };
 
   nativeBuildInputs = [
@@ -102,7 +102,7 @@ stdenv.mkDerivation rec {
 
   passthru = {
     pythonSourceRoot = "notmuch-${version}/bindings/python";
-    tests.version = testVersion { package = notmuch; };
+    tests.version = testers.testVersion { package = notmuch; };
     inherit version;
   };
 

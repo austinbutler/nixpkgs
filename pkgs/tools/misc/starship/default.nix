@@ -14,15 +14,13 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "starship";
-  # unstable was used for a quick fix for darwin
-  # revert to stable for the release after 1.5.4
-  version = "unstable-2022-04-12";
+  version = "1.9.1";
 
   src = fetchFromGitHub {
     owner = "starship";
     repo = pname;
-    rev = "a02e87833d6a0e0da3c239d0bbbf3b485356a655";
-    sha256 = "sha256-oe/dKFgM8h+ur8E9/dw4byBl9vD6foUXyKX19HDozYU=";
+    rev = "v${version}";
+    sha256 = "sha256-IujaGyAGYlBb4efaRb13rsPSD2gWAg5UgG10iMp9iQE=";
   };
 
   nativeBuildInputs = [ installShellFiles pkg-config ];
@@ -40,7 +38,7 @@ rustPlatform.buildRustPackage rec {
     done
   '';
 
-  cargoSha256 = "sha256-lku+K1Y5HIt4gDHqudhDMVs7XGoKw8HcMjXMGDu1vkg=";
+  cargoSha256 = "sha256-HrSMNNrldwb6LMMuxdQ84iY+/o5L2qwe+Vz3ekQt1YQ=";
 
   preCheck = ''
     HOME=$TMPDIR

@@ -3,23 +3,24 @@
 , buildPythonPackage
 , pythonOlder
 , fetchPypi
-, Babel
+, babel
 , markupsafe
 , pytestCheckHook
 }:
 
 buildPythonPackage rec {
   pname = "Jinja2";
-  version = "3.0.3";
-  disabled = pythonOlder "3.6";
+  version = "3.1.2";
+
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "611bb273cd68f3b993fabdc4064fc858c5b47a973cb5aa7999ec1ba405c87cd7";
+    sha256 = "sha256-MTUacCpAip51laj8YVD8P0O7a/fjGXcMvA2535Q36FI=";
   };
 
   propagatedBuildInputs = [
-    Babel
+    babel
     markupsafe
   ];
 
@@ -48,6 +49,6 @@ buildPythonPackage rec {
       syntax. Then the template is passed data to render the final document.
       an optional sandboxed environment.
     '';
-    maintainers = with maintainers; [ pierron sjourdois ];
+    maintainers = with maintainers; [ pierron ];
   };
 }
