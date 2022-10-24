@@ -11,6 +11,8 @@ buildGoModule rec {
     sha256 = "0whijr2r2j5bvfy8jgmpxsa0zvwk5kfjlpnkw4za5k35q7bjffls";
   };
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "0zj2hls8m0l9xsfv680wiwq1g2qjdjslv2yx3yd4rzxdsv2wz09a";
 
   subPackages = [ "." ];
