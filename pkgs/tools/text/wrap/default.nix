@@ -13,6 +13,8 @@ buildGoModule rec {
 
   nativeBuildInputs = [ makeWrapper ];
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "03q5a5lm8zj1523gxkbc0y6a3mjj1z2h7nrr2qcz8nlghvp4cfaz";
 
   patches = [
