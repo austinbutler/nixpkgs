@@ -18594,10 +18594,7 @@ with pkgs;
 
   filter-audio = callPackage ../development/libraries/filter-audio {};
 
-  filtron = callPackage ../servers/filtron {
-    # pinned due to build failure or vendoring problems. When unpinning double check with: nix-build -A $name.go-modules --rebuild
-    buildGoModule = buildGo117Module;
-  };
+  filtron = callPackage ../servers/filtron { };
 
   flann = callPackage ../development/libraries/flann { };
 
