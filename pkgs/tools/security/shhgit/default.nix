@@ -1,6 +1,7 @@
 { lib
 , buildGoModule
 , fetchFromGitHub
+, stdenv
 }:
 
 buildGoModule rec {
@@ -15,6 +16,8 @@ buildGoModule rec {
     sha256 = "1b7r4ivfplm4crlvx571nyz2rc6djy0xvl14nz7m0ngh6206df9k";
   };
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "0isa9faaknm8c9mbyj5dvf1dfnyv44d1pjd2nbkyfi6b22hcci3d";
 
   meta = with lib; {
@@ -22,5 +25,6 @@ buildGoModule rec {
     homepage = "https://github.com/eth0izzle/shhgit";
     license = with licenses; [ mit ];
     maintainers = with maintainers; [ fab ];
+    broken = stdenv.isDarwin; # build fails with go > 1.17
   };
 }
