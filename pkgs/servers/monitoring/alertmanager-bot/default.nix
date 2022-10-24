@@ -1,4 +1,4 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{ lib, buildGoModule, fetchFromGitHub, stdenv }:
 
 buildGoModule rec {
   pname = "alertmanager-bot";
@@ -11,6 +11,8 @@ buildGoModule rec {
     sha256 = "1hjfkksqb675gabzjc221b33h2m4s6qsanmkm382d3fyzqj71dh9";
   };
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "1v0fgin8dn81b559zz4lqmrl7hikr46g4gb18sci4riql5qs1isj";
 
   postPatch = ''
@@ -30,5 +32,6 @@ buildGoModule rec {
     homepage = "https://github.com/metalmatze/alertmanager-bot";
     license = licenses.mit;
     maintainers = with maintainers; [ mmahut ];
+    broken = stdenv.isDarwin; # build fails with go > 1.17
   };
 }
