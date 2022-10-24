@@ -23,6 +23,8 @@ buildGoModule rec {
     inherit prePatch;
   });
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "0hjifc3kbwmx7kjn858vi05cwwra6q19cqjfd94k726pwhk37qkw";
 
   buildInputs = [

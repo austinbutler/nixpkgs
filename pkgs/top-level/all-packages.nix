@@ -25378,10 +25378,7 @@ with pkgs;
 
   pam_usb = callPackage ../os-specific/linux/pam_usb { };
 
-  pam_ussh = callPackage ../os-specific/linux/pam_ussh {
-    # pinned due to build failure or vendoring problems. When unpinning double check with: nix-build -A $name.go-modules --rebuild
-    buildGoModule = buildGo117Module;
-  };
+  pam_ussh = callPackage ../os-specific/linux/pam_ussh { };
 
   paxctl = callPackage ../os-specific/linux/paxctl { };
 
