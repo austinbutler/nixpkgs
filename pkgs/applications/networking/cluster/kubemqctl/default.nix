@@ -1,4 +1,4 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{ lib, buildGoModule, fetchFromGitHub, stdenv }:
 
 buildGoModule rec {
   pname = "kubemqctl";
@@ -14,6 +14,8 @@ buildGoModule rec {
 
   doCheck = false; # TODO tests are failing
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "1agn6i7cnsb5igvvbjzlaa5fgssr5h7h25y440q44bk16jxk6s74";
 
   meta = {
@@ -21,5 +23,6 @@ buildGoModule rec {
     description = "Kubemqctl is a command line interface (CLI) for Kubemq Kubernetes Message Broker.";
     license = lib.licenses.asl20;
     maintainers = with lib.maintainers; [ brianmcgee ];
+    broken = stdenv.isDarwin; # build fails with go > 1.17
   };
 }
