@@ -1,6 +1,7 @@
 { buildGoModule
 , fetchFromGitHub
 , lib
+, stdenv
 }:
 
 buildGoModule rec {
@@ -14,6 +15,8 @@ buildGoModule rec {
     sha256 = "02s03sha8vwp7dsaw3z446pskhb6wmy0hyj0mhpbx58sf147rkig";
   };
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "0vpkzykfg1rq4qi1v5lsa0drpil9i6ccfw96k48ppi9hiwzpq94w";
 
   meta = with lib; {
@@ -26,5 +29,6 @@ buildGoModule rec {
     homepage = "https://github.com/dsnezhkov/deepsea";
     license = with licenses; [ asl20 ];
     maintainers = with maintainers; [ fab ];
+    broken = stdenv.isDarwin; # build fails with go > 1.17
   };
 }
