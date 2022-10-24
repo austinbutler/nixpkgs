@@ -9751,10 +9751,7 @@ with pkgs;
 
   openfortivpn = callPackage ../tools/networking/openfortivpn { };
 
-  opensnitch = callPackage ../tools/networking/opensnitch/daemon.nix {
-    # pinned due to build failure or vendoring problems. When unpinning double check with: nix-build -A $name.go-modules --rebuild
-    buildGoModule = buildGo117Module;
-  };
+  opensnitch = callPackage ../tools/networking/opensnitch/daemon.nix { };
 
   opensnitch-ui = libsForQt5.callPackage ../tools/networking/opensnitch/ui.nix { };
 

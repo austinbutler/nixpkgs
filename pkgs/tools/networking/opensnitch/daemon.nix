@@ -40,6 +40,8 @@ buildGoModule rec {
 
   nativeBuildInputs = [ pkg-config protobuf go-protobuf makeWrapper protoc-gen-go-grpc ];
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "sha256-81BKMLuEXA/NeIjO7icBm48ROq6KxAxHtvP0nV5yM5A=";
 
   preBuild = ''
