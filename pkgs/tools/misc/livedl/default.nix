@@ -21,5 +21,6 @@ buildGoModule rec {
     license = licenses.mit;
     maintainers = with maintainers; [ wakira ];
     platforms = platforms.linux ++ platforms.darwin;
+    broken = true; # build fails with go > 1.17
   };
 }
