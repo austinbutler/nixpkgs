@@ -19,5 +19,6 @@ buildGoModule rec {
     maintainers = with maintainers; [ fbrs ];
     mainProgram = "mockery";
     license = licenses.bsd3;
+    broken = true; # build fails with go > 1.17
   };
 }
