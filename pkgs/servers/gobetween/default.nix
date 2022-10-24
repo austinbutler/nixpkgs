@@ -21,6 +21,8 @@ buildGoModule rec {
     make -e build${lib.optionalString enableStatic "-static"}
   '';
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "1nkni9ikpc0wngh5v0qmlpn5s9v85lb2ih22f3h3lih7nc29yv87";
 
   installPhase = ''
@@ -35,5 +37,6 @@ buildGoModule rec {
     homepage = "https://gobetween.io";
     license = licenses.mit;
     maintainers = with maintainers; [ tomberek ];
+    broken = stdenv.isDarwin; # build fails with go > 1.17
   };
 }
