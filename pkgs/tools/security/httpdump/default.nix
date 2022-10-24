@@ -16,6 +16,8 @@ buildGoModule rec {
     sha256 = "0yh8kxy1k23lln09b614limwk9y59r7cn5qhbnzc06ga4mxfczv2";
   };
 
+  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
+  # may end up needing to mark the package as broken
   vendorSha256 = "0lb1p63lzn1ngj54bar9add7w0azvgcq3azhv9c5glk3ykv9c3iy";
 
   propagatedBuildInputs = [ libpcap ];
