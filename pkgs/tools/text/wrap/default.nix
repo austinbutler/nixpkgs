@@ -13,15 +13,18 @@ buildGoModule rec {
 
   nativeBuildInputs = [ makeWrapper ];
 
-  # package still builds but the vendor isn't reproducible with go > 1.17: nix-build -A $name.go-modules --check
-  # may end up needing to mark the package as broken
-  vendorSha256 = "03q5a5lm8zj1523gxkbc0y6a3mjj1z2h7nrr2qcz8nlghvp4cfaz";
+  vendorSha256 = "sha256-vg61Vypd+mSF9FyLFVpnS5UCTJDoobkDE1Cneg8O0RM=";
 
   patches = [
     (fetchpatch {
       name = "courier-prime-variants.patch";
-      url = "https://github.com/Wraparound/wrap/commit/b72c280b6eddba9ec7b3507c1f143eb28a85c9c1.patch";
-      sha256 = "1d9v0agfd7mgd17k4a8l6vr2kyswyfsyq3933dz56pgs5d3jric5";
+      url = "https://patch-diff.githubusercontent.com/raw/Wraparound/wrap/pull/56.patch";
+      sha256 = "sha256-wQ90B9my5LUgTE0zSzpl8ZP8OZA/QEpj6F9sHbc5N/U=";
+    })
+    (fetchpatch {
+      name = "go-119.patch";
+      url = "https://patch-diff.githubusercontent.com/raw/Wraparound/wrap/pull/60.patch";
+      sha256 = "sha256-eIKvA91olfbNJhOhIUu3GOL/rbgX3m6unmU8nRdKbtc=";
     })
   ];
 
