@@ -1,26 +1,31 @@
 { lib
-, gcc11Stdenv
+, gcc12Stdenv
 , fetchFromGitLab
 , makeWrapper
 , cmake
 , spdlog
 , nlohmann_json
 , systemd
+, clang
 }:
 
-gcc11Stdenv.mkDerivation rec {
+gcc12Stdenv.mkDerivation rec {
   pname = "ananicy-cpp";
-  version = "unstable-2021-10-13";
+  version = "unstable-2022-10-18";
 
   src = fetchFromGitLab {
     owner = "ananicy-cpp";
     repo = "ananicy-cpp";
-    rev = "6a14fe7353221c89347eddbbcafb35cf5fee4758";
-    sha256 = "sha256-V0QPXC17ZD2c4MK3DAkzoPgKOU5V5BjfQKUk7I6f8WM=";
+    rev = "a5223907458b94f7240ade581cd62c9ca5a1892a";
+    sha256 = "sha256-2MzRdPpsgnGVF7YCLSjcG8bVQUEB1gSgEUWW5Y0zZSY=";
+    fetchSubmodules = true;
   };
+  
+  NIX_CLAGS_COMPILE = "-Wno-error";
 
   nativeBuildInputs = [
     makeWrapper
+    clang
     cmake
   ];
 
@@ -31,6 +36,8 @@ gcc11Stdenv.mkDerivation rec {
   ];
 
   cmakeFlags = [
+    "-DCMAKE_CXX_COMPILER=clang++"
+    "-DCMAKE_C_FLAGS=-Wno-error"
     "-DUSE_EXTERNAL_JSON=yON"
     "-DUSE_EXTERNAL_SPDLOG=ON"
     "-DUSE_EXTERNAL_FMTLIB=ON"
