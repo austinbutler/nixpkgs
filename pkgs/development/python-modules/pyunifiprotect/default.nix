@@ -3,6 +3,7 @@
 , aiohttp
 , aioshutil
 , buildPythonPackage
+, dateparser
 , fetchFromGitHub
 , ipython
 , orjson
@@ -20,13 +21,15 @@
 , python-dotenv
 , pythonOlder
 , pytz
+, setuptools
 , termcolor
 , typer
+, ffmpeg
 }:
 
 buildPythonPackage rec {
   pname = "pyunifiprotect";
-  version = "4.0.11";
+  version = "4.4.2";
   format = "pyproject";
 
   disabled = pythonOlder "3.9";
@@ -35,13 +38,23 @@ buildPythonPackage rec {
     owner = "briis";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-81nottXXenkIPiDnR8O44ELStoh8i2yROYCPvBLiWSU=";
+    hash = "sha256-30nQ02UUXJHvHC+hWTWHsUeU83G8cOJHK+Tgo6AE5jc=";
   };
+
+  postPatch = ''
+    substituteInPlace pyproject.toml \
+      --replace "--cov=pyunifiprotect --cov-append" ""
+  '';
+
+  nativeBuildInputs = [
+    setuptools
+  ];
 
   propagatedBuildInputs = [
     aiofiles
     aiohttp
     aioshutil
+    dateparser
     orjson
     packaging
     pillow
@@ -49,7 +62,7 @@ buildPythonPackage rec {
     pyjwt
     pytz
     typer
-  ];
+  ] ++ typer.optional-dependencies.all;
 
   passthru.optional-dependencies = {
     shell = [
@@ -60,6 +73,7 @@ buildPythonPackage rec {
   };
 
   checkInputs = [
+    ffmpeg # Required for command ffprobe
     pytest-aiohttp
     pytest-asyncio
     pytest-benchmark
@@ -67,11 +81,6 @@ buildPythonPackage rec {
     pytest-xdist
     pytestCheckHook
   ];
-
-  postPatch = ''
-    substituteInPlace pyproject.toml \
-      --replace "--cov=pyunifiprotect --cov-append" ""
-  '';
 
   pythonImportsCheck = [
     "pyunifiprotect"
@@ -81,14 +90,10 @@ buildPythonPackage rec {
     "--benchmark-disable"
   ];
 
-  disabledTests = [
-    # Tests require ffprobe
-    "test_get_camera_video"
-  ];
-
   meta = with lib; {
     description = "Library for interacting with the Unifi Protect API";
     homepage = "https://github.com/briis/pyunifiprotect";
+    changelog = "https://github.com/AngellusMortis/pyunifiprotect/releases/tag/v${version}";
     license = with licenses; [ mit ];
     maintainers = with maintainers; [ fab ];
   };

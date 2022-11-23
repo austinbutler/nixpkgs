@@ -2,7 +2,7 @@
 
 stdenv.mkDerivation rec {
   pname = "lean";
-  version = "3.45.0";
+  version = "3.49.0";
 
   src = fetchFromGitHub {
     owner  = "leanprover-community";
@@ -11,8 +11,8 @@ stdenv.mkDerivation rec {
     # from. this is then used to check whether an olean file should be
     # rebuilt. don't use a tag as rev because this will get replaced into
     # src/githash.h.in in preConfigure.
-    rev    = "22b09be35ef66aece11e6e8f5d114f42b064259b";
-    sha256 = "1i1zpl9m80k64b7ac23gzab55kky4444lvki1isbmd92m3m4bk8x";
+    rev    = "acf633e01a8783a12060b0a1b7b5b5e15fd73e77";
+    sha256 = "sha256-KF13DlGEl6aICSp/haczo54gjLZaOxyzFRdzvyyiu5M=";
   };
 
   nativeBuildInputs = [ cmake ];

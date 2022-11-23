@@ -16,9 +16,8 @@ let
     let attrs' = builtins.removeAttrs attrs [ "version" "sha256" "vendorSha256" ];
     in
     buildGoModule ({
-      name = "terraform-${version}";
-
-      inherit vendorSha256;
+      pname = "terraform";
+      inherit version vendorSha256;
 
       src = fetchFromGitHub {
         owner = "hashicorp";
@@ -169,9 +168,9 @@ rec {
   mkTerraform = attrs: pluggable (generic attrs);
 
   terraform_1 = mkTerraform {
-    version = "1.2.5";
-    sha256 = "sha256-dj6q+FwsXphR1e/LQApqBr7ytVM5FXexSbNklnU1jao=";
-    vendorSha256 = "sha256-Whe1prBGsE0q0QdNkzAKwvAP7EVlnD/985gjngh+VI4=";
+    version = "1.3.5";
+    sha256 = "sha256-+jmZcIF9+vvjoA/PXWCc3F4l3YnlpZgxs0eGxchiIBE=";
+    vendorSha256 = "sha256-fviukVGBkbxFs2fJpEp/tFMymXex7NRQdcGIIA9W88k=";
     patches = [ ./provider-path-0_15.patch ];
     passthru = {
       inherit plugins;

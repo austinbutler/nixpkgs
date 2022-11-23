@@ -2,13 +2,13 @@
 
 stdenv.mkDerivation rec {
   pname = "libxc";
-  version = "5.2.2";
+  version = "6.0.0";
 
   src = fetchFromGitLab {
     owner = "libxc";
     repo = "libxc";
     rev = version;
-    sha256 = "113sk7hxjpfbz3nrgjsc7bi6zrlwb3qq5s6h0zh37hz9bd1brq54";
+    hash = "sha256-g1BjqzSVauDrzxIqqU2kLl6RFs6/oe2VthtndbnJQCc=";
   };
 
   nativeBuildInputs = [ perl cmake gfortran ];

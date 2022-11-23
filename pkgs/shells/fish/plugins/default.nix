@@ -2,9 +2,15 @@
 
 lib.makeScope newScope (self: with self; {
 
+  autopair-fish = callPackage ./autopair-fish.nix { };
+
   buildFishPlugin = callPackage ./build-fish-plugin.nix { };
 
+  colored-man-pages = callPackage ./colored-man-pages.nix { };
+
   clownfish = callPackage ./clownfish.nix { };
+
+  bass = callPackage ./bass.nix { };
 
   done = callPackage ./done.nix { };
 
@@ -27,4 +33,7 @@ lib.makeScope newScope (self: with self; {
 
   pure = callPackage ./pure.nix { };
 
+  sponge = callPackage ./sponge.nix { };
+
+  tide = callPackage ./tide.nix { };
 })

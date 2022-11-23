@@ -40,8 +40,8 @@ stdenvNoCC.mkDerivation rec {
         owner = "itchio";
         repo = pname;
         rev = "v${version}";
-        hash = "sha256-1L6STTBHA9xL9IaERaH2OTvurTSng1D+P3KoW0ucEJc=";
-        inherit sparseCheckout;
+        hash = "sha256-DZBmf8fe0zw5uiQjNKXw8g/vU2hjNDa87z/7XuhyXog=";
+        sparseCheckout = [ sparseCheckout ];
       } + sparseCheckout;
 
   nativeBuildInputs = [ copyDesktopItems makeWrapper ];

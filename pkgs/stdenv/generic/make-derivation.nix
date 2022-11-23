@@ -178,7 +178,7 @@ let
                             # Except when:
                             #    - static aarch64, where compilation works, but produces segfaulting dynamically linked binaries.
                             #    - static armv7l, where compilation fails.
-                            !((stdenv.hostPlatform.isAarch64 || stdenv.hostPlatform.isAarch32) && stdenv.hostPlatform.isStatic)
+                            !(stdenv.hostPlatform.isAarch && stdenv.hostPlatform.isStatic)
                           then supportedHardeningFlags
                           else lib.remove "pie" supportedHardeningFlags;
   enabledHardeningOptions =
@@ -209,7 +209,7 @@ else let
   dependencies = map (map lib.chooseDevOutputs) [
     [
       (map (drv: drv.__spliced.buildBuild or drv) (checkDependencyList "depsBuildBuild" depsBuildBuild))
-      (map (drv: drv.nativeDrv or drv) (checkDependencyList "nativeBuildInputs" nativeBuildInputs
+      (map (drv: drv.__spliced.buildHost or drv) (checkDependencyList "nativeBuildInputs" nativeBuildInputs
          ++ lib.optional separateDebugInfo' ../../build-support/setup-hooks/separate-debug-info.sh
          ++ lib.optional stdenv.hostPlatform.isWindows ../../build-support/setup-hooks/win-dll-link.sh
          ++ lib.optionals doCheck checkInputs
@@ -218,7 +218,7 @@ else let
     ]
     [
       (map (drv: drv.__spliced.hostHost or drv) (checkDependencyList "depsHostHost" depsHostHost))
-      (map (drv: drv.crossDrv or drv) (checkDependencyList "buildInputs" buildInputs))
+      (map (drv: drv.__spliced.hostTarget or drv) (checkDependencyList "buildInputs" buildInputs))
     ]
     [
       (map (drv: drv.__spliced.targetTarget or drv) (checkDependencyList "depsTargetTarget" depsTargetTarget))
@@ -227,12 +227,12 @@ else let
   propagatedDependencies = map (map lib.chooseDevOutputs) [
     [
       (map (drv: drv.__spliced.buildBuild or drv) (checkDependencyList "depsBuildBuildPropagated" depsBuildBuildPropagated))
-      (map (drv: drv.nativeDrv or drv) (checkDependencyList "propagatedNativeBuildInputs" propagatedNativeBuildInputs))
+      (map (drv: drv.__spliced.buildHost or drv) (checkDependencyList "propagatedNativeBuildInputs" propagatedNativeBuildInputs))
       (map (drv: drv.__spliced.buildTarget or drv) (checkDependencyList "depsBuildTargetPropagated" depsBuildTargetPropagated))
     ]
     [
       (map (drv: drv.__spliced.hostHost or drv) (checkDependencyList "depsHostHostPropagated" depsHostHostPropagated))
-      (map (drv: drv.crossDrv or drv) (checkDependencyList "propagatedBuildInputs" propagatedBuildInputs))
+      (map (drv: drv.__spliced.hostTarget or drv) (checkDependencyList "propagatedBuildInputs" propagatedBuildInputs))
     ]
     [
       (map (drv: drv.__spliced.targetTarget or drv) (checkDependencyList "depsTargetTargetPropagated" depsTargetTargetPropagated))
@@ -384,7 +384,7 @@ else let
 
           crossFile = builtins.toFile "cross-file.conf" ''
             [properties]
-            needs_exe_wrapper = true
+            needs_exe_wrapper = ${lib.boolToString (!stdenv.buildPlatform.canExecute stdenv.hostPlatform)}
 
             [host_machine]
             system = '${stdenv.targetPlatform.parsed.kernel.name}'

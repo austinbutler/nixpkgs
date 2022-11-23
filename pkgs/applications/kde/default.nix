@@ -145,6 +145,7 @@ let
       kio-extras = callPackage ./kio-extras.nix {};
       kio-gdrive = callPackage ./kio-gdrive.nix {};
       kipi-plugins = callPackage ./kipi-plugins.nix {};
+      kirigami-gallery = callPackage ./kirigami-gallery.nix {};
       kitinerary = callPackage ./kitinerary.nix {};
       kldap = callPackage ./kldap.nix {};
       kleopatra = callPackage ./kleopatra.nix {};
@@ -185,6 +186,7 @@ let
       kreversi = callPackage ./kreversi.nix {};
       krfb = callPackage ./krfb.nix {};
       kruler = callPackage ./kruler.nix {};
+      ksanecore = callPackage ./ksanecore.nix {};
       kshisen = callPackage ./kshisen.nix {};
       ksmtp = callPackage ./ksmtp {};
       kspaceduel = callPackage ./kspaceduel.nix {};
@@ -220,6 +222,7 @@ let
       messagelib = callPackage ./messagelib.nix {};
       minuet = callPackage ./minuet.nix {};
       okular = callPackage ./okular.nix {};
+      palapeli = callPackage ./palapeli.nix {};
       picmi = callPackage ./picmi.nix {};
       pim-data-exporter = callPackage ./pim-data-exporter.nix {};
       pim-sieve-editor = callPackage ./pim-sieve-editor.nix {};
@@ -229,6 +232,7 @@ let
       skanlite = callPackage ./skanlite.nix {};
       skanpage = callPackage ./skanpage.nix {};
       spectacle = callPackage ./spectacle.nix {};
+      umbrello = callPackage ./umbrello.nix {};
       yakuake = callPackage ./yakuake.nix {};
       zanshin = callPackage ./zanshin.nix {};
     };

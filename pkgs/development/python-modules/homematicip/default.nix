@@ -17,7 +17,7 @@
 
 buildPythonPackage rec {
   pname = "homematicip";
-  version = "1.0.5";
+  version = "1.0.9";
   format = "setuptools";
 
   disabled = pythonOlder "3.6";
@@ -26,7 +26,7 @@ buildPythonPackage rec {
     owner = "hahn-th";
     repo = "homematicip-rest-api";
     rev = "refs/tags/${version}";
-    hash = "sha256-pfVjnRO6iKEgLDQz4JMARzab21XLbbUDUMyMWatGlJ8=";
+    hash = "sha256-pQVSbR4MLbyHQRAoCFOMnOrhuAnGRMyiXm1szHvANuA=";
   };
 
   propagatedBuildInputs = [
@@ -43,6 +43,10 @@ buildPythonPackage rec {
     pytest-aiohttp
     pytest-asyncio
     pytestCheckHook
+  ];
+
+  pytestFlagsArray = [
+    "--asyncio-mode=auto"
   ];
 
   disabledTests = [

@@ -7,11 +7,16 @@
 
 # darwin
 , Security
+
+# tests
+, firefox-esr-unwrapped
+, firefox-unwrapped
+, thunderbird-unwrapped
 }:
 
 let
   pname = "dump_syms";
-  version = "1.0.1";
+  version = "2.1.0";
 in
 rustPlatform.buildRustPackage {
   inherit pname version;
@@ -20,10 +25,10 @@ rustPlatform.buildRustPackage {
     owner = "mozilla";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-2OSni0PA0LfamOqdFQTRLgolF55z13owgFrqYYHuNX0=";
+    hash = "sha256-Q4opIGG1kOORECNB6al0oT4tjBe++ND6Eb4E86ED2+o=";
   };
 
-  cargoSha256 = "sha256-ggJWweulbSJ8Femzv7uHLcrn1HTenw79AYIydE6y4ag=";
+  cargoSha256 = "sha256-j3bZaHFJEn/LW032CaRBaLN3Pb5GiQv1MReD0LFI8y8=";
 
   nativeBuildInputs = [
     pkg-config
@@ -41,6 +46,10 @@ rustPlatform.buildRustPackage {
     "--skip windows::pdb::tests::test_ntdll"
     "--skip windows::pdb::tests::test_oleaut32"
   ];
+
+  passthru.tests = {
+    inherit firefox-esr-unwrapped firefox-unwrapped thunderbird-unwrapped;
+  };
 
   meta = with lib; {
     changelog = "https://github.com/mozilla/dump_syms/releases/tag/v${version}";

@@ -34,6 +34,10 @@ buildPythonPackage rec {
     pytestCheckHook
   ];
 
+  pytestFlagsArray = [
+    "--asyncio-mode=auto"
+  ];
+
   pythonImportsCheck = [ "pyspcwebgw" ];
 
   meta = with lib; {
