@@ -17979,6 +17979,8 @@ with pkgs;
     shards_0_17
     shards;
 
+  shellcaster = callPackage ../applications/audio/shellcaster { };
+
   shellcheck = callPackage ../development/tools/shellcheck {
     inherit (haskellPackages) ShellCheck;
   };
