@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , fetchFromGitLab
+, fetchpatch
 , appstream-glib
 , clang
 , desktop-file-utils
@@ -73,6 +74,15 @@ stdenv.mkDerivation rec {
   preBuild = ''
     export BINDGEN_EXTRA_CLANG_ARGS="$BINDGEN_EXTRA_CLANG_ARGS -DPW_ENABLE_DEPRECATED"
   '';
+
+  patches = [
+    # https://gitlab.gnome.org/World/Authenticator/-/issues/339
+    (fetchpatch {
+      name = "token-check.patch";
+      url = "https://gitlab.gnome.org/World/Authenticator/-/commit/192d296f3b800832cdc84934e5395052f6080db5.patch";
+      sha256 = "sha256-bTzrl36/71EpmXp4XlOMRNH8vISZMS6/PbKx4fYiQ4s=";
+    })
+  ];
 
   meta = {
     description = "Two-factor authentication code generator for GNOME";
