@@ -1,14 +1,14 @@
 {
   "aci": {
     "deleteVendor": true,
-    "hash": "sha256-Y2cNp2BuPEH5wAEwaMVSBgKoHrcy6d4eOlsGPqAxmoU=",
+    "hash": "sha256-vTDuSZjO3ZHCUBaIYB7fvXvBPYywGJy307x2rCejOzk=",
     "homepage": "https://registry.terraform.io/providers/CiscoDevNet/aci",
     "owner": "CiscoDevNet",
     "proxyVendor": true,
     "repo": "terraform-provider-aci",
-    "rev": "v2.5.2",
+    "rev": "v2.6.0",
     "spdx": "MPL-2.0",
-    "vendorHash": "sha256-AB+uj4hQIYMVQHhw1cISB2TotNO8rw1iU0/gP096CoE="
+    "vendorHash": "sha256-dEnQa1GaYrx2jxsRSJWlMmy1hGsXACsp+5PtGmSDL6E="
   },
   "acme": {
     "hash": "sha256-fK34A45plTqtOYGbq8CAtFnyMYOvdOKFycY7X5ZlRRY=",
@@ -433,13 +433,13 @@
     "vendorHash": null
   },
   "gitlab": {
-    "hash": "sha256-RCN4CRFffg1rhyNACo/5ebVzbvsUXf6otDRuxlF8RoM=",
+    "hash": "sha256-bCF6BLuzjUZToZKerfsGcav4DD6AWwOrlELxQKygHv4=",
     "homepage": "https://registry.terraform.io/providers/gitlabhq/gitlab",
     "owner": "gitlabhq",
     "repo": "terraform-provider-gitlab",
-    "rev": "v15.7.1",
+    "rev": "v15.8.0",
     "spdx": "MPL-2.0",
-    "vendorHash": "sha256-7XiZP51K/S5Al+VNJw4NcqzkMeqs2iSHCOlNAI4+id4="
+    "vendorHash": "sha256-aVbJT31IIgW0GYzwVX7kT4j7E+dadSbnttThh2lzGyE="
   },
   "google": {
     "hash": "sha256-/UgxXHucsrt960zLQiPruqJLxjFriTrNKjeI1gNEWys=",
