@@ -59,9 +59,7 @@ let
   suffixSalt = replaceStrings ["-" "."] ["_" "_"] targetPlatform.config;
 
   expand-response-params =
-    if (buildPackages.stdenv.hasCC or false) && buildPackages.stdenv.cc != "/dev/null"
-    then import ../expand-response-params { inherit (buildPackages) stdenv; }
-    else "";
+    lib.optionalString ((buildPackages.stdenv.hasCC or false) && buildPackages.stdenv.cc != "/dev/null") (import ../expand-response-params { inherit (buildPackages) stdenv; });
 
   useGccForLibs = isClang
     && libcxx == null
@@ -321,6 +319,11 @@ stdenv.mkDerivation {
                       && !(stdenv.targetPlatform.useLLVM or false)
                       && gccForLibs != null) ''
       echo "--gcc-toolchain=${gccForLibs}" >> $out/nix-support/cc-cflags
+
+      # Pull in 'cc.out' target to get 'libstdc++fs.a'. It should be in
+      # 'cc.lib'. But it's a gcc package bug.
+      # TODO(trofi): remove once gcc is fixed to move libraries to .lib output.
+      echo "-L${gccForLibs}/${optionalString (targetPlatform != hostPlatform) "/${targetPlatform.config}"}/lib" >> $out/nix-support/cc-ldflags
     ''
 
     ##
@@ -372,11 +375,11 @@ stdenv.mkDerivation {
         echo "-isystem $dir" >> $out/nix-support/libcxx-cxxflags
       done
     ''
-    + optionalString (libcxx.isLLVM or false) (''
+    + optionalString (libcxx.isLLVM or false) ''
       echo "-isystem ${lib.getDev libcxx}/include/c++/v1" >> $out/nix-support/libcxx-cxxflags
       echo "-stdlib=libc++" >> $out/nix-support/libcxx-ldflags
-      echo "-lc++abi" >> $out/nix-support/libcxx-ldflags
-    '')
+      echo "-l${libcxx.cxxabi.libName}" >> $out/nix-support/libcxx-ldflags
+    ''
 
     ##
     ## Initial CFLAGS

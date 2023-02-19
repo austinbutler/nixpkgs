@@ -1,5 +1,5 @@
 { lib, stdenv, fetchFromGitHub, python3, openssl, rustPlatform
-, enableSystemd ? lib.meta.availableOn stdenv.hostPlatform systemd, systemd
+, enableSystemd ? lib.meta.availableOn stdenv.hostPlatform python3.pkgs.systemd
 , nixosTests
 , enableRedis ? true
 , callPackage
@@ -12,20 +12,20 @@ in
 with python3.pkgs;
 buildPythonApplication rec {
   pname = "matrix-synapse";
-  version = "1.75.0";
+  version = "1.77.0";
   format = "pyproject";
 
   src = fetchFromGitHub {
     owner = "matrix-org";
     repo = "synapse";
     rev = "v${version}";
-    hash = "sha256-cfvekrZRLbdsUqkkPF8hz9B4qsum1kpIL0aCnJf3HYg=";
+    hash = "sha256-//1BTiNH3n2eNjwOADb1OB7xp5QsH6arV5Pg3B7y3r0=";
   };
 
   cargoDeps = rustPlatform.fetchCargoTarball {
     inherit src;
     name = "${pname}-${version}";
-    hash = "sha256-oyXgHqOrMKs+mYGAI4Wn+fuVQWsQJIkPwCY4t+cUlQ4=";
+    hash = "sha256-B9Z+7VtbbX/S01aaMFHgXH60sg8Lmwku2XPRnpMpwjo=";
   };
 
   postPatch = ''
@@ -67,7 +67,6 @@ buildPythonApplication rec {
     pyasn1
     pydantic
     pyicu
-    pyjwt
     pymacaroons
     pynacl
     pyopenssl

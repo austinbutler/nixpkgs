@@ -50,7 +50,7 @@ buildDunePackage rec {
   ];
 
   doCheck = true;
-  nativeCheckInputs = [
+  checkInputs = [
     lwt
     logs
     fmt
@@ -60,6 +60,8 @@ buildDunePackage rec {
     uri
     alcotest-lwt
   ];
+
+  __darwinAllowLocalNetworking = true;
 
   meta = {
     description = "HTTP/AF and MirageOS";

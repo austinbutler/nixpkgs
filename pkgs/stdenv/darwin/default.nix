@@ -98,7 +98,6 @@ rec {
 
       doSign = localSystem.isAarch64 && last != null;
       doUpdateAutoTools = localSystem.isAarch64 && last != null;
-      inherit (last.pkgs) runCommandLocal;
 
       mkExtraBuildCommands = cc: ''
         rsrc="$out/resource-root"
@@ -339,6 +338,7 @@ rec {
           '';
           passthru = {
             isLLVM = true;
+            cxxabi = self."${finalLlvmPackages}".libcxxabi;
           };
         };
 
@@ -348,6 +348,9 @@ rec {
             mkdir -p $out/lib
             ln -s ${bootstrapTools}/lib/libc++abi.dylib $out/lib/libc++abi.dylib
           '';
+          passthru = {
+            libName = "c++abi";
+          };
         };
 
         compiler-rt = stdenv.mkDerivation {
@@ -733,6 +736,7 @@ rec {
         pcre.out
         gettext
         binutils.bintools
+        binutils.bintools.lib
         darwin.binutils
         darwin.binutils.bintools
         curl.out

@@ -14,14 +14,14 @@
 
 buildPythonPackage rec {
   pname = "google-cloud-error-reporting";
-  version = "1.8.0";
+  version = "1.8.2";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-XFOgoe6xphHyp/zbd+RR+9dXebMcU7/c2ETFGy+lg3U=";
+    hash = "sha256-bwl1gWLux5LJMZIS/tJFMhHs1LcaDVCTgNrke6ASiBI=";
   };
 
   propagatedBuildInputs = [
