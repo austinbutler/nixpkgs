@@ -4,12 +4,17 @@
 , src ? null
 , srcs ? null
 , sourceRoot ? null
+, prePatch ? ""
 , patches ? [ ]
+, postPatch ? ""
 , nativeBuildInputs ? [ ]
 , buildInputs ? [ ]
   # The output hash of the dependencies for this project.
   # Can be calculated in advance with prefetch-npm-deps.
 , npmDepsHash ? ""
+  # Whether to force the usage of Git dependencies that have install scripts, but not a lockfile.
+  # Use with care.
+, forceGitDeps ? false
   # Whether to make the cache writable prior to installing dependencies.
   # Don't set this unless npm tries to write to the cache directory, as it can slow down the build.
 , makeCacheWritable ? false
@@ -30,7 +35,7 @@
 
 let
   npmDeps = fetchNpmDeps {
-    inherit src srcs sourceRoot patches;
+    inherit forceGitDeps src srcs sourceRoot prePatch patches postPatch;
     name = "${name}-npm-deps";
     hash = npmDepsHash;
   };

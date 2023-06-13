@@ -28,8 +28,8 @@ let
       messagebus:x:1:
       EOF
 
-      "${pkgs.dbus.daemon}/bin/dbus-daemon" --fork \
-        --config-file="${pkgs.dbus.daemon}/share/dbus-1/system.conf"
+      "${pkgs.dbus}/bin/dbus-daemon" --fork \
+        --config-file="${pkgs.dbus}/share/dbus-1/system.conf"
 
       ${guestAdditions}/bin/VBoxService
       ${(attrs.vmScript or (const "")) pkgs}
@@ -386,7 +386,7 @@ let
     '';
 
     meta = with pkgs.lib.maintainers; {
-      maintainers = [ aszlig cdepillabout ];
+      maintainers = [ aszlig ];
     };
   };
 

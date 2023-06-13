@@ -2,16 +2,20 @@
 
 stdenv.mkDerivation rec {
   pname = "tio";
-  version = "2.3";
+  version = "2.5";
 
   src = fetchFromGitHub {
     owner = "tio";
     repo = "tio";
     rev = "v${version}";
-    hash = "sha256-BjA9Zl6JcgDxTj4KPiWItSq9XuX9FJkpZnhdMBGZQpQ=";
+    hash = "sha256-7mVLfzguQ7eNIFTJMLJyoM+/pveGO88j2JUEOqvnqvk=";
   };
 
-  nativeBuildInputs = [ meson ninja pkg-config inih bash-completion ];
+  strictDeps = true;
+
+  buildInputs = [ inih ];
+
+  nativeBuildInputs = [ meson ninja pkg-config bash-completion ];
 
   meta = with lib; {
     description = "Serial console TTY";

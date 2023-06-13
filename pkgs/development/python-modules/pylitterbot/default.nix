@@ -14,7 +14,7 @@
 
 buildPythonPackage rec {
   pname = "pylitterbot";
-  version = "2022.11.0";
+  version = "2023.4.0";
   format = "pyproject";
 
   disabled = pythonOlder "3.9";
@@ -23,7 +23,7 @@ buildPythonPackage rec {
     owner = "natekspencer";
     repo = pname;
     rev = "refs/tags/${version}";
-    hash = "sha256-GEKLkFzQV8xI3c8061fO1p66WKj3eDXmx7VaRYDu7kw=";
+    hash = "sha256-nF6njY2qNoHW2ZGNDHNeTBTjSBbitJxitPgyayLaqSE=";
   };
 
   nativeBuildInputs = [
@@ -36,18 +36,12 @@ buildPythonPackage rec {
     pyjwt
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     aioresponses
     pytest-aiohttp
     pytest-freezegun
     pytestCheckHook
   ];
-
-  postPatch = ''
-    # https://github.com/natekspencer/pylitterbot/issues/73
-    substituteInPlace pyproject.toml \
-      --replace 'deepdiff = "^5.8.1"' 'deepdiff = ">=5.8.1"'
-  '';
 
   pythonImportsCheck = [
     "pylitterbot"
@@ -56,6 +50,7 @@ buildPythonPackage rec {
   meta = with lib; {
     description = "Modulefor controlling a Litter-Robot";
     homepage = "https://github.com/natekspencer/pylitterbot";
+    changelog = "https://github.com/natekspencer/pylitterbot/releases/tag/${version}";
     license = with licenses; [ mit ];
     maintainers = with maintainers; [ fab ];
   };

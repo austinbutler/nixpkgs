@@ -20,21 +20,24 @@
 , pugixml
 , rapidjson
 , vulkan-headers
+, wayland
 , wxGTK32
 , zarchive
-
+, gamemode
 , vulkan-loader
+
+, nix-update-script
 }:
 
 stdenv.mkDerivation rec {
   pname = "cemu";
-  version = "2.0-17";
+  version = "2.0-39";
 
   src = fetchFromGitHub {
     owner = "cemu-project";
     repo = "Cemu";
     rev = "v${version}";
-    hash = "sha256-ryFph55o7s3eiqQ8kx5+3Et5S2U9H5i3fmZTc1CaCnA=";
+    hash = "sha256-+2V78G4SDFb6ZQDDorvT13yqnZw2JAObF+WGYMMGYHE=";
   };
 
   patches = [
@@ -68,6 +71,7 @@ stdenv.mkDerivation rec {
     pugixml
     rapidjson
     vulkan-headers
+    wayland
     wxGTK32
     zarchive
   ];
@@ -76,15 +80,20 @@ stdenv.mkDerivation rec {
     "-DCMAKE_C_FLAGS_RELEASE=-DNDEBUG"
     "-DCMAKE_CXX_FLAGS_RELEASE=-DNDEBUG"
     "-DENABLE_VCPKG=OFF"
+    "-DENABLE_FERAL_GAMEMODE=ON"
 
     # PORTABLE:
     # "All data created and maintained by Cemu will be in the directory where the executable file is located"
     "-DPORTABLE=OFF"
   ];
 
-  preConfigure = ''
+  preConfigure = with lib; let
+    tag = last (splitString "-" version);
+  in ''
     rm -rf dependencies/imgui
     ln -s ${imgui}/include/imgui dependencies/imgui
+    substituteInPlace src/Common/version.h --replace " (experimental)" "-${tag} (experimental)"
+    substituteInPlace dependencies/gamemode/lib/gamemode_client.h --replace "libgamemode.so.0" "${gamemode.lib}/lib/libgamemode.so.0"
   '';
 
   installPhase = ''
@@ -108,12 +117,10 @@ stdenv.mkDerivation rec {
   in ''
     gappsWrapperArgs+=(
       --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath libs}"
-
-      # Force X11 to be used until Wayland is natively supported
-      # <https://github.com/cemu-project/Cemu/pull/143>
-      --set GDK_BACKEND x11
     )
   '';
+
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     description = "Cemu is a Wii U emulator";

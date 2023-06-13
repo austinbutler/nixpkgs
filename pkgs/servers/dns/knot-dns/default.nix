@@ -1,17 +1,17 @@
 { lib, stdenv, fetchurl, pkg-config, gnutls, liburcu, lmdb, libcap_ng, libidn2, libunistring
 , systemd, nettle, libedit, zlib, libiconv, libintl, libmaxminddb, libbpf, nghttp2, libmnl
-, ngtcp2-gnutls
+, ngtcp2-gnutls, xdp-tools
 , autoreconfHook
 , nixosTests, knot-resolver, knot-dns, runCommandLocal
 }:
 
 stdenv.mkDerivation rec {
   pname = "knot-dns";
-  version = "3.2.3";
+  version = "3.2.7";
 
   src = fetchurl {
     url = "https://secure.nic.cz/files/knot-dns/knot-${version}.tar.xz";
-    sha256 = "f736ef284358923e312f8e1e3c6ce7c97b20965b09eb65705e9f7e3d5e9a9d79";
+    sha256 = "d3b7872ac8aa80f7f54ddb1bb3b1e2f90ec55f7270a2c4a9338eab42b7d2767b";
   };
 
   outputs = [ "bin" "out" "dev" ];
@@ -29,6 +29,12 @@ stdenv.mkDerivation rec {
     ./runtime-deps.patch
   ];
 
+  # Upstream mistake in 3.2.7: too strict constraint.
+  postPatch = ''
+    substituteInPlace configure.ac \
+      --replace 'libngtcp2 = 0.13.0' 'libngtcp2 = 0.13.1'
+  '';
+
   nativeBuildInputs = [ pkg-config autoreconfHook ];
   buildInputs = [
     gnutls liburcu libidn2 libunistring
@@ -41,7 +47,7 @@ stdenv.mkDerivation rec {
     # TODO: add dnstap support?
   ] ++ lib.optionals stdenv.isLinux [
     libcap_ng systemd
-    libbpf libmnl # XDP support (it's Linux kernel API)
+    xdp-tools libbpf libmnl # XDP support (it's Linux kernel API)
   ] ++ lib.optional stdenv.isDarwin zlib; # perhaps due to gnutls
 
   enableParallelBuilding = true;
@@ -59,14 +65,14 @@ stdenv.mkDerivation rec {
   passthru.tests = {
     inherit knot-resolver;
   } // lib.optionalAttrs stdenv.isLinux {
-    inherit (nixosTests) knot;
+    inherit (nixosTests) knot kea;
     # Some dependencies are very version-sensitive, so the might get dropped
     # or embedded after some update, even if the nixPackagers didn't intend to.
     # For non-linux I don't know a good replacement for `ldd`.
     deps = runCommandLocal "knot-deps-test"
       { nativeBuildInputs = [ (lib.getBin stdenv.cc.libc) ]; }
       ''
-        for libname in libngtcp2 libbpf; do
+        for libname in libngtcp2 libxdp libbpf; do
           echo "Checking for $libname:"
           ldd '${knot-dns.bin}/bin/knotd' | grep -F "$libname"
           echo "OK"

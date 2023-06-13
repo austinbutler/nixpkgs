@@ -23,12 +23,12 @@ let
     optionalAttrs (lhs ? packageOverrides) {
       packageOverrides = pkgs:
         optCall lhs.packageOverrides pkgs //
-        optCall (attrByPath ["packageOverrides"] ({}) rhs) pkgs;
+        optCall (attrByPath [ "packageOverrides" ] { } rhs) pkgs;
     } //
     optionalAttrs (lhs ? perlPackageOverrides) {
       perlPackageOverrides = pkgs:
         optCall lhs.perlPackageOverrides pkgs //
-        optCall (attrByPath ["perlPackageOverrides"] ({}) rhs) pkgs;
+        optCall (attrByPath [ "perlPackageOverrides" ] { } rhs) pkgs;
     };
 
   configType = mkOptionType {
@@ -49,10 +49,10 @@ let
     merge = lib.mergeOneOption;
   };
 
-  pkgsType = mkOptionType {
-    name = "nixpkgs";
+  pkgsType = types.pkgs // {
+    # This type is only used by itself, so let's elaborate the description a bit
+    # for the purpose of documentation.
     description = "An evaluation of Nixpkgs; the top level attribute set of packages";
-    check = builtins.isAttrs;
   };
 
   # Whether `pkgs` was constructed by this module - not if nixpkgs.pkgs or
@@ -67,11 +67,6 @@ let
   # Context for messages
   hostPlatformLine = optionalString hasHostPlatform "${showOptionWithDefLocs opt.hostPlatform}";
   buildPlatformLine = optionalString hasBuildPlatform "${showOptionWithDefLocs opt.buildPlatform}";
-  platformLines = optionalString hasPlatform ''
-    Your system configuration configures nixpkgs with platform parameters:
-    ${hostPlatformLine
-    }${buildPlatformLine
-    }'';
 
   legacyOptionsDefined =
     optional (opt.localSystem.highestPrio < (mkDefault {}).priority) opt.system

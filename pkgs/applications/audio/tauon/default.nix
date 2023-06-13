@@ -23,15 +23,15 @@
 , withDiscordRPC ? false
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "tauon";
-  version = "7.4.3";
+  version = "7.6.5";
 
   src = fetchFromGitHub {
     owner = "Taiko2k";
     repo = "TauonMusicBox";
-    rev = "v${version}";
-    sha256 = "sha256-eB4fwW5UvylVslSEvDFdCVYcEK3M2H+8VJGHH13vvA0=";
+    rev = "v${finalAttrs.version}";
+    hash = "sha256-+K+sX6JbVB7qCRlwlIHMHFR76GwZZrHFh6Jjn8xlMmg=";
   };
 
   postUnpack = ''
@@ -56,6 +56,8 @@ stdenv.mkDerivation rec {
       --replace 'lib/libphazor.so' '../../lib/libphazor.so'
 
     patchShebangs compile-phazor.sh
+
+    substituteInPlace compile-phazor.sh --replace 'gcc' '${stdenv.cc.targetPrefix}cc'
 
     substituteInPlace extra/tauonmb.desktop --replace 'Exec=/opt/tauon-music-box/tauonmb.sh' 'Exec=${placeholder "out"}/bin/tauon'
   '';
@@ -95,9 +97,8 @@ stdenv.mkDerivation rec {
     natsort
     pillow
     plexapi
-    pulsectl
     pycairo
-    PyChromecast
+    pychromecast
     pylast
     pygobject3
     pylyrics
@@ -105,7 +106,8 @@ stdenv.mkDerivation rec {
     requests
     send2trash
     setproctitle
-  ] ++ lib.optional withDiscordRPC pypresence;
+  ] ++ lib.optional withDiscordRPC pypresence
+    ++ lib.optional stdenv.isLinux pulsectl;
 
   makeWrapperArgs = [
     "--prefix PATH : ${lib.makeBinPath [ffmpeg]}"
@@ -131,8 +133,9 @@ stdenv.mkDerivation rec {
   meta = with lib; {
     description = "The Linux desktop music player from the future";
     homepage = "https://tauonmusicbox.rocks/";
+    changelog = "https://github.com/Taiko2k/TauonMusicBox/releases/tag/v${finalAttrs.version}";
     license = licenses.gpl3;
     maintainers = with maintainers; [ jansol ];
-    platforms = platforms.linux;
+    platforms = platforms.linux ++ platforms.darwin;
   };
-}
+})

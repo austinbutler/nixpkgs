@@ -56,7 +56,7 @@ let
   provisionConfDir = pkgs.runCommand "grafana-provisioning" { nativeBuildInputs = [ pkgs.xorg.lndir ]; } ''
     mkdir -p $out/{datasources,dashboards,notifiers,alerting}
     ${ln { src = datasourceFileOrDir;    dir = "datasources"; filename = "datasource"; }}
-    ${ln { src = dashboardFileOrDir;     dir = "dashboards";  filename = "dashbaord"; }}
+    ${ln { src = dashboardFileOrDir;     dir = "dashboards";  filename = "dashboard"; }}
     ${ln { src = notifierFileOrDir;      dir = "notifiers";   filename = "notifier"; }}
     ${ln { src = rulesFileOrDir;         dir = "alerting";    filename = "rules"; }}
     ${ln { src = contactPointsFileOrDir; dir = "alerting";    filename = "contactPoints"; }}
@@ -92,17 +92,6 @@ let
   grafanaTypes.datasourceConfig = types.submodule {
     freeformType = provisioningSettingsFormat.type;
 
-    imports = [
-      (mkRemovedOptionModule [ "password" ] ''
-        `services.grafana.provision.datasources.settings.datasources.<name>.password` has been removed
-        in Grafana 9. Use `secureJsonData` instead.
-      '')
-      (mkRemovedOptionModule [ "basicAuthPassword" ] ''
-        `services.grafana.provision.datasources.settings.datasources.<name>.basicAuthPassword` has been removed
-        in Grafana 9. Use `secureJsonData` instead.
-      '')
-    ];
-
     options = {
       name = mkOption {
         type = types.str;
@@ -131,6 +120,11 @@ let
         type = types.bool;
         default = false;
         description = lib.mdDoc "Allow users to edit datasources from the UI.";
+      };
+      jsonData = mkOption {
+        type = types.nullOr types.attrs;
+        default = null;
+        description = lib.mdDoc "Extra data for datasource plugins.";
       };
       secureJsonData = mkOption {
         type = types.nullOr types.attrs;
@@ -364,9 +358,15 @@ in {
             };
 
             http_addr = mkOption {
-              description = lib.mdDoc "Listening address.";
-              default = "";
               type = types.str;
+              default = "127.0.0.1";
+              description = lib.mdDoc ''
+                Listening address.
+
+                ::: {.note}
+                This setting intentionally varies from upstream's default to be a bit more secure by default.
+                :::
+              '';
             };
 
             http_port = mkOption {
@@ -555,7 +555,7 @@ in {
             auto_assign_org_role = mkOption {
               description = lib.mdDoc "Default role new users will be auto assigned.";
               default = "Viewer";
-              type = types.enum ["Viewer" "Editor"];
+              type = types.enum ["Viewer" "Editor" "Admin"];
             };
           };
 
@@ -597,7 +597,6 @@ in {
                   description = lib.mdDoc "List of datasources to insert/update.";
                   default = [];
                   type = types.listOf grafanaTypes.datasourceConfig;
-                  apply = map (flip builtins.removeAttrs [ "password" "basicAuthPassword" ]);
                 };
 
                 deleteDatasources = mkOption {
@@ -1291,7 +1290,10 @@ in {
         SystemCallArchitectures = "native";
         # Upstream grafana is not setting SystemCallFilter for compatibility
         # reasons, see https://github.com/grafana/grafana/pull/40176
-        SystemCallFilter = [ "@system-service" "~@privileged" ];
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+        ] ++ lib.optionals (cfg.settings.server.protocol == "socket") [ "@chown" ];
         UMask = "0027";
       };
       preStart = ''

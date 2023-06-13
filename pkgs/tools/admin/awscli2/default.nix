@@ -9,40 +9,29 @@
 }:
 
 let
-  py = python3.override {
-    packageOverrides = self: super: {
-      awscrt = super.awscrt.overridePythonAttrs (oldAttrs: rec {
-        version = "0.14.0";
-        src = self.fetchPypi {
-          inherit (oldAttrs) pname;
-          inherit version;
-          hash = "sha256-MGLTFcsWVC/gTdgjny6LwyOO6QRc1QcLkVzy677Lqqw=";
-        };
-      });
-
-      prompt-toolkit = super.prompt-toolkit.overridePythonAttrs (oldAttrs: rec {
-        version = "3.0.28";
-        src = self.fetchPypi {
-          pname = "prompt_toolkit";
-          inherit version;
-          hash = "sha256-nxzRax6GwpaPJRnX+zHdnWaZFvUVYSwmnRTp7VK1FlA=";
-        };
-      });
-    };
+  py = python3 // {
+    pkgs = python3.pkgs.overrideScope (self: super: {
+      # nothing right now
+    });
   };
 
 in
 with py.pkgs; buildPythonApplication rec {
   pname = "awscli2";
-  version = "2.9.0"; # N.B: if you change this, check if overrides are still up-to-date
+  version = "2.11.27"; # N.B: if you change this, check if overrides are still up-to-date
   format = "pyproject";
 
   src = fetchFromGitHub {
     owner = "aws";
     repo = "aws-cli";
     rev = version;
-    sha256 = "sha256-kPMoGOn6ws4DjA9fR9gci7vHPIqOSsgMXa1wCiwN8yU=";
+    hash = "sha256-GjnNW5VaWLz8QXIdYZJC0oho3K2Cu//cAgnwQ6lBbTQ=";
   };
+
+  postPatch = ''
+    substituteInPlace requirements/bootstrap.txt \
+      --replace "pip>=22.0.0,<23.0.0" "pip>=22.0.0,<24.0.0"
+  '';
 
   nativeBuildInputs = [
     flit-core
@@ -61,25 +50,16 @@ with py.pkgs; buildPythonApplication rec {
     pyyaml
     rsa
     ruamel-yaml
-    wcwidth
     python-dateutil
     jmespath
     urllib3
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     jsonschema
     mock
     pytestCheckHook
   ];
-
-  postPatch = ''
-    substituteInPlace pyproject.toml \
-      --replace "colorama>=0.2.5,<0.4.4" "colorama" \
-      --replace "distro>=1.5.0,<1.6.0" "distro" \
-      --replace "docutils>=0.10,<0.16" "docutils" \
-      --replace "wcwidth<0.2.0" "wcwidth"
-  '';
 
   postInstall = ''
     mkdir -p $out/${python3.sitePackages}/awscli/data
@@ -121,7 +101,8 @@ with py.pkgs; buildPythonApplication rec {
   passthru = {
     python = py; # for aws_shell
     updateScript = nix-update-script {
-      attrPath = pname;
+      # Excludes 1.x versions from the Github tags list
+      extraArgs = [ "--version-regex" "^(2\.(.*))" ];
     };
     tests.version = testers.testVersion {
       package = awscli2;

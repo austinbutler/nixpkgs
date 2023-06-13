@@ -1,23 +1,29 @@
-{ lib, pkgs, nodejs, stdenv, buildGoModule, fetchFromGitHub, debianutils, mkdocs, python3, python3Packages }:
+{ lib, pkgs, stdenv, buildGoModule, fetchFromGitHub, nixosTests
+, nodejs, debianutils, mkdocs, python3, python3Packages
+, pkg-config, pixman, cairo, pango }:
+
 
 let
   nodeDependencies = (import ./node-composition.nix {
     inherit pkgs nodejs;
     inherit (stdenv.hostPlatform) system;
-  }).nodeDependencies;
+  }).nodeDependencies.override {
+    nativeBuildInputs = [ pkg-config ];
+    buildInputs = [ pixman cairo pango ];
+  };
 in
 buildGoModule rec {
   pname = "ntfy-sh";
-  version = "1.28.0";
+  version = "2.5.0";
 
   src = fetchFromGitHub {
     owner = "binwiederhier";
     repo = "ntfy";
     rev = "v${version}";
-    sha256 = "sha256-pDKeG0Q4cG+UoxpBawHOtO8xVXXxo0Z7nyY2nZSSFvc=";
+    sha256 = "sha256-C7Ko7JBiQoafos7TbVTqq6pn7NnuLOZo7Dcf6ob2IzI=";
   };
 
-  vendorSha256 = "sha256-oMZCjrCsq6aRxcdF6jQK51sZqOjbrdlbofSQvGO/POg=";
+  vendorSha256 = "sha256-9mhMeGcAdFjzLJdsGnoTArtxVEaUznpN64j5SMBYHv8=";
 
   doCheck = false;
 
@@ -30,6 +36,7 @@ buildGoModule rec {
     python3
     python3Packages.mkdocs-material
     python3Packages.mkdocs-minify
+    python3Packages.mkdocs-simple-hooks
   ];
 
   postPatch = ''
@@ -41,10 +48,15 @@ buildGoModule rec {
     DISABLE_ESLINT_PLUGIN=true npm_config_offline=true make web-build docs-build
   '';
 
+  passthru = {
+    updateScript = ./update.sh;
+    tests.ntfy-sh = nixosTests.ntfy-sh;
+  };
+
   meta = with lib; {
     description = "Send push notifications to your phone or desktop via PUT/POST";
     homepage = "https://ntfy.sh";
     license = licenses.asl20;
-    maintainers = with maintainers; [ arjan-s ];
+    maintainers = with maintainers; [ arjan-s fpletz ];
   };
 }

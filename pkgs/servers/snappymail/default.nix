@@ -1,12 +1,17 @@
-{ lib, stdenv, fetchurl, writeText
-, dataPath ? "/var/lib/snappymail" }:
+{ lib
+, stdenv
+, fetchurl
+, writeText
+, dataPath ? "/var/lib/snappymail"
+}:
+
 stdenv.mkDerivation rec {
   pname = "snappymail";
-  version = "2.21.4";
+  version = "2.28.1";
 
   src = fetchurl {
     url = "https://github.com/the-djmaze/snappymail/releases/download/v${version}/snappymail-${version}.tar.gz";
-    sha256 = "sha256-NxE3weZRI06scDZHSL5QjL+boc0GVffHCTzBxncBIuU=";
+    sha256 = "sha256-et3KuILHNPUMaqgOffMh1w73h0ThUbc/lR82pFaG6rM=";
   };
 
   sourceRoot = "snappymail";
@@ -27,8 +32,8 @@ stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "Simple, modern & fast web-based email client";
-
     homepage = "https://snappymail.eu";
+    changelog = "https://github.com/the-djmaze/snappymail/blob/v${version}/CHANGELOG.md";
     downloadPage = "https://github.com/the-djmaze/snappymail/releases";
     license = licenses.agpl3;
     platforms = platforms.all;

@@ -1,4 +1,4 @@
-{ lib, stdenvNoCC, rustPlatform, makeWrapper, Security, gnutar, gzip, testers, fetchurl, prefetch-npm-deps, fetchNpmDeps }:
+{ lib, stdenvNoCC, rustPlatform, makeWrapper, Security, gnutar, gzip, nix, testers, fetchurl, prefetch-npm-deps, fetchNpmDeps }:
 
 {
   prefetch-npm-deps = rustPlatform.buildRustPackage {
@@ -20,7 +20,7 @@
     buildInputs = lib.optional stdenvNoCC.isDarwin Security;
 
     postInstall = ''
-      wrapProgram "$out/bin/prefetch-npm-deps" --prefix PATH : ${lib.makeBinPath [ gnutar gzip ]}
+      wrapProgram "$out/bin/prefetch-npm-deps" --prefix PATH : ${lib.makeBinPath [ gnutar gzip nix ]}
     '';
 
     passthru.tests =
@@ -36,8 +36,8 @@
           '';
         };
 
-        makeTest = { name, src, hash }: testers.invalidateFetcherByDrvHash fetchNpmDeps {
-          inherit name hash;
+        makeTest = { name, src, hash, forceGitDeps ? false }: testers.invalidateFetcherByDrvHash fetchNpmDeps {
+          inherit name hash forceGitDeps;
 
           src = makeTestSrc { inherit name src; };
         };
@@ -84,7 +84,7 @@
             hash = "sha256-X9mCwPqV5yP0S2GonNvpYnLSLJMd/SUIked+hMRxDpA=";
           };
 
-          hash = "sha256-5Mg7KDJLMM5e/7BCHGinGAnBRft2ySQzvKW06p3u/0o=";
+          hash = "sha256-tEdElWJ+KBTxBobzXBpPopQSwK2usGW/it1+yfbVzBw=";
         };
 
         linkDependencies = makeTest {
@@ -107,7 +107,9 @@
             hash = "sha256-1fGNxYJi1I4cXK/jinNG+Y6tPEOhP3QAqWOBEQttS9E=";
           };
 
-          hash = "sha256-8xF8F74nHwL9KPN2QLsxnfvsk0rNCKOZniYJQCD5u/I=";
+          hash = "sha256-+KA8/orSBJ4EhuSyQO8IKSxsN/FAsYU3lOzq+awuxNQ=";
+
+          forceGitDeps = true;
         };
       };
 
@@ -121,6 +123,7 @@
   fetchNpmDeps =
     { name ? "npm-deps"
     , hash ? ""
+    , forceGitDeps ? false
     , ...
     } @ args:
     let
@@ -131,6 +134,8 @@
           outputHash = "";
           outputHashAlgo = "sha256";
         };
+
+      forceGitDeps_ = lib.optionalAttrs forceGitDeps { FORCE_GIT_DEPS = true; };
     in
     stdenvNoCC.mkDerivation (args // {
       inherit name;
@@ -140,14 +145,14 @@
       buildPhase = ''
         runHook preBuild
 
-        if [[ ! -f package-lock.json ]]; then
+        if [[ ! -e package-lock.json ]]; then
           echo
           echo "ERROR: The package-lock.json file does not exist!"
           echo
           echo "package-lock.json is required to make sure that npmDepsHash doesn't change"
           echo "when packages are updated on npm."
           echo
-          echo "Hint: You can use the patches attribute to add a package-lock.json manually to the build."
+          echo "Hint: You can copy a vendored package-lock.json file via postPatch."
           echo
 
           exit 1
@@ -161,5 +166,5 @@
       dontInstall = true;
 
       outputHashMode = "recursive";
-    } // hash_);
+    } // hash_ // forceGitDeps_);
 }

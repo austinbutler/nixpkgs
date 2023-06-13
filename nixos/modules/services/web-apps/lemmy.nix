@@ -6,9 +6,7 @@ let
 in
 {
   meta.maintainers = with maintainers; [ happysalada ];
-  # Don't edit the docbook xml directly, edit the md and generate it:
-  # `pandoc lemmy.md -t docbook --top-level-division=chapter --extract-media=media -f markdown+smart > lemmy.xml`
-  meta.doc = ./lemmy.xml;
+  meta.doc = ./lemmy.md;
 
   imports = [
     (mkRemovedOptionModule [ "services" "lemmy" "jwtSecretPath" ] "As of v0.13.0, Lemmy auto-generates the JWT secret.")
@@ -27,6 +25,7 @@ in
     };
 
     caddy.enable = mkEnableOption (lib.mdDoc "exposing lemmy with the caddy reverse proxy");
+    nginx.enable = mkEnableOption (lib.mdDoc "exposing lemmy with the nginx reverse proxy");
 
     database.createLocally = mkEnableOption (lib.mdDoc "creation of database on the instance");
 
@@ -142,6 +141,41 @@ in
         };
       };
 
+      services.nginx = mkIf cfg.nginx.enable {
+        enable = mkDefault true;
+        virtualHosts."${cfg.settings.hostname}".locations = let
+          ui = "http://127.0.0.1:${toString cfg.ui.port}";
+          backend = "http://127.0.0.1:${toString cfg.settings.port}";
+        in {
+          "~ ^/(api|pictrs|feeds|nodeinfo|.well-known)" = {
+            # backend requests
+            proxyPass = backend;
+            proxyWebsockets = true;
+            recommendedProxySettings = true;
+          };
+          "/" = {
+            # mixed frontend and backend requests, based on the request headers
+            proxyPass = "$proxpass";
+            recommendedProxySettings = true;
+            extraConfig = ''
+              set $proxpass "${ui}";
+              if ($http_accept = "application/activity+json") {
+                set $proxpass "${backend}";
+              }
+              if ($http_accept = "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
+                set $proxpass "${backend}";
+              }
+              if ($request_method = POST) {
+                set $proxpass "${backend}";
+              }
+
+              # Cuts off the trailing slash on URLs to make them valid
+              rewrite ^(.+)/+$ $1 permanent;
+            '';
+          };
+        };
+      };
+
       assertions = [{
         assertion = cfg.database.createLocally -> cfg.settings.database.host == "localhost" || cfg.settings.database.host == "/run/postgresql";
         message = "if you want to create the database locally, you need to use a local database";
@@ -158,8 +192,8 @@ in
         };
 
         documentation = [
-          "https://join-lemmy.org/docs/en/administration/from_scratch.html"
-          "https://join-lemmy.org/docs"
+          "https://join-lemmy.org/docs/en/admins/from_scratch.html"
+          "https://join-lemmy.org/docs/en/"
         ];
 
         wantedBy = [ "multi-user.target" ];
@@ -187,8 +221,8 @@ in
         };
 
         documentation = [
-          "https://join-lemmy.org/docs/en/administration/from_scratch.html"
-          "https://join-lemmy.org/docs"
+          "https://join-lemmy.org/docs/en/admins/from_scratch.html"
+          "https://join-lemmy.org/docs/en/"
         ];
 
         wantedBy = [ "multi-user.target" ];

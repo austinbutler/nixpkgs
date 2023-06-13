@@ -2,16 +2,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "rust-script";
-  version = "0.21.0";
+  version = "0.28.0";
 
   src = fetchFromGitHub {
     owner = "fornwall";
     repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-5T5DivfT7/MkBJo5YgLAVnfct84nBhw/OXWQ/4TMm2A=";
+    rev = version;
+    sha256 = "sha256-BQ/jgS7tq4upVe78N3rxNIQPq/4RHtt66wBnltcU/iY=";
   };
 
-  cargoSha256 = "sha256-mDH3R9gn64DXVoe3Vkl2Kwhr7OTOUWKBLW5Y+Uo4aXM=";
+  cargoSha256 = "sha256-bU/LKvixAu6GQ93FT8csQFFnfHDhFltWHXfG/Pmchfw=";
 
   # tests require network access
   doCheck = false;
@@ -19,6 +19,7 @@ rustPlatform.buildRustPackage rec {
   meta = with lib; {
     description = "Run Rust files and expressions as scripts without any setup or compilation step";
     homepage = "https://rust-script.org";
+    changelog = "https://github.com/fornwall/rust-script/releases/tag/${version}";
     license = with licenses; [ mit /* or */ asl20 ];
     maintainers = with maintainers; [ figsoda ];
   };

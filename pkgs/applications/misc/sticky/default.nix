@@ -12,14 +12,14 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "sticky";
-  version = "1.12";
+  version = "1.16";
   format = "other";
 
   src = fetchFromGitHub {
     owner = "linuxmint";
     repo = pname;
     rev = version;
-    hash = "sha256-kAO8Qz4bTn3+YeIXAvPZ1SpKgn+g+rBgi9+TaqL1vOY=";
+    hash = "sha256-+opzjvSdGwwn1imNzSsfD9rfs4naSXzcMBJRPhKW2WM=";
   };
 
   postPatch = ''

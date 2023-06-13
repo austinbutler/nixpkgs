@@ -2,6 +2,7 @@
 , buildGoModule
 , fetchFromGitHub
 , fetchNpmDeps
+, fetchpatch
 , cacert
 , go
 , git
@@ -16,20 +17,28 @@
 
 buildGoModule rec {
   pname = "evcc";
-  version = "0.107.1";
+  version = "0.118.0";
 
   src = fetchFromGitHub {
     owner = "evcc-io";
     repo = pname;
     rev = version;
-    hash = "sha256-Yu7ebZ6WkLpdvmg7H9A1Sveyu9SRuQ+78gFrCZrYhCU=";
+    hash = "sha256-LQtFmN4IyDj/SRTik+ML3h1/tMwnTQ13dQHnghcDuUo=";
   };
 
-  vendorHash = "sha256-10W1BNHcdP77m7lJ/mc+jQeUigoUid3K0wI4bUm5y+s=";
+  patches = [
+    (fetchpatch {
+      # fix ISO15118 vehicle setup
+      url = "https://github.com/evcc-io/evcc/commit/cc22337b422e4ee541a2c75740c039f2d029bd9b.patch";
+      hash = "sha256-Q+5Klpdv1cWVg716lbKl1JLwkr4LiLPRUoZHemFUQZc=";
+    })
+  ];
+
+  vendorHash = "sha256-1YTVFn/DngzSQwYxGHCAaJl4ZnVj4au32YcpNo1m4w8=";
 
   npmDeps = fetchNpmDeps {
     inherit src;
-    hash = "sha256-+l5LuxJAjrTvOL5XEQ4OIktdupSpn6IqrNX5x4MRmNw=";
+    hash = "sha256-QRjOmanO+phyqgZb/cAyU0dFKI6T6o84MuObANZoYNE=";
   };
 
   nativeBuildInputs = [
@@ -53,6 +62,7 @@ buildGoModule rec {
 
   tags = [
     "release"
+    "test"
   ];
 
   ldflags = [
@@ -60,10 +70,6 @@ buildGoModule rec {
     "-X github.com/evcc-io/evcc/server.Commit=${src.rev}"
     "-s"
     "-w"
-  ];
-
-  npmInstallFlags = [
-    "--legacy-peer-deps"
   ];
 
   preBuild = ''
@@ -75,15 +81,14 @@ buildGoModule rec {
   preCheck = ''
     # requires network access
     rm meter/template_test.go
+    rm charger/template_test.go
   '';
 
   passthru = {
     tests = {
       inherit (nixosTests) evcc;
     };
-    updateScript = nix-update-script {
-      attrPath = pname;
-    };
+    updateScript = nix-update-script { };
   };
 
   meta = with lib; {

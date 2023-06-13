@@ -9,16 +9,21 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "felix";
-  version = "2.1.0";
+  version = "2.3.0";
 
   src = fetchFromGitHub {
     owner = "kyoheiu";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-CLCzRnczItvnjXtS4BOc9FeBCPQm102U0bDIWAZPzYc=";
+    sha256 = "sha256-+8tYllK8UYW7hdA4qoH8Eiu6SbXvjRe4BFfEbwabuIY=";
   };
 
-  cargoSha256 = "sha256-H+uOo3Cm1nFPYyA0qOAcaD4mfSd4Uaq5U20t6V4mmcg=";
+  cargoLock = {
+    lockFile = ./Cargo.lock;
+    outputHashes = {
+      "syntect-5.0.0" = "sha256-Ql3zpfjZ5nopmqZyVOJ8qcRA8eXm6ZYzLsAnGA1+upY=";
+    };
+  };
 
   nativeBuildInputs = [ pkg-config ];
 
@@ -27,14 +32,14 @@ rustPlatform.buildRustPackage rec {
     zstd
   ];
 
-  checkInputs = [ zoxide ];
+  nativeCheckInputs = [ zoxide ];
 
   buildFeatures = [ "zstd/pkg-config" ];
 
   checkFlags = [
     # extra test files not shipped with the repository
-    "--skip=magic_image::tests::test_inspect_image"
-    "--skip=magic_packed::tests::test_inspect_signature"
+    "--skip=functions::tests::test_list_up_contents"
+    "--skip=state::tests::test_has_write_permission"
   ];
 
   meta = with lib; {

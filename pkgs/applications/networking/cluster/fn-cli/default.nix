@@ -2,16 +2,16 @@
 
 buildGoModule rec {
   pname = "fn";
-  version = "0.6.20";
+  version = "0.6.24";
 
   src = fetchFromGitHub {
     owner = "fnproject";
     repo = "cli";
     rev = version;
-    sha256 = "sha256-HeyWMzxSga6T2/BRVwrmgb3utjnVTJk3zhhcVfq8/Cc=";
+    hash = "sha256-em9Bfrk7jJdmg3N+zH0VTpCdKPEOBK8vc297V5vmKzM=";
   };
 
-  vendorSha256 = null;
+  vendorHash = null;
 
   subPackages = ["."];
 
@@ -32,6 +32,5 @@ buildGoModule rec {
     homepage = "https://fnproject.io";
     license = licenses.asl20;
     maintainers = [ maintainers.c4605 ];
-    broken = stdenv.isDarwin;
   };
 }

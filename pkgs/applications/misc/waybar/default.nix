@@ -16,10 +16,12 @@
 , howard-hinnant-date
 , libinotify-kqueue
 , libxkbcommon
+, cavaSupport     ? true,  alsa-lib, fftw, iniparser, ncurses, pipewire, portaudio, SDL2
 , evdevSupport    ? true,  libevdev
 , inputSupport    ? true,  libinput
 , jackSupport     ? true,  libjack2
 , mpdSupport      ? true,  libmpdclient
+, mprisSupport    ? stdenv.isLinux, playerctl ? false
 , nlSupport       ? true,  libnl
 , pulseSupport    ? true,  libpulseaudio
 , rfkillSupport   ? true
@@ -29,19 +31,39 @@
 , traySupport     ? true,  libdbusmenu-gtk3
 , udevSupport     ? true,  udev
 , upowerSupport   ? true,  upower
-, withMediaPlayer ? false, glib, gobject-introspection, python3, playerctl
+, wireplumberSupport ? true, wireplumber
+, withMediaPlayer ? mprisSupport && false, glib, gobject-introspection, python3
 }:
-
+let
+  # Derived from subprojects/cava.wrap
+  libcava = rec {
+    version = "0.8.4";
+    src = fetchFromGitHub {
+      owner = "LukashonakV";
+      repo = "cava";
+      rev = version;
+      hash = "sha256-66uc0CEriV9XOjSjFTt+bxghEXY1OGrpjd+7d6piJUI=";
+    };
+  };
+in
 stdenv.mkDerivation rec {
   pname = "waybar";
-  version = "0.9.15";
+  version = "0.9.18";
 
   src = fetchFromGitHub {
     owner = "Alexays";
     repo = "Waybar";
     rev = version;
-    sha256 = "sha256-u2nEMS0lJ/Kf09+mWYWQLji9MVgjYAfUi5bmPEfTfFc=";
+    hash = "sha256-bnaYNa1jb7kZ1mtMzeOQqz4tmBG1w5YXlQWoop1Q0Yc=";
   };
+
+  postUnpack = lib.optional cavaSupport ''
+    (
+      cd "$sourceRoot"
+      cp -R --no-preserve=mode,ownership ${libcava.src} subprojects/cava-0.8.4
+      patchShebangs .
+    )
+  '';
 
   nativeBuildInputs = [
     meson ninja pkg-config scdoc wrapGAppsHook
@@ -52,40 +74,53 @@ stdenv.mkDerivation rec {
     playerctl
     python3.pkgs.pygobject3
   ];
+
   strictDeps = false;
 
   buildInputs = with lib;
     [ wayland wlroots gtkmm3 libsigcxx jsoncpp spdlog gtk-layer-shell howard-hinnant-date libxkbcommon ]
     ++ optional  (!stdenv.isLinux) libinotify-kqueue
+    ++ optional  cavaSupport   alsa-lib
+    ++ optional  cavaSupport   iniparser
+    ++ optional  cavaSupport   fftw
+    ++ optional  cavaSupport   ncurses
+    ++ optional  cavaSupport   pipewire
+    ++ optional  cavaSupport   portaudio
+    ++ optional  cavaSupport   SDL2
     ++ optional  evdevSupport  libevdev
     ++ optional  inputSupport  libinput
     ++ optional  jackSupport   libjack2
     ++ optional  mpdSupport    libmpdclient
+    ++ optional  mprisSupport  playerctl
     ++ optional  nlSupport     libnl
     ++ optional  pulseSupport  libpulseaudio
     ++ optional  sndioSupport  sndio
     ++ optional  swaySupport   sway
     ++ optional  traySupport   libdbusmenu-gtk3
     ++ optional  udevSupport   udev
-    ++ optional  upowerSupport upower;
+    ++ optional  upowerSupport upower
+    ++ optional  wireplumberSupport wireplumber;
 
-  checkInputs = [ catch2_3 ];
+  nativeCheckInputs = [ catch2_3 ];
   doCheck = runTests;
 
   mesonFlags = (lib.mapAttrsToList
     (option: enable: "-D${option}=${if enable then "enabled" else "disabled"}")
     {
+      cava = cavaSupport;
       dbusmenu-gtk = traySupport;
       jack = jackSupport;
       libinput = inputSupport;
       libnl = nlSupport;
       libudev = udevSupport;
       mpd = mpdSupport;
+      mpris = mprisSupport;
       pulseaudio = pulseSupport;
       rfkill = rfkillSupport;
       sndio = sndioSupport;
       tests = runTests;
       upower_glib = upowerSupport;
+      wireplumber = wireplumberSupport;
     }
   ) ++ [
     "-Dsystemd=disabled"
@@ -101,9 +136,10 @@ stdenv.mkDerivation rec {
     '';
 
   meta = with lib; {
+    changelog = "https://github.com/alexays/waybar/releases/tag/${version}";
     description = "Highly customizable Wayland bar for Sway and Wlroots based compositors";
     license = licenses.mit;
-    maintainers = with maintainers; [ FlorianFranzen minijackson synthetica lovesegfault ];
+    maintainers = with maintainers; [ FlorianFranzen minijackson synthetica lovesegfault rodrgz ];
     platforms = platforms.unix;
     homepage = "https://github.com/alexays/waybar";
   };

@@ -3,7 +3,7 @@ MD_TARGETS=$(addsuffix .xml, $(basename $(shell find . -type f -regex '.*\.md$$'
 PANDOC ?= pandoc
 
 pandoc_media_dir = media
-# NOTE: Keep in sync with NixOS manual (/nixos/doc/manual/md-to-db.sh) and conversion script (/maintainers/scripts/db-to-md.sh).
+# NOTE: Keep in sync with conversion script (/maintainers/scripts/db-to-md.sh).
 # TODO: Remove raw-attribute when we can get rid of DocBook altogether.
 pandoc_commonmark_enabled_extensions = +attributes+fenced_divs+footnotes+bracketed_spans+definition_lists+pipe_tables+raw_attribute
 # Not needed:
@@ -11,13 +11,16 @@ pandoc_commonmark_enabled_extensions = +attributes+fenced_divs+footnotes+bracket
 pandoc_flags = --extract-media=$(pandoc_media_dir) \
 	--lua-filter=$(PANDOC_LUA_FILTERS_DIR)/diagram-generator.lua \
 	--lua-filter=build-aux/pandoc-filters/myst-reader/roles.lua \
-	--lua-filter=build-aux/pandoc-filters/link-unix-man-references.lua \
+	--lua-filter=$(PANDOC_LINK_MANPAGES_FILTER) \
 	--lua-filter=build-aux/pandoc-filters/docbook-writer/rst-roles.lua \
 	--lua-filter=build-aux/pandoc-filters/docbook-writer/labelless-link-is-xref.lua \
 	-f commonmark$(pandoc_commonmark_enabled_extensions)+smart
 
 .PHONY: all
 all: validate format out/html/index.html out/epub/manual.epub
+
+.PHONY: render-md
+render-md: ${MD_TARGETS}
 
 .PHONY: debug
 debug:
@@ -63,18 +66,13 @@ out/html/index.html: doc-support/result manual-full.xml style.css highlightjs
 	cp doc-support/result/xsl/docbook/images/callouts/*.svg out/html/images/callouts/
 	chmod u+w -R out/html/
 
-out/epub/manual.epub: manual-full.xml
+out/epub/manual.epub: epub.xml
 	mkdir -p out/epub/scratch
 	xsltproc --nonet \
 		--output out/epub/scratch/ \
 		doc-support/result/epub.xsl \
-		./manual-full.xml
+		./epub.xml
 
-	cp -r $(pandoc_media_dir) out/epub/scratch/OEBPS
-	cp ./overrides.css out/epub/scratch/OEBPS
-	cp ./style.css out/epub/scratch/OEBPS
-	mkdir -p out/epub/scratch/OEBPS/images/callouts/
-	cp doc-support/result/xsl/docbook/images/callouts/*.svg out/epub/scratch/OEBPS/images/callouts/
 	echo "application/epub+zip" > mimetype
 	zip -0Xq "out/epub/manual.epub" mimetype
 	rm mimetype
