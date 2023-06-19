@@ -51,14 +51,21 @@ rustPlatform.buildRustPackage rec {
   pname = "alacritty";
   version = "0.12.1";
 
+  # patches = [
+  #   (fetchpatch {
+  #     url = "https://github.com/alacritty/alacritty/commit/727531406c8511c3b7685ea5bc6897604172e6aa.patch";
+  #     hash = "sha256-NGRPkOEXz9pD90SKtWr6tE2ET/phDcAOB+xUm4TZ2Xc=";
+  #   })
+  # ];
+
   src = fetchFromGitHub {
     owner = "alacritty";
     repo = pname;
-    rev = "refs/tags/v${version}";
-    hash = "sha256-jw66pBKIhvvaQ+Q6tDV6i7ALa7Z0Pw7dp6gAVPqy5bs=";
+    rev = "ee938243586ae5482cf26ff238ddc99e66e1d1c4";
+    hash = "sha256-lT/cEVczNUR+TYTPDuDIWq3xRjobJxvzT4zrWH8ZfQM=";
   };
 
-  cargoHash = "sha256-rDcNliuUDGsd4VA2H9k+AiJTf1ylmFyqCUzxwCtM3T8=";
+  cargoHash = "sha256-THgd6A7elphuiADJrEnO65Nf0CkySvJQjVV9Q2w5T0Y=";
 
   nativeBuildInputs = [
     cmake
@@ -113,10 +120,10 @@ rustPlatform.buildRustPackage rec {
     installShellCompletion --fish extra/completions/alacritty.fish
 
     install -dm 755 "$out/share/man/man1"
-    gzip -c extra/alacritty.man > "$out/share/man/man1/alacritty.1.gz"
-    gzip -c extra/alacritty-msg.man > "$out/share/man/man1/alacritty-msg.1.gz"
+    # gzip -c extra/alacritty.man > "$out/share/man/man1/alacritty.1.gz"
+    # gzip -c extra/alacritty-msg.man > "$out/share/man/man1/alacritty-msg.1.gz"
 
-    install -Dm 644 alacritty.yml $out/share/doc/alacritty.yml
+    # install -Dm 644 alacritty.yml $out/share/doc/alacritty.yml
 
     install -dm 755 "$terminfo/share/terminfo/a/"
     tic -xe alacritty,alacritty-direct -o "$terminfo/share/terminfo" extra/alacritty.info
