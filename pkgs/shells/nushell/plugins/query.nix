@@ -9,11 +9,11 @@
 
 rustPlatform.buildRustPackage {
   pname = "nushell_plugin_query";
-  version = "0.81.0";
+  version = "0.83.1";
 
   src = nushell.src;
 
-  cargoHash = "sha256-iQ7xr7NY/OQ5pVq2DFmdl/6F2NlUh3NBA9dk+e4gzRE=";
+  cargoHash = "sha256-0Bcu2h1ooc4z4ezKSjl7ca5cNQwnF3je7XzdhuqP4iQ=";
 
   buildInputs = lib.optionals stdenv.isDarwin [ IOKit CoreFoundation ];
 

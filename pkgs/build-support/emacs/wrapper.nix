@@ -21,7 +21,7 @@ set which contains `emacs.pkgs.withPackages`. For example, to override
 `emacs.pkgs.emacs.pkgs.withPackages`,
 ```
 let customEmacsPackages =
-      emacs.pkgs.overrideScope' (self: super: {
+      emacs.pkgs.overrideScope (self: super: {
         # use a custom version of emacs
         emacs = ...;
         # use the unstable MELPA version of magit
@@ -36,8 +36,8 @@ in customEmacsPackages.withPackages (epkgs: [ epkgs.evil epkgs.magit ])
 self:
 let
   inherit (self) emacs;
-  withNativeCompilation = emacs.withNativeCompilation or false;
-  withTreeSitter = emacs.withTreeSitter or false;
+  withNativeCompilation = emacs.withNativeCompilation or emacs.nativeComp or false;
+  withTreeSitter = emacs.withTreeSitter or emacs.treeSitter or false;
 in
 packagesFun: # packages explicitly requested by the user
 let

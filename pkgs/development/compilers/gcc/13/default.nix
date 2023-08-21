@@ -9,8 +9,8 @@
 , profiledCompiler ? false
 , langJit ? false
 , staticCompiler ? false
-, enableShared ? !stdenv.targetPlatform.isStatic
-, enableLTO ? !stdenv.hostPlatform.isStatic
+, enableShared ? stdenv.targetPlatform.hasSharedLibraries
+, enableLTO ? stdenv.hostPlatform.hasSharedLibraries
 , texinfo ? null
 , perl ? null # optional, for texi2pod (then pod2man)
 , gmp, mpfr, libmpc, gettext, which, patchelf, binutils
@@ -23,7 +23,7 @@
 , name ? "gcc"
 , libcCross ? null
 , threadsCross ? null # for MinGW
-, crossStageStatic ? false
+, withoutTargetLibc ? false
 , gnused ? null
 , cloog # unused; just for compat with gcc4, as we override the parameter on some places
 , buildPackages
@@ -55,7 +55,7 @@ with lib;
 with builtins;
 
 let majorVersion = "13";
-    version = "${majorVersion}.1.0";
+    version = "${majorVersion}.2.0";
     disableBootstrap = !stdenv.hostPlatform.isDarwin && !profiledCompiler;
 
     inherit (stdenv) buildPlatform hostPlatform targetPlatform;
@@ -63,7 +63,7 @@ let majorVersion = "13";
     patches =
          optional (targetPlatform != hostPlatform) ../libstdc++-target.patch
       ++ optional noSysDirs ../gcc-12-no-sys-dirs.patch
-      ++ optional noSysDirs ../no-sys-dirs-riscv.patch
+      ++ optional noSysDirs ./no-sys-dirs-riscv.patch
       ++ [
         ../gnat-cflags-11.patch
         ../gcc-12-gfortran-driving.patch
@@ -73,8 +73,8 @@ let majorVersion = "13";
       # a foreign one: https://github.com/iains/gcc-12-branch/issues/18
       ++ optional (stdenv.isDarwin && stdenv.isAarch64 && buildPlatform == hostPlatform && hostPlatform == targetPlatform) (fetchpatch {
         name = "gcc-13-darwin-aarch64-support.patch";
-        url = "https://github.com/Homebrew/formula-patches/raw/5c206c47e2a08d522ec9795bb314346fff5fc4c5/gcc/gcc-13.1.0.diff";
-        sha256 = "sha256-sMgA7nwE2ULa54t5g6VE6eJQYa69XvQrefi9U9f2t4g=";
+        url = "https://raw.githubusercontent.com/Homebrew/formula-patches/3c5cbc8e9cf444a1967786af48e430588e1eb481/gcc/gcc-13.2.0.diff";
+        sha256 = "sha256-Y5r3U3dwAFG6+b0TNCFd18PNxYu2+W/5zDbZ5cHvv+U=";
       })
       ++ optional langD ../libphobos.patch
 
@@ -125,7 +125,7 @@ let majorVersion = "13";
 
     /* Cross-gcc settings (build == host != target) */
     crossMingw = targetPlatform != hostPlatform && targetPlatform.libc == "msvcrt";
-    stageNameAddon = if crossStageStatic then "stage-static" else "stage-final";
+    stageNameAddon = if withoutTargetLibc then "stage-static" else "stage-final";
     crossNameAddon = optionalString (targetPlatform != hostPlatform) "${targetPlatform.config}-${stageNameAddon}-";
 
     callFile = lib.callPackageWith {
@@ -146,7 +146,7 @@ let majorVersion = "13";
         binutils
         buildPackages
         cloog
-        crossStageStatic
+        withoutTargetLibc
         disableBootstrap
         disableGdbPlugin
         enableLTO
@@ -195,15 +195,13 @@ let majorVersion = "13";
 
 in
 
-lib.pipe (stdenv.mkDerivation ({
+lib.pipe ((callFile ../common/builder.nix {}) ({
   pname = "${crossNameAddon}${name}";
   inherit version;
 
-  builder = ../builder.sh;
-
   src = fetchurl {
     url = "mirror://gcc/releases/gcc-${version}/gcc-${version}.tar.xz";
-    sha256 = "sha256-YdaE8Kpedqxlha2ImKJCeq3ol57V5/hUkihsTfwT7oY=";
+    hash = "sha256-4nXnZEKmBnNBon8Exca4PYYTFEAEwEE1KIY9xrXHQ9o=";
   };
 
   inherit patches;
@@ -265,7 +263,7 @@ lib.pipe (stdenv.mkDerivation ({
             )
           '';
 
-  inherit noSysDirs staticCompiler crossStageStatic
+  inherit noSysDirs staticCompiler withoutTargetLibc
     libcCross crossMingw;
 
   inherit (callFile ../common/dependencies.nix { }) depsBuildBuild nativeBuildInputs depsBuildTarget buildInputs depsTargetTarget;
@@ -297,6 +295,9 @@ lib.pipe (stdenv.mkDerivation ({
     stripDebugList
     stripDebugListTarget
     preFixup;
+
+  # https://gcc.gnu.org/PR109898
+  enableParallelInstalling = false;
 
   # https://gcc.gnu.org/install/specific.html#x86-64-x-solaris210
   ${if hostPlatform.system == "x86_64-solaris" then "CC" else null} = "gcc -m64";
@@ -341,15 +342,10 @@ lib.pipe (stdenv.mkDerivation ({
   };
 }
 
-// optionalAttrs (targetPlatform != hostPlatform && targetPlatform.libc == "msvcrt" && crossStageStatic) {
-  makeFlags = [ "all-gcc" "all-target-libgcc" ];
-  installTargets = "install-gcc install-target-libgcc";
-}
-
 // optionalAttrs (enableMultilib) { dontMoveLib64 = true; }
 ))
 [
-  (callPackage ../common/libgcc.nix   { inherit langC langCC langJit; })
+  (callPackage ../common/libgcc.nix   { inherit version langC langCC langJit targetPlatform hostPlatform withoutTargetLibc enableShared; })
   (callPackage ../common/checksum.nix { inherit langC langCC; })
 ]
 
