@@ -8,6 +8,7 @@
 , python3
 , makeWrapper
 , electron
+, vulkan-helper
 , gogdl
 , legendary-gl
 , nile
@@ -16,18 +17,18 @@
 let appName = "heroic";
 in stdenv.mkDerivation rec {
   pname = "heroic-unwrapped";
-  version = "2.9.1";
+  version = "2.9.2";
 
   src = fetchFromGitHub {
     owner = "Heroic-Games-Launcher";
     repo = "HeroicGamesLauncher";
     rev = "v${version}";
-    hash = "sha256-1FtAcp6cG2qRfWrAgCOQ87DzMvszqqhObfSzepezBGc=";
+    hash = "sha256-kCvMUhN1kjGb5rV+lkKm1FFYBJUSQGOKTY1DQdiAWLU=";
   };
 
   offlineCache = fetchYarnDeps {
     yarnLock = "${src}/yarn.lock";
-    hash = "sha256-KEzTjtoBcHNJxC/7W/Bft75JZuZUSHieOOAwhbr5d3s=";
+    hash = "sha256-kHZL7TENVK58dvr8PBFtWYZ2PSKEYESX4e1xYmMA5+Y=";
   };
 
   nativeBuildInputs = [
@@ -86,14 +87,15 @@ in stdenv.mkDerivation rec {
     ln -s \
       "${gogdl}/bin/gogdl" \
       "${legendary-gl}/bin/legendary" \
-      "${nile}"/bin/nile \
+      "${nile}/bin/nile" \
+      "${lib.optionalString stdenv.isLinux "${vulkan-helper}/bin/vulkan-helper"}" \
       "$out/share/${appName}/build/bin/${binPlatform}"
 
     makeWrapper "${electron}/bin/electron" "$out/bin/heroic" \
       --inherit-argv0 \
       --add-flags --disable-gpu-compositing \
       --add-flags $out/share/${appName} \
-      --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations}}"
+      --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime}}"
 
     substituteInPlace "$out/share/${appName}/flatpak/com.heroicgameslauncher.hgl.desktop" \
       --replace "Exec=heroic-run" "Exec=heroic"

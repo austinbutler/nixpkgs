@@ -1,7 +1,7 @@
 { lib
 , buildPythonPackage
 , fetchFromGitHub
-, pythonOlder
+, python
 , poetry-core
 , pytest
 , colored
@@ -10,16 +10,16 @@
 
 buildPythonPackage rec {
   pname = "syrupy";
-  version = "4.0.8";
+  version = "4.5.0";
   format = "pyproject";
 
-  disabled = pythonOlder "3.8.1";
+  disabled = lib.versionOlder python.version "3.8.1";
 
   src = fetchFromGitHub {
     owner = "tophat";
     repo = "syrupy";
     rev = "refs/tags/v${version}";
-    hash = "sha256-qUKOZHkpQmeS/QELRf1FoUniaHs/gYyOtsBCFOidx4g=";
+    hash = "sha256-HRCURqnFzo1l+PjX1LtXTSVZGA36OaRgmy4xKizeuOg=";
   };
 
   nativeBuildInputs = [

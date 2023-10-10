@@ -19,7 +19,7 @@ rec {
          name = "sed-4.2.2-pre";
          src = fetchurl {
            url = ftp://alpha.gnu.org/gnu/sed/sed-4.2.2-pre.tar.bz2;
-           sha256 = "11nq06d131y4wmf3drm0yk502d2xc6n5qy82cg88rb9nqd2lj41k";
+           hash = "sha256-MxBJRcM2rYzQYwJ5XKxhXTQByvSg5jZc5cSHEZoB2IY=";
          };
          patches = [];
        });
@@ -281,11 +281,11 @@ rec {
   /* backward compatibility with old uncurried form; deprecated */
   makeScopeWithSplicing =
     splicePackages: newScope: otherSplices: keep: extra: f:
-    makeScopeWithSplicing' {
-      inherit splicePackages newScope otherSplices keep extra f;
-    };
+    makeScopeWithSplicing'
+    { inherit splicePackages newScope; }
+    { inherit otherSplices keep extra f; };
 
-  /* Like the above, but aims to support cross compilation. It's still ugly, but
+  /* Like makeScope, but aims to support cross compilation. It's still ugly, but
      hopefully it helps a little bit. */
   makeScopeWithSplicing' =
     { splicePackages

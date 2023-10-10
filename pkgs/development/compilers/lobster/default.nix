@@ -18,13 +18,13 @@
 
 stdenv.mkDerivation rec {
   pname = "lobster";
-  version = "2023.9";
+  version = "2023.12";
 
   src = fetchFromGitHub {
     owner = "aardappel";
     repo = "lobster";
     rev = "v${version}";
-    sha256 = "sha256-30OOdl/BzWJeLhSWuzLAhwELRPcOJIi7FqwL/ztUOUo=";
+    sha256 = "sha256-0hEcbLq8thlgMtCcWt8SR5XsNgQfNH4+qdE0cHfRveo=";
   };
 
   nativeBuildInputs = [ cmake ];

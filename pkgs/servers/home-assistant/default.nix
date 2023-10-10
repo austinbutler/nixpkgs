@@ -49,6 +49,7 @@ let
         };
         postPatch = ''
           substituteInPlace pyproject.toml \
+            --replace "poetry>=1.0.0b1" "poetry-core" \
             --replace "poetry.masonry" "poetry.core.masonry"
         '';
         propagatedBuildInputs = oldAttrs.propagatedBuildInputs ++ [
@@ -295,7 +296,7 @@ let
   extraBuildInputs = extraPackages python.pkgs;
 
   # Don't forget to run parse-requirements.py after updating
-  hassVersion = "2023.8.3";
+  hassVersion = "2023.10.0";
 
 in python.pkgs.buildPythonApplication rec {
   pname = "homeassistant";
@@ -311,7 +312,7 @@ in python.pkgs.buildPythonApplication rec {
   # Primary source is the pypi sdist, because it contains translations
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-fbuNDP604G7YIL61+7LALPdD0blA4n2/meG0PnKnNQU=";
+    hash = "sha256-UmgIQJRQRDMzjUO9lJVpKsIvrFHBzoXc5Kig69ZHttU=";
   };
 
   # Secondary source is git for tests
@@ -319,11 +320,12 @@ in python.pkgs.buildPythonApplication rec {
     owner = "home-assistant";
     repo = "core";
     rev = "refs/tags/${version}";
-    hash = "sha256-eDA4FWFhfwlUM2skq/Yrua6RFEbmX5x1uC/QE/PhgTQ=";
+    hash = "sha256-M8TuH9oF4+6PuHDCHiGWxSnrQcOw/OsJVSfX/8XfyIM=";
   };
 
   nativeBuildInputs = with python.pkgs; [
     setuptools
+    wheel
   ];
 
   # copy tests early, so patches apply as they would to the git repo
@@ -368,6 +370,9 @@ in python.pkgs.buildPythonApplication rec {
       ) relaxedConstraints)}
       pyproject.toml
     substituteInPlace tests/test_config.py --replace '"/usr"' '"/build/media"'
+
+    sed -i 's/setuptools[~=]/setuptools>/' pyproject.toml
+    sed -i 's/wheel[~=]/wheel>/' pyproject.toml
   '';
 
   propagatedBuildInputs = with python.pkgs; [
@@ -388,6 +393,7 @@ in python.pkgs.buildPythonApplication rec {
     jinja2
     lru-dict
     orjson
+    packaging
     pip
     pyopenssl
     pyjwt

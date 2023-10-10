@@ -13,16 +13,16 @@
 
 buildNpmPackage rec {
   pname = "homepage-dashboard";
-  version = "0.6.28";
+  version = "0.7.2";
 
   src = fetchFromGitHub {
-    owner = "benphelps";
+    owner = "gethomepage";
     repo = "homepage";
     rev = "v${version}";
-    hash = "sha256-ghS5RL6wKdyJg4HxS31lol7QlFiZRXDAgn6rijy9XV8=";
+    hash = "sha256-p2h1XPVMTZ23nxu/rX/qOQ5DXOZ0ORaXR41ng4pgmmg=";
   };
 
-  npmDepsHash = "sha256-3sjMWQ40FqdTfx1QkMoIwpIGWRQKPOqOKfPVDWzjz3w=";
+  npmDepsHash = "sha256-ZUdBXkQnwh0jrrSKukHeSv3HS1q24Qd12zVnpV71qIY=";
 
   preBuild = ''
     mkdir -p config

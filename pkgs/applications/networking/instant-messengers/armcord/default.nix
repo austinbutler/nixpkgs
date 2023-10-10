@@ -39,7 +39,7 @@
 
 stdenv.mkDerivation rec {
   pname = "armcord";
-  version = "3.2.3";
+  version = "3.2.4-libwebp";
 
   src =
     let
@@ -47,12 +47,12 @@ stdenv.mkDerivation rec {
     in
       {
         x86_64-linux = fetchurl {
-          url = "${base}/v${version}/ArmCord_${version}_amd64.deb";
-          hash = "sha256-d8Xv9ecXxkUAIqCS82VKlLNne56hESYvYtSDvNvGul0=";
+          url = "${base}/v${version}/ArmCord_${builtins.head (lib.splitString "-" version)}_amd64.deb";
+          hash = "sha256-WeHgai9vTaN04zMdAXmhemKroKH+kwHuOr/E85mfurE=";
         };
         aarch64-linux = fetchurl {
-          url = "${base}/v${version}/ArmCord_${version}_arm64.deb";
-          hash = "sha256-yqZ4hl+E4IEEEuKhfyDYY1Lyz5/Nekrf8uxoJr1B8w8=";
+          url = "${base}/v${version}/ArmCord_${builtins.head (lib.splitString "-" version)}_arm64.deb";
+          hash = "sha256-4/vGdWXv8wrbF/EhMK6kJPjta0EOGH6C3kUyM0OTB8M=";
         };
       }.${stdenv.hostPlatform.system} or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
 
@@ -135,7 +135,7 @@ stdenv.mkDerivation rec {
     downloadPage = "https://github.com/ArmCord/ArmCord";
     sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     license = licenses.osl3;
-    maintainers = with maintainers; [ wrmilling ];
+    maintainers = with maintainers; [ ludovicopiero wrmilling ];
     platforms = [ "x86_64-linux" "aarch64-linux" ];
     mainProgram = "armcord";
   };
