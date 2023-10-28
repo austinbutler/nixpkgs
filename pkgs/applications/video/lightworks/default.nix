@@ -70,7 +70,10 @@ let
         --prefix LD_LIBRARY_PATH : ${fullPath}:$out/lib/lightworks \
         --set FONTCONFIG_FILE $out/lib/lightworks/fonts.conf
 
-      cp -r usr/share $out/share
+      cp -r usr/share $out/
+
+      substituteInPlace "$out/share/applications/lightworks.desktop" \
+        --replace "Exec=/usr/bin/lightworks" "Exec=$out/bin/lightworks"
     '';
 
     dontPatchELF = true;
