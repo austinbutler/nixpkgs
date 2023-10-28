@@ -12,7 +12,7 @@ let
     owner = "caddyserver";
     repo = "dist";
     rev = "v${version}";
-    hash = "sha256-b4cDDUcdVoB7kU677nrKf8W/5QMnB5vEaPYVBMllEA8=";
+    hash = "sha256-aZ7hdAZJH1PvrX9GQLzLquzzZG3LZSKOvt7sWQhTiR8=";
   };
 in
 buildGoModule {
@@ -64,6 +64,7 @@ buildGoModule {
     homepage = "https://caddyserver.com";
     description = "Fast and extensible multi-platform HTTP/1-2-3 web server with automatic HTTPS";
     license = licenses.asl20;
+    mainProgram = "caddy";
     maintainers = with maintainers; [ Br1ght0ne emilylange techknowlogick ];
   };
 }

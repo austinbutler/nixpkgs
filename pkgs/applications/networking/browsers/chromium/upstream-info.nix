@@ -3,63 +3,63 @@
     deps = {
       gn = {
         rev = "811d332bd90551342c5cbd39e133aa276022d7f8";
-        sha256 = "0jlg3d31p346na6a3yk0x29pm6b7q03ck423n5n6mi8nv4ybwajq";
+        hash = "sha256-WCq+PNkWxWpssUOQyQbAZ5l6k+hg+qGMsoaMG0Ybj0o=";
         url = "https://gn.googlesource.com/gn";
         version = "2023-08-01";
       };
     };
-    sha256 = "1wf0j189cxpayy6ffmj5j6h5yg3amivryilimjc2ap0jkyj4xrbi";
-    sha256bin64 = "11w1di146mjb9ql30df9yk9x4b9amc6514jzyfbf09mqsrw88dvr";
+    hash = "sha256-spzY2u5Wk52BrKCk9aQOEp/gbppaGVLCQxXa+3JuajA=";
+    hash_deb_amd64 = "sha256-eTeEeNa4JuCW81+SUAyrKi3S0/TJNTAoTktWQ0JsgYc=";
     version = "117.0.5938.22";
   };
   dev = {
     deps = {
       gn = {
         rev = "cc56a0f98bb34accd5323316e0292575ff17a5d4";
-        sha256 = "1ly7z48v147bfdb1kqkbc98myxpgqq3g6vgr8bjx1ikrk17l82ab";
+        hash = "sha256-SwlET5h5xtDlQvlt8wbG73ZfUWJr4hlWc+uQsBH5x9M=";
         url = "https://gn.googlesource.com/gn";
         version = "2023-08-10";
       };
     };
-    sha256 = "1z01b6w4sgndrlcd26jgimk3rhv3wzpn67nv1fd5ln7dwfwkyq20";
-    sha256bin64 = "11y09hsy7y1vg65xfilq44ffsmn15dqy80fa57psj1kin4a52v2x";
+    hash = "sha256-W0fZuvv9jz03ibQqB6MG45aw2zPklfxoFzZzr+kRuJk=";
+    hash_deb_amd64 = "sha256-XWxRFLFxBqnvKcoB5HErwVbtHCGYRteLeTv44zVMwIc=";
     version = "118.0.5966.0";
   };
   stable = {
     chromedriver = {
-      sha256_darwin = "06yhmapflj5m40952zcrq97qlj3crbbffaspiz87w0syxnw9avq1";
-      sha256_darwin_aarch64 =
-        "07dkpaqildzsrwbgjgxw5imbbz2pjvyq3n1wiw94lfjqbd9jrkbz";
-      sha256_linux = "0lqng6g722apxa9k596f42f6bw323q4b29vrkcs1lh86skgikdgj";
-      version = "117.0.5938.149";
+      hash_darwin = "sha256-ugsxRhIPtDD7Y4/PsIc8Apqrtyo4uiVKoLmtRvQaJ3k=";
+      hash_darwin_aarch64 =
+        "sha256-aD/bHIxMm1OQu6un8cTYLPWoq/cC6kd1hTkxLEqGGRM=";
+      hash_linux = "sha256-Ie5wtKXz27/vI97Ku7dqqQicR+tujgFUzANAIKTRw8M=";
+      version = "118.0.5993.70";
     };
     deps = {
       gn = {
-        rev = "811d332bd90551342c5cbd39e133aa276022d7f8";
-        sha256 = "0jlg3d31p346na6a3yk0x29pm6b7q03ck423n5n6mi8nv4ybwajq";
+        rev = "cc56a0f98bb34accd5323316e0292575ff17a5d4";
+        hash = "sha256-SwlET5h5xtDlQvlt8wbG73ZfUWJr4hlWc+uQsBH5x9M=";
         url = "https://gn.googlesource.com/gn";
-        version = "2023-08-01";
+        version = "2023-08-10";
       };
     };
-    sha256 = "1pyrqxzxxibz0yp218kw6z186x8y6kd5a1l0mcbhj70rpm9cimyx";
-    sha256bin64 = "1zly8dpxmhyqdsqd381r0yzjrf8nkfigfjhabm3dbf1ih7qma40z";
-    version = "117.0.5938.149";
+    hash = "sha256-CTkw92TiRD2tkYu5a5dy8fjpR2MMOMCvcbxXhJ36Bp8=";
+    hash_deb_amd64 = "sha256-Y4IUVJIBlt2kcrK5c8SiUyvetC3aBhQQIBTCSaDUKxs=";
+    version = "118.0.5993.88";
   };
   ungoogled-chromium = {
     deps = {
       gn = {
-        rev = "811d332bd90551342c5cbd39e133aa276022d7f8";
-        sha256 = "0jlg3d31p346na6a3yk0x29pm6b7q03ck423n5n6mi8nv4ybwajq";
+        rev = "cc56a0f98bb34accd5323316e0292575ff17a5d4";
+        hash = "sha256-SwlET5h5xtDlQvlt8wbG73ZfUWJr4hlWc+uQsBH5x9M=";
         url = "https://gn.googlesource.com/gn";
-        version = "2023-08-01";
+        version = "2023-08-10";
       };
       ungoogled-patches = {
-        rev = "117.0.5938.149-1";
-        sha256 = "0kzbnymbp7snxmg3adpl16anyhs2rxk0iqy5dda8dx5rv9s8i0x0";
+        rev = "118.0.5993.88-1";
+        hash = "sha256-Tv/DSvVHa/xU5SXNtobaJPOSrbMMwYIu0+okSkw7RJ4=";
       };
     };
-    sha256 = "1pyrqxzxxibz0yp218kw6z186x8y6kd5a1l0mcbhj70rpm9cimyx";
-    sha256bin64 = "1zly8dpxmhyqdsqd381r0yzjrf8nkfigfjhabm3dbf1ih7qma40z";
-    version = "117.0.5938.149";
+    hash = "sha256-CTkw92TiRD2tkYu5a5dy8fjpR2MMOMCvcbxXhJ36Bp8=";
+    hash_deb_amd64 = "sha256-Y4IUVJIBlt2kcrK5c8SiUyvetC3aBhQQIBTCSaDUKxs=";
+    version = "118.0.5993.88";
   };
 }
