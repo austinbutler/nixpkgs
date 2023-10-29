@@ -1,7 +1,7 @@
 { lib, stdenv, fetchurl, dpkg, makeWrapper, buildFHSEnv
 , gtk3, gdk-pixbuf, cairo, libjpeg_original, glib, pango, libGLU
 , libGL, nvidia_cg_toolkit, zlib, openssl, libuuid
-, alsa-lib, udev, libjack2, freetype, libva, libvdpau
+, alsa-lib, udev, libjack2, freetype, libva, libvdpau, copyDesktopItems, makeDesktopItem
 }:
 let
   fullPath = lib.makeLibraryPath [
@@ -42,6 +42,18 @@ let
     nativeBuildInputs = [ makeWrapper ];
     buildInputs = [ dpkg ];
 
+    desktopItems = [
+   ( makeDesktopItem {
+    name = pname;
+    exec = pname;
+    icon = pname;
+    desktopName = "Lightworks";
+    genericName = "Video Editor";
+    categories = [ "AudioVideo" "AudioVideoEditing" ];
+    startupWMClass = pname;
+  })
+];
+
     unpackPhase = "dpkg-deb -x ${src} ./";
 
     installPhase = ''
@@ -72,8 +84,8 @@ let
 
       cp -r usr/share $out/
 
-      substituteInPlace "$out/share/applications/lightworks.desktop" \
-        --replace "Exec=/usr/bin/lightworks" "Exec=$out/bin/lightworks"
+      mkdir -p "$out/share/icons/hicolor/$pname/apps"
+      install -Dm0644 usr/share/lightworks/Icons/App.png $out/share/icons/hicolor/64x64/apps/$pname.png
     '';
 
     dontPatchELF = true;
@@ -81,7 +93,7 @@ let
 
 # Lightworks expects some files in /usr/share/lightworks
 in buildFHSEnv {
-  inherit (lightworks) name;
+  name = lightworks.pname;
 
   targetPkgs = pkgs: [
       lightworks
