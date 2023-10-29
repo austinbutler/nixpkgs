@@ -84,6 +84,8 @@ let
 
       cp -r usr/share $out/
 
+      rm $out/share/applications/lightworks.desktop
+
       mkdir -p "$out/share/icons/hicolor/$pname/apps"
       install -Dm0644 usr/share/lightworks/Icons/App.png $out/share/icons/hicolor/64x64/apps/$pname.png
     '';
