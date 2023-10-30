@@ -57,7 +57,7 @@ let
     unpackPhase = "dpkg-deb -x ${src} ./";
 
     installPhase = ''
-      mkdir -p $out/bin
+      mkdir -p $out/{bin,share/pixmaps}
       substitute usr/bin/lightworks $out/bin/lightworks \
         --replace "/usr/lib/lightworks" "$out/lib/lightworks"
       chmod +x $out/bin/lightworks
@@ -86,8 +86,9 @@ let
 
       rm $out/share/applications/lightworks.desktop
 
-      mkdir -p "$out/share/icons/hicolor/$pname/apps"
-      install -Dm0644 usr/share/lightworks/Icons/App.png $out/share/icons/hicolor/64x64/apps/$pname.png
+      ln -s $out/share/lightworks/Icons/App.png $out/share/pixmaps/lightworks.png
+
+      runHook postInstall
     '';
 
     dontPatchELF = true;
@@ -100,6 +101,14 @@ in buildFHSEnv {
   targetPkgs = pkgs: [
       lightworks
   ];
+
+ # TODO: Might still need this
+  # link desktop item and icon into FHS user environment
+  # extraInstallCommands = ''
+  #   mkdir -p "$out/share/{applications,pixmaps}"
+  #   ln -s ${lightworks}/share/applications/lightworks.desktop "$out/share/applications/lightworks.desktop"
+  #   ln -s ${lightworks}/share/pixmaps/lightworks.png "$out/share/pixmaps/lightworks.png"
+  # '';
 
   runScript = "lightworks";
 
