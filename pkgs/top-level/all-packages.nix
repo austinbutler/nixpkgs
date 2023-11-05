@@ -7888,6 +7888,8 @@ with pkgs;
     inherit (darwin.apple_sdk.frameworks) CoreFoundation CoreServices Security;
   };
 
+  wrangler3 = callPackage ../development/tools/wrangler { };
+
   snowflake = callPackage ../tools/networking/snowflake { };
 
   wsl-open = callPackage ../tools/misc/wsl-open { };
