@@ -15,16 +15,18 @@ on:
         required: false
         default: false
         options:
-          - false
-          - true
+          - "false"
+          - "true"
       os:
         description: Operating system
         required: true
         type: choice
         options:
           # https://github.com/actions/virtual-environments#available-environments
-          - macos-11
+          - macos-latest
+          - macos-latest-large
           - ubuntu-latest
+          - ubuntu-latest-arm
 jobs:
   parse-inputs:
     runs-on: ubuntu-latest
