@@ -35,7 +35,7 @@ jobs:
         id: parse-packages
         run: |
           PACKAGES=$(printf %s "${{ github.event.inputs.packages }}" | jq -cRs 'split(" ")')
-          echo "PACKAGES: $PACKAGES"
+          echo "Building the following packages on ${{ github.event.inputs.os }}: $PACKAGES"
           echo "packages=${PACKAGES}" >> $GITHUB_OUTPUT
     outputs:
       packages: ${{ steps.parse-packages.outputs.packages }}
