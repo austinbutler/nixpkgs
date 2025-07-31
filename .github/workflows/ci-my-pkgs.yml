@@ -36,7 +36,6 @@ jobs:
         run: |
           PACKAGES=$(printf %s "${{ github.event.inputs.packages }}" | jq -cRs 'split(" ")')
           echo "PACKAGES: $PACKAGES"
-          echo ::set-output name=packages::${PACKAGES}
           echo "packages=${PACKAGES}" >> $GITHUB_OUTPUT
     outputs:
       packages: ${{ steps.parse-packages.outputs.packages }}
