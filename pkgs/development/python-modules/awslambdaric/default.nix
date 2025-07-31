@@ -14,10 +14,11 @@
   perl,
   setuptools,
   simplejson,
+  snapshot-restore-py,
 }:
 buildPythonPackage rec {
   pname = "awslambdaric";
-  version = "3.0.0";
+  version = "3.1.1";
   pyproject = true;
 
   disabled = isPy27;
@@ -29,7 +30,10 @@ buildPythonPackage rec {
     sha256 = "sha256-pUVWd4zpmTygndPIy76uVk7+sLCmwQqulLaUI7B0fQc=";
   };
 
-  propagatedBuildInputs = [ simplejson ];
+  propagatedBuildInputs = [
+    simplejson
+    snapshot-restore-py
+  ];
 
   nativeBuildInputs = [
     autoconf271
