@@ -1,3 +1,6 @@
+# Run from CLI:
+# gh workflow run 'Build Nix Packages' --repo austinbutler/nixpkgs --field git_ref=72af269544659f70b70cf5d837df21650270f9cd --field packages=python3Packages.awslambdaric --field os=ubuntu-latest
+
 name: Build Nix Packages
 
 on:
@@ -22,11 +25,12 @@ on:
         required: true
         type: choice
         options:
-          # https://github.com/actions/virtual-environments#available-environments
-          - macos-latest
-          - macos-latest-large
-          - ubuntu-latest
-          - ubuntu-latest-arm
+          # https://github.com/actions/runner-images
+          - macos-latest # aarch64
+          - macos-13 # Last free x86_64 macOS version
+          - ubuntu-latest # x86_64
+          # https://github.com/actions/partner-runner-images
+          - ubuntu-latest-arm # aarch64, can have long queue times
 jobs:
   parse-inputs:
     runs-on: ubuntu-latest
@@ -57,5 +61,7 @@ jobs:
         with:
           name: austinbutler
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - name: Show kernel info
+        run: uname --all
       - name: Build package
-        run: nix-build -A ${{ matrix.package }} $([[ "${{ github.event.inputs.check }}" == "true" ]] && printf %s '--check')
+        run: NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix-build -A ${{ matrix.package }} $([[ "${{ github.event.inputs.check }}" == "true" ]] && printf %s '--check')
