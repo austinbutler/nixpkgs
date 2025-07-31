@@ -1,17 +1,36 @@
-{ stdenv, fetchurl, perl, icu, zlib, gmp, lib, nqp, removeReferencesTo }:
+{
+  stdenv,
+  fetchFromGitHub,
+  perl,
+  icu,
+  zlib,
+  gmp,
+  lib,
+  nqp,
+  removeReferencesTo,
+}:
 
 stdenv.mkDerivation rec {
   pname = "rakudo";
-  version = "2022.02";
+  version = "2025.06.1";
 
-  src = fetchurl {
-    url = "https://rakudo.org/dl/rakudo/rakudo-${version}.tar.gz";
-    sha256 = "sha256-am6dvMbZoWEKNMbsZ+LT9pTXsz6eCg8iRUMIn6f3EzI=";
+  # nixpkgs-update: no auto update
+  src = fetchFromGitHub {
+    owner = "rakudo";
+    repo = "rakudo";
+    rev = version;
+    hash = "sha256-cofiX6VHHeki8GQcMamDyPYoVMUKiuhKVz8Gh8L9qu0=";
+    fetchSubmodules = true;
   };
 
   nativeBuildInputs = [ removeReferencesTo ];
 
-  buildInputs = [ icu zlib gmp perl ];
+  buildInputs = [
+    icu
+    zlib
+    gmp
+    perl
+  ];
   configureScript = "perl ./Configure.pl";
   configureFlags = [
     "--backends=moar"
@@ -23,11 +42,15 @@ stdenv.mkDerivation rec {
     remove-references-to -t ${stdenv.cc.cc} "$(readlink -f $out/share/perl6/runtime/dynext/libperl6_ops_moar${stdenv.hostPlatform.extensions.sharedLibrary})"
   '';
 
-  meta = with lib; {
+  meta = {
     description = "Raku implementation on top of Moar virtual machine";
     homepage = "https://rakudo.org";
-    license = licenses.artistic2;
-    platforms = platforms.unix;
-    maintainers = with maintainers; [ thoughtpolice vrthra sgo ];
+    license = lib.licenses.artistic2;
+    platforms = lib.platforms.unix;
+    maintainers = with lib.maintainers; [
+      thoughtpolice
+      sgo
+      prince213
+    ];
   };
 }

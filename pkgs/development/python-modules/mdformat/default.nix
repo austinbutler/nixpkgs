@@ -1,61 +1,48 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, importlib-metadata
-, markdown-it-py
-, poetry-core
-, pytestCheckHook
-, pythonOlder
-, tomli
-, typing-extensions
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  markdown-it-py,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "mdformat";
-  version = "0.7.13";
-  format = "pyproject";
+  version = "0.7.22";
+  pyproject = true;
 
-  disabled = pythonOlder "3.7";
+  disabled = pythonOlder "3.12";
 
   src = fetchFromGitHub {
     owner = "executablebooks";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-9ssDe7Wjuwuq2j7xwRyLqKouqeIt6NCUbEXjPdu2VZ8=";
+    repo = "mdformat";
+    tag = version;
+    hash = "sha256-WvbGCqfzh7KlNXIGJq09goiyLzVgU7c1+qmsLrIW38k=";
   };
 
-  nativeBuildInputs = [
-    poetry-core
-  ];
+  build-system = [ setuptools ];
 
-  propagatedBuildInputs = [
-    markdown-it-py
-    tomli
-  ] ++ lib.optionals (pythonOlder "3.10") [
-    importlib-metadata
-  ] ++ lib.optionals (pythonOlder "3.7") [
-    typing-extensions
-  ];
+  dependencies = [ markdown-it-py ];
 
-  checkInputs = [
-    pytestCheckHook
-  ];
+  nativeCheckInputs = [ pytestCheckHook ];
 
-  disabledTests = [
-    # AssertionError
-    "test_no_codeblock_trailing_newline"
-    # Issue with upper/lower case
-    "default_style.md-options0"
-  ];
+  pythonImportsCheck = [ "mdformat" ];
 
-  pythonImportsCheck = [
-    "mdformat"
-  ];
+  passthru = {
+    withPlugins = throw "Use pkgs.mdformat.withPlugins, i.e. the top-level attribute.";
+  };
 
   meta = with lib; {
     description = "CommonMark compliant Markdown formatter";
     homepage = "https://mdformat.rtfd.io/";
-    license = with licenses; [ mit ];
-    maintainers = with maintainers; [ fab ];
+    changelog = "https://github.com/executablebooks/mdformat/blob/${version}/docs/users/changelog.md";
+    license = licenses.mit;
+    maintainers = with maintainers; [
+      fab
+      aldoborrero
+    ];
+    mainProgram = "mdformat";
   };
 }

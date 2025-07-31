@@ -1,4 +1,7 @@
-import ./make-test-python.nix ({ pkgs, ...} :
+{
+  pkgs,
+  ...
+}:
 
 let
   port = 10004;
@@ -6,7 +9,8 @@ let
   httpPort = 10080;
   tcpStreamPort = 10006;
   bufferSize = 742;
-in {
+in
+{
   name = "snapcast";
   meta = with pkgs.lib.maintainers; {
     maintainers = [ hexa ];
@@ -19,6 +23,7 @@ in {
         port = port;
         tcp.port = tcpPort;
         http.port = httpPort;
+        openFirewall = true;
         buffer = bufferSize;
         streams = {
           mpd = {
@@ -86,4 +91,4 @@ in {
         )
         client.wait_until_succeeds("journalctl -o cat -u snapcast-client | grep -q 'buffer: ${toString bufferSize}'")
   '';
-})
+}

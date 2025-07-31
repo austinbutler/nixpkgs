@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -17,12 +22,7 @@ in
     services.sabnzbd = {
       enable = mkEnableOption "the sabnzbd server";
 
-      package = mkOption {
-        type = types.package;
-        default = pkgs.sabnzbd;
-        defaultText = "pkgs.sabnzbd";
-        description = "The sabnzbd executable package run by the service.";
-      };
+      package = mkPackageOption pkgs "sabnzbd" { };
 
       configFile = mkOption {
         type = types.path;
@@ -41,37 +41,48 @@ in
         default = "sabnzbd";
         description = "Group to run the service as";
       };
+
+      openFirewall = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Open ports in the firewall for the sabnzbd web interface
+        '';
+      };
     };
   };
-
 
   ###### implementation
 
   config = mkIf cfg.enable {
-
-    users.users.sabnzbd = {
-          uid = config.ids.uids.sabnzbd;
-          group = "sabnzbd";
-          description = "sabnzbd user";
-          home = "/var/lib/sabnzbd/";
-          createHome = true;
+    users.users = mkIf (cfg.user == "sabnzbd") {
+      sabnzbd = {
+        uid = config.ids.uids.sabnzbd;
+        group = cfg.group;
+        description = "sabnzbd user";
+      };
     };
 
-    users.groups.sabnzbd = {
-      gid = config.ids.gids.sabnzbd;
+    users.groups = mkIf (cfg.group == "sabnzbd") {
+      sabnzbd.gid = config.ids.gids.sabnzbd;
     };
 
     systemd.services.sabnzbd = {
-        description = "sabnzbd server";
-        wantedBy    = [ "multi-user.target" ];
-        after = [ "network.target" ];
-        serviceConfig = {
-          Type = "forking";
-          GuessMainPID = "no";
-          User = "${cfg.user}";
-          Group = "${cfg.group}";
-          ExecStart = "${lib.getBin cfg.package}/bin/sabnzbd -d -f ${cfg.configFile}";
-        };
+      description = "sabnzbd server";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      serviceConfig = {
+        Type = "forking";
+        GuessMainPID = "no";
+        User = cfg.user;
+        Group = cfg.group;
+        StateDirectory = "sabnzbd";
+        ExecStart = "${lib.getBin cfg.package}/bin/sabnzbd -d -f ${cfg.configFile}";
+      };
+    };
+
+    networking.firewall = mkIf cfg.openFirewall {
+      allowedTCPPorts = [ 8080 ];
     };
   };
 }

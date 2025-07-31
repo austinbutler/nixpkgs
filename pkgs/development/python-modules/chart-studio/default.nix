@@ -1,44 +1,54 @@
-{ lib, buildPythonPackage, fetchFromGitHub
-, mock
-, nose
-, plotly
-, pytest
-, requests
-, retrying
-, six
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  mock,
+  plotly,
+  requests,
+  retrying,
+  setuptools,
+  pytestCheckHook,
 }:
 
-buildPythonPackage rec {
+buildPythonPackage {
   pname = "chart-studio";
-  version = "5.5.0";
+  version = "1.1.0-unstable-2025-01-30";
+  pyproject = true;
 
-  # chart-studio was split from plotly
   src = fetchFromGitHub {
     owner = "plotly";
-    repo = "plotly.py";
-    rev = "v${version}";
-    sha256 = "04hsh1z2ngfslmvi8fdzfccssg6i0ziksil84j129f049m96wd51";
+    repo = "chart-studio";
+    rev = "44c7c43be0fe7e031ec281c86ee7dae0efa0619e";
+    hash = "sha256-RekcZzUcunIqXOSriW+RvpLdvATQWTeRAiR8LFodfQg=";
   };
 
-  sourceRoot = "source/packages/python/chart-studio";
+  build-system = [ setuptools ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     plotly
     requests
     retrying
-    six
   ];
 
-  checkInputs = [ mock nose pytest ];
-  # most tests talk to a service
-  checkPhase = ''
-    HOME=$TMPDIR pytest chart_studio/tests/test_core chart_studio/tests/test_plot_ly/test_api
+  nativeCheckInputs = [
+    mock
+    plotly
+    pytestCheckHook
+  ];
+
+  preCheck = ''
+    export HOME=$(mktemp -d)
   '';
 
-  meta = with lib; {
+  # most tests talk to a network service, so only run ones that don't do that.
+  enabledTestPaths = [
+    "chart_studio/tests/test_core"
+  ];
+
+  meta = {
     description = "Utilities for interfacing with Plotly's Chart Studio service";
-    homepage = "https://github.com/plotly/plotly.py/tree/master/packages/python/chart-studio";
-    license = with licenses; [ mit ];
-    maintainers = with maintainers; [ jonringer ];
+    homepage = "https://github.com/plotly/chart-studio";
+    license = with lib.licenses; [ mit ];
+    maintainers = with lib.maintainers; [ sarahec ];
   };
 }

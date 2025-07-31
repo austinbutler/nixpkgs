@@ -1,5 +1,15 @@
-{ mkDerivation, fetchFromGitHub, lib, makeWrapper, pkg-config
-, kcoreaddons, ki18n, kwallet, mksh, pinentry-qt }:
+{
+  mkDerivation,
+  fetchFromGitHub,
+  lib,
+  makeWrapper,
+  pkg-config,
+  kcoreaddons,
+  ki18n,
+  kwallet,
+  mksh,
+  pinentry-qt,
+}:
 
 mkDerivation rec {
   pname = "kwalletcli";
@@ -22,22 +32,34 @@ mkDerivation rec {
 
     substituteInPlace pinentry-kwallet \
       --replace '/usr/bin/env mksh' ${mksh}/bin/mksh
+
+    substituteInPlace kwalletcli_getpin \
+      --replace '/usr/bin/env mksh' ${mksh}/bin/mksh
   '';
 
   makeFlags = [ "KDE_VER=5" ];
 
-  nativeBuildInputs = [ makeWrapper pkg-config ];
+  nativeBuildInputs = [
+    makeWrapper
+    pkg-config
+  ];
   # if using just kwallet, cmake will be added as a buildInput and fail the build
-  propagatedBuildInputs = [ kcoreaddons ki18n (lib.getLib kwallet) ];
+  propagatedBuildInputs = [
+    kcoreaddons
+    ki18n
+    (lib.getLib kwallet)
+  ];
 
   preInstall = ''
     mkdir -p $out/bin $out/share/man/man1
   '';
 
   postInstall = ''
-    wrapProgram $out/bin/pinentry-kwallet \
-      --prefix PATH : $out/bin:${lib.makeBinPath [ pinentry-qt ]} \
-      --set-default PINENTRY pinentry-qt
+    for program in pinentry-kwallet kwalletcli_getpin; do
+      wrapProgram $out/bin/$program \
+        --prefix PATH : $out/bin:${lib.makeBinPath [ pinentry-qt ]} \
+        --set-default PINENTRY pinentry-qt
+    done
   '';
 
   meta = with lib; {

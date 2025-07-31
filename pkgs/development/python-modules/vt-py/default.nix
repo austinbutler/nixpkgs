@@ -1,49 +1,58 @@
-{ lib
-, aiohttp
-, buildPythonPackage
-, fetchFromGitHub
-, pytest-asyncio
-, pytest-httpserver
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  aiofiles,
+  aiohttp,
+  buildPythonPackage,
+  fetchFromGitHub,
+  flask,
+  pytest-asyncio,
+  pytest-httpserver,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "vt-py";
-  version = "0.13.1";
-  format = "setuptools";
+  version = "0.21.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = "VirusTotal";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-85ohhynXHWjuwKB18DciB48tNGZcHzafobMDaGoTkoc=";
+    repo = "vt-py";
+    tag = version;
+    hash = "sha256-hp9MjFSakFezlT/rTHa70KrL3VShhpayXaK88LxY7I4=";
   };
 
-  propagatedBuildInputs = [
+  postPatch = ''
+    substituteInPlace setup.py \
+      --replace-fail "pytest-runner" ""
+  '';
+
+  pythonRelaxDeps = [ "aiohttp" ];
+
+  build-system = [ setuptools ];
+
+  dependencies = [
+    aiofiles
     aiohttp
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
+    flask
     pytest-asyncio
     pytest-httpserver
     pytestCheckHook
   ];
 
-  postPatch = ''
-    substituteInPlace setup.py \
-      --replace "'pytest-runner'" ""
-  '';
-
-  pythonImportsCheck = [
-    "vt"
-  ];
+  pythonImportsCheck = [ "vt" ];
 
   meta = with lib; {
     description = "Python client library for VirusTotal";
     homepage = "https://virustotal.github.io/vt-py/";
+    changelog = "https://github.com/VirusTotal/vt-py/releases/tag//${version}";
     license = with licenses; [ asl20 ];
     maintainers = with maintainers; [ fab ];
   };

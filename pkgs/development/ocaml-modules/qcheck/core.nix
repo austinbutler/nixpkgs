@@ -1,18 +1,20 @@
-{ lib, buildDunePackage, fetchFromGitHub }:
+{
+  lib,
+  buildDunePackage,
+  fetchFromGitHub,
+}:
 
 buildDunePackage rec {
   pname = "qcheck-core";
-  version = "0.18";
-
-  useDune2 = true;
+  version = "0.25";
 
   minimalOCamlVersion = "4.08";
 
   src = fetchFromGitHub {
     owner = "c-cube";
     repo = "qcheck";
-    rev = "v${version}";
-    sha256 = "1s652hrj2sxqj30dfl300zjvvqk3r62a1bnzqw1hqyf6pi88qn8x";
+    tag = "v${version}";
+    hash = "sha256-Z89jJ21zm89wb9m5HthnbHdnE9iXLyaH9k8S+FAWkKQ=";
   };
 
   meta = {

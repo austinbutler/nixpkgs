@@ -1,114 +1,153 @@
-{ lib
-, stdenv
-, bokeh
-, buildPythonPackage
-, cloudpickle
-, distributed
-, fetchFromGitHub
-, fetchpatch
-, fsspec
-, jinja2
-, numpy
-, packaging
-, pandas
-, partd
-, pytest-rerunfailures
-, pytest-xdist
-, pytestCheckHook
-, pythonOlder
-, pyyaml
-, toolz
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
+  # dependencies
+  click,
+  cloudpickle,
+  fsspec,
+  importlib-metadata,
+  packaging,
+  partd,
+  pyyaml,
+  toolz,
+
+  # optional-dependencies
+  numpy,
+  pyarrow,
+  lz4,
+  pandas,
+  distributed,
+  bokeh,
+  jinja2,
+
+  # tests
+  hypothesis,
+  pytest-asyncio,
+  pytest-cov-stub,
+  pytest-mock,
+  pytest-rerunfailures,
+  pytest-xdist,
+  pytestCheckHook,
+  versionCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "dask";
-  version = "2022.02.0";
-  format = "setuptools";
-
-  disabled = pythonOlder "3.7";
+  version = "2025.3.0";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "dask";
-    repo = pname;
-    rev = version;
-    hash = "sha256-tDqpIS8j6a16YbJak+P1GkCEZvJyheWV5vkUrkhScRY=";
+    repo = "dask";
+    tag = version;
+    hash = "sha256-j25+DfWReonXKqxkX9OVHjKo+Indh13rlBE5PyGe69c=";
   };
 
-  propagatedBuildInputs = [
+  postPatch = ''
+    # versioneer hack to set version of GitHub package
+    echo "def get_versions(): return {'dirty': False, 'error': None, 'full-revisionid': None, 'version': '${version}'}" > dask/_version.py
+
+    substituteInPlace setup.py \
+      --replace-fail "import versioneer" "" \
+      --replace-fail "version=versioneer.get_version()," "version='${version}'," \
+      --replace-fail "cmdclass=versioneer.get_cmdclass()," ""
+
+    substituteInPlace pyproject.toml \
+      --replace-fail ', "versioneer[toml]==0.29"' ""
+  '';
+
+  build-system = [ setuptools ];
+
+  dependencies = [
+    click
     cloudpickle
     fsspec
+    importlib-metadata
     packaging
     partd
     pyyaml
     toolz
-    pandas
-    jinja2
-    bokeh
-    numpy
   ];
 
-  doCheck = true;
+  optional-dependencies = lib.fix (self: {
+    array = [ numpy ];
+    complete = [
+      pyarrow
+      lz4
+    ]
+    ++ self.array
+    ++ self.dataframe
+    ++ self.distributed
+    ++ self.diagnostics;
+    dataframe = [
+      pandas
+      pyarrow
+    ]
+    ++ self.array;
+    distributed = [ distributed ];
+    diagnostics = [
+      bokeh
+      jinja2
+    ];
+  });
 
-  checkInputs = [
-    pytestCheckHook
+  nativeCheckInputs = [
+    hypothesis
+    pyarrow
+    pytest-asyncio
+    pytest-cov-stub
+    pytest-mock
     pytest-rerunfailures
     pytest-xdist
+    pytestCheckHook
+    versionCheckHook
+  ]
+  ++ optional-dependencies.array
+  ++ optional-dependencies.dataframe;
+  versionCheckProgramArg = "--version";
+
+  pytestFlags = [
+    # Rerun failed tests up to three times
+    "--reruns=3"
   ];
 
-  dontUseSetuptoolsCheck = true;
-
-  postPatch = ''
-    # versioneer hack to set version of github package
-    echo "def get_versions(): return {'dirty': False, 'error': None, 'full-revisionid': None, 'version': '${version}'}" > dask/_version.py
-
-    substituteInPlace setup.py \
-      --replace "version=versioneer.get_version()," "version='${version}'," \
-      --replace "cmdclass=versioneer.get_cmdclass()," ""
-  '';
-
-  pytestFlagsArray = [
-    # parallelize
-    "--numprocesses $NIX_BUILD_CORES"
-    # rerun failed tests up to three times
-    "--reruns 3"
-    # don't run tests that require network access
-    "-m 'not network'"
+  disabledTestMarks = [
+    # Don't run tests that require network access
+    "network"
   ];
 
-  disabledTests = lib.optionals stdenv.isDarwin [
-    # this test requires features of python3Packages.psutil that are
-    # blocked in sandboxed-builds
-    "test_auto_blocksize_csv"
-  ] ++ [
-    # A deprecation warning from newer sqlalchemy versions makes these tests
-    # to fail https://github.com/dask/dask/issues/7406
-    "test_sql"
-    # Test interrupt fails intermittently https://github.com/dask/dask/issues/2192
-    "test_interrupt"
+  disabledTests = [
+    # UserWarning: Insufficient elements for `head`. 10 elements requested, only 5 elements available. Try passing larger `npartitions` to `head`.
+    "test_set_index_head_nlargest_string"
   ];
 
   __darwinAllowLocalNetworking = true;
 
   pythonImportsCheck = [
     "dask"
-    "dask.array"
     "dask.bag"
     "dask.bytes"
+    "dask.diagnostics"
+
+    # Requires the `dask.optional-dependencies.array` that are only in `nativeCheckInputs`
+    "dask.array"
+    # Requires the `dask.optional-dependencies.dataframe` that are only in `nativeCheckInputs`
     "dask.dataframe"
     "dask.dataframe.io"
     "dask.dataframe.tseries"
-    "dask.diagnostics"
   ];
 
-  passthru.extras-require = {
-    complete = [ distributed ];
-  };
-
-  meta = with lib; {
+  meta = {
     description = "Minimal task scheduling abstraction";
+    mainProgram = "dask";
     homepage = "https://dask.org/";
     changelog = "https://docs.dask.org/en/latest/changelog.html";
-    license = licenses.bsd3;
-    maintainers = with maintainers; [ fridh ];
+    license = lib.licenses.bsd3;
+    maintainers = with lib.maintainers; [ GaetanLepage ];
   };
 }

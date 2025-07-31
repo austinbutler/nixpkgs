@@ -1,70 +1,64 @@
-{ lib
-, substituteAll
-, buildPythonApplication
-, fetchPypi
-, joblib
-, segments
-, attrs
-, espeak-ng
-, pytestCheckHook
-, pytest-cov
+{
+  lib,
+  stdenv,
+  replaceVars,
+  buildPythonPackage,
+  fetchPypi,
+  fetchpatch2,
+  joblib,
+  segments,
+  attrs,
+  dlinfo,
+  typing-extensions,
+  espeak-ng,
+  setuptools,
+  pytest,
 }:
 
-buildPythonApplication rec {
+buildPythonPackage rec {
   pname = "phonemizer";
-  version = "3.0.1";
+  version = "3.3.0";
+  pyproject = true;
+
+  build-system = [ setuptools ];
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1b4ea53b8da9a156361dff1d0c04ac1a8e65e6966d1cb9a8147c200960b32296";
+    hash = "sha256-Xgw4Ei7/4LMxok5nSv8laHTs4WnXCpzxEgM3tW+OPQw=";
   };
 
-  postPatch = ''
-    sed -i -e '/\'pytest-runner\'/d setup.py
-  '';
-
   patches = [
-    (substituteAll {
-      src = ./backend-paths.patch;
-      espeak = "${lib.getBin espeak-ng}/bin/espeak";
-      # override festival path should you try to integrate it
-      festival = "";
+    (replaceVars ./backend-paths.patch {
+      libespeak = "${lib.getLib espeak-ng}/lib/libespeak-ng${stdenv.hostPlatform.extensions.sharedLibrary}";
+      # FIXME package festival
     })
-    ./remove-intertwined-festival-test.patch
+    # This patch is needed for python3Packages.misaki. See https://github.com/thewh1teagle/espeakng-loader?tab=readme-ov-file#usage-with-phonemizer
+    # and https://github.com/bootphon/phonemizer/pull/191.
+    (fetchpatch2 {
+      name = "pr191-add-option-to-use-custom-espeak-data-path.patch";
+      url = "https://github.com/bootphon/phonemizer/commit/cc1db4bfaf688fdfb8275fd83d218f06411455e6.patch?full_index=1";
+      hash = "sha256-PMeX7A9BBVLS3Sk/Lum85GpJzKXM5tULTWSURq3MD8E=";
+    })
   ];
 
   propagatedBuildInputs = [
     joblib
     segments
     attrs
+    dlinfo
+    typing-extensions
   ];
 
-  preCheck = ''
-    export HOME=$TMPDIR
-  '';
-
-  checkInputs = [
-    pytestCheckHook
-    pytest-cov
-  ];
-
-  # We tried to package festvial, but were unable to get the backend running,
+  # We tried to package festival, but were unable to get the backend running,
   # so let's disable related tests.
-  pytestFlagsArray = [
-    "--ignore=test/test_festival.py"
-  ];
+  doCheck = false;
 
-  disabledTests = [
-    "test_festival"
-    "test_relative"
-    "test_absolute"
-    "test_readme_festival_syll"
-  ];
-
-  meta = with lib; {
+  meta = {
     homepage = "https://github.com/bootphon/phonemizer";
+    changelog = "https://github.com/bootphon/phonemizer/blob/v${version}/CHANGELOG.md";
     description = "Simple text to phones converter for multiple languages";
-    license = licenses.gpl3;
-    maintainers = with maintainers; [ ];
+    mainProgram = "phonemize";
+    license = lib.licenses.gpl3Plus;
+    maintainers = with lib.maintainers; [ bot-wxt1221 ];
   };
 }

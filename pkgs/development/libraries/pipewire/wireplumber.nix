@@ -1,57 +1,68 @@
-{ lib
-, stdenv
-, fetchFromGitLab
-, fetchpatch
-, nix-update-script
-, # base build deps
-  meson
-, pkg-config
-, ninja
-, # docs build deps
-  python3
-, doxygen
-, graphviz
-, # GI build deps
-  gobject-introspection
-, # runtime deps
-  glib
-, systemd
-, lua5_4
-, pipewire
-, # options
-  enableDocs ? true
-, enableGI ? stdenv.hostPlatform == stdenv.buildPlatform
+{
+  lib,
+  stdenv,
+  fetchFromGitLab,
+  nix-update-script,
+  # base build deps
+  meson,
+  pkg-config,
+  ninja,
+  # docs build deps
+  python3,
+  doxygen,
+  graphviz,
+  # GI build deps
+  gobject-introspection,
+  # runtime deps
+  glib,
+  systemd,
+  lua5_4,
+  pipewire,
+  # options
+  enableDocs ? true,
+  enableGI ? true,
 }:
-let
-  mesonEnableFeature = b: if b then "enabled" else "disabled";
-in
+
 stdenv.mkDerivation rec {
   pname = "wireplumber";
-  version = "0.4.8";
+  version = "0.5.10";
 
-  outputs = [ "out" "dev" ] ++ lib.optional enableDocs "doc";
+  outputs = [
+    "out"
+    "dev"
+  ]
+  ++ lib.optional enableDocs "doc";
 
   src = fetchFromGitLab {
     domain = "gitlab.freedesktop.org";
     owner = "pipewire";
     repo = "wireplumber";
     rev = version;
-    sha256 = "sha256-xwfggrjKHh5mZdvH6dKqQo6o1ltxuYdjoGYaWl31C/Y=";
+    hash = "sha256-CZjVCy9FKTBO7C5f+vOejJyVjo2a5YoOKgqzH+w2k3w=";
   };
 
   nativeBuildInputs = [
     meson
     pkg-config
     ninja
-  ] ++ lib.optionals enableDocs [
+  ]
+  ++ lib.optionals enableDocs [
     graphviz
-  ] ++ lib.optionals enableGI [
+  ]
+  ++ lib.optionals enableGI [
     gobject-introspection
-  ] ++ lib.optionals (enableDocs || enableGI) [
+  ]
+  ++ lib.optionals (enableDocs || enableGI) [
     doxygen
-    (python3.withPackages (ps: with ps;
-    lib.optionals enableDocs [ sphinx sphinx_rtd_theme breathe ] ++
-      lib.optionals enableGI [ lxml ]
+    (python3.pythonOnBuildForHost.withPackages (
+      ps:
+      with ps;
+      lib.optionals enableDocs [
+        sphinx
+        sphinx-rtd-theme
+        breathe
+      ]
+      ++ lib.optionals enableGI [ lxml ]
     ))
   ];
 
@@ -63,20 +74,19 @@ stdenv.mkDerivation rec {
   ];
 
   mesonFlags = [
-    "-Dsystem-lua=true"
-    "-Delogind=disabled"
-    "-Ddoc=${mesonEnableFeature enableDocs}"
-    "-Dintrospection=${mesonEnableFeature enableGI}"
-    "-Dsystemd-system-service=true"
-    "-Dsystemd-system-unit-dir=${placeholder "out"}/lib/systemd/system"
+    (lib.mesonBool "system-lua" true)
+    (lib.mesonEnable "elogind" false)
+    (lib.mesonEnable "doc" enableDocs)
+    (lib.mesonEnable "introspection" enableGI)
+    (lib.mesonBool "systemd-system-service" true)
+    (lib.mesonOption "systemd-system-unit-dir" "${placeholder "out"}/lib/systemd/system")
+    (lib.mesonOption "sysconfdir" "/etc")
   ];
 
-  passthru.updateScript = nix-update-script {
-    attrPath = pname;
-  };
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
-    description = "A modular session / policy manager for PipeWire";
+    description = "Modular session / policy manager for PipeWire";
     homepage = "https://pipewire.org";
     license = licenses.mit;
     platforms = platforms.linux;

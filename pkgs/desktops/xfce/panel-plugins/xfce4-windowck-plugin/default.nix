@@ -1,49 +1,62 @@
-{ lib, stdenv, fetchFromGitHub, pkg-config, intltool, python3, imagemagick, libwnck, libxfce4ui, xfce4-panel, xfconf, xfce4-dev-tools, xfce, gitUpdater }:
+{
+  stdenv,
+  lib,
+  fetchurl,
+  gettext,
+  meson,
+  ninja,
+  pkg-config,
+  python3,
+  glib,
+  gtk3,
+  libwnck,
+  libxfce4ui,
+  libxfce4util,
+  xfce4-panel,
+  xfconf,
+  gitUpdater,
+}:
 
-stdenv.mkDerivation rec {
-  pname  = "xfce4-windowck-plugin";
-  version = "0.4.10";
+stdenv.mkDerivation (finalAttrs: {
+  pname = "xfce4-windowck-plugin";
+  version = "0.6.1";
 
-  src = fetchFromGitHub {
-    owner = "invidian";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-luCQzqWX3Jl2MlBa3vi1q7z1XOhpFxE8PUxscoIyBlA=";
+  src = fetchurl {
+    url = "mirror://xfce/src/panel-plugins/xfce4-windowck-plugin/${lib.versions.majorMinor finalAttrs.version}/xfce4-windowck-plugin-${finalAttrs.version}.tar.xz";
+    hash = "sha256-Ay4wXXTxe9ZbKL0mDPGS/PiqDfM9EWCH5IX9E2i3zzk=";
   };
 
+  strictDeps = true;
+
   nativeBuildInputs = [
+    gettext
+    glib # glib-compile-resources
+    meson
+    ninja
     pkg-config
-    intltool
+    python3
   ];
 
   buildInputs = [
-    python3
-    imagemagick
+    glib
+    gtk3
     libwnck
     libxfce4ui
+    libxfce4util
     xfce4-panel
     xfconf
-    xfce4-dev-tools
   ];
 
-  preConfigure = ''
-    ./autogen.sh
-    patchShebangs .
-  '';
-
-  enableParallelBuilding = true;
-
   passthru.updateScript = gitUpdater {
-    inherit pname version;
-    attrPath = "xfce.${pname}";
-    rev-prefix = "v";
+    url = "https://gitlab.xfce.org/panel-plugins/xfce4-windowck-plugin";
+    rev-prefix = "xfce4-windowck-plugin-";
   };
 
-  meta = with lib; {
-    homepage = "https://goodies.xfce.org/projects/panel-plugins/xfce4-windowck-plugin";
-    description = "Xfce plugins which allows to put the maximized window title and buttons on the panel";
-    license = licenses.gpl2Plus;
-    platforms = platforms.unix;
-    maintainers = with maintainers; [ volth ] ++ teams.xfce.members;
+  meta = {
+    description = "Xfce panel plugin for displaying window title and buttons";
+    homepage = "https://gitlab.xfce.org/panel-plugins/xfce4-windowck-plugin";
+    license = lib.licenses.gpl3Plus;
+    platforms = lib.platforms.linux;
+    teams = [ lib.teams.xfce ];
   };
-}
+})

@@ -1,41 +1,55 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, asn1crypto
-, asysocks
-, minikerberos
-, prompt-toolkit
-, tqdm
-, winacl
-, winsspi
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  pythonOlder,
+  setuptools,
+  unicrypto,
+  asyauth,
+  asysocks,
+  asn1crypto,
+  winacl,
+  prompt-toolkit,
+  tqdm,
+  wcwidth,
+  tabulate,
 }:
 
 buildPythonPackage rec {
   pname = "msldap";
-  version = "0.3.30";
+  version = "0.5.15";
+  pyproject = true;
+
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-fX+W1Bq4F0/6DyxWeA6zvoswFQCdDpSk29g7nq1cYYE=";
+    hash = "sha256-uAJKLAVZFY7EB8tjFyAezINicki6ruzuXf1EGcp3Pj0=";
   };
 
-  propagatedBuildInputs = [
-    asn1crypto
+  build-system = [ setuptools ];
+
+  dependencies = [
+    unicrypto
+    asyauth
     asysocks
-    minikerberos
+    asn1crypto
+    winacl
     prompt-toolkit
     tqdm
-    winacl
-    winsspi
+    wcwidth
+    tabulate
   ];
 
   # Project doesn't have tests
   doCheck = false;
+
   pythonImportsCheck = [ "msldap" ];
 
   meta = with lib; {
     description = "Python LDAP library for auditing MS AD";
     homepage = "https://github.com/skelsec/msldap";
+    changelog = "https://github.com/skelsec/msldap/releases/tag/${version}";
     license = with licenses; [ mit ];
     maintainers = with maintainers; [ fab ];
   };

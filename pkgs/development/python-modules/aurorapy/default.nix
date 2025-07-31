@@ -1,38 +1,41 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitLab
-, future
-, pyserial
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitLab,
+  pyserial,
+  pytestCheckHook,
+  setuptools,
+  six,
 }:
 
 buildPythonPackage rec {
   pname = "aurorapy";
-  version = "0.2.6";
-  format = "pyproject";
-
-  disabled = pythonOlder "3.7";
+  version = "0.2.7";
+  pyproject = true;
 
   src = fetchFromGitLab {
     owner = "energievalsabbia";
-    repo = pname;
+    repo = "aurorapy";
     rev = version;
-    hash = "sha256-DMlzzLe94dbeHjESmLc045v7vQ//IEsngAv7TeVznHE=";
+    hash = "sha256-rGwfGq3zdoG9NCGqVN29Q4bWApk5B6CRdsW9ctWgOec=";
   };
 
-  propagatedBuildInputs = [
-    future
-    pyserial
-  ];
+  postPatch = ''
+    sed -i "/from past.builtins import map/d" aurorapy/client.py
+  '';
 
-  checkInputs = [
+  build-system = [ setuptools ];
+
+  pythonRemoveDeps = [ "future" ];
+
+  dependencies = [ pyserial ];
+
+  nativeCheckInputs = [
     pytestCheckHook
+    six
   ];
 
-  pythonImportsCheck = [
-    "aurorapy"
-  ];
+  pythonImportsCheck = [ "aurorapy" ];
 
   meta = with lib; {
     description = "Implementation of the communication protocol for Power-One Aurora inverters";

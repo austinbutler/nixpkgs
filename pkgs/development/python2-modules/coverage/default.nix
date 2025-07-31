@@ -1,12 +1,14 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, mock
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  mock,
 }:
 
 buildPythonPackage rec {
   pname = "coverage";
   version = "5.5";
+  format = "setuptools";
 
   src = fetchPypi {
     inherit pname version;
@@ -15,7 +17,7 @@ buildPythonPackage rec {
 
   # No tests in archive
   doCheck = false;
-  checkInputs = [ mock ];
+  nativeCheckInputs = [ mock ];
 
   meta = {
     description = "Code coverage measurement for python";

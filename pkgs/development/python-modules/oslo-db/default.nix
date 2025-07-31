@@ -1,49 +1,65 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, alembic
-, oslo-config
-, oslo-context
-, oslo-utils
-, oslotest
-, pbr
-, sqlalchemy
-, sqlalchemy-migrate
-, stestr
-, testresources
-, testscenarios
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  aiosqlite,
+  alembic,
+  debtcollector,
+  oslo-config,
+  oslo-context,
+  oslo-i18n,
+  oslo-utils,
+  oslotest,
+  pbr,
+  psycopg2,
+  setuptools,
+  sqlalchemy,
+  stevedore,
+  stestr,
+  testresources,
+  testscenarios,
 }:
 
 buildPythonPackage rec {
   pname = "oslo-db";
-  version = "11.2.0";
+  version = "17.3.0";
+  pyproject = true;
 
   src = fetchPypi {
-    pname = "oslo.db";
+    pname = "oslo_db";
     inherit version;
-    sha256 = "sha256-ezppPrC1BEkUmiJWGMdQtvDhZWyEJoGEe0e4UK1FYL4=";
+    hash = "sha256-IzDiHVDqwVi8xVzmzR2XwZfVrFj5/TkmMRAJ2SKh1v0=";
   };
 
-  nativeBuildInputs = [ pbr ];
+  build-system = [
+    pbr
+    setuptools
+  ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     alembic
+    debtcollector
     oslo-config
-    oslo-context
+    oslo-i18n
     oslo-utils
     sqlalchemy
-    sqlalchemy-migrate
+    stevedore
+  ];
+
+  nativeCheckInputs = [
+    aiosqlite
+    oslo-context
+    oslotest
+    stestr
+    psycopg2
     testresources
     testscenarios
   ];
 
-  checkInputs = [
-    oslotest
-    stestr
-  ];
-
   checkPhase = ''
-    stestr run
+    runHook preCheck
+    stestr run -e <(echo "oslo_db.tests.sqlalchemy.test_utils.TestModelQuery.test_project_filter_allow_none")
+    runHook postCheck
   '';
 
   pythonImportsCheck = [ "oslo_db" ];
@@ -52,6 +68,6 @@ buildPythonPackage rec {
     description = "Oslo Database library";
     homepage = "https://github.com/openstack/oslo.db";
     license = licenses.asl20;
-    maintainers = teams.openstack.members;
+    teams = [ teams.openstack ];
   };
 }

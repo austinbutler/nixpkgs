@@ -1,21 +1,26 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 let
   cfg = config.services.gerrit;
 
   # NixOS option type for git-like configs
-  gitIniType = with types;
+  gitIniType =
+    with types;
     let
       primitiveType = either str (either bool int);
       multipleType = either primitiveType (listOf primitiveType);
       sectionType = lazyAttrsOf multipleType;
       supersectionType = lazyAttrsOf (either multipleType sectionType);
-    in lazyAttrsOf supersectionType;
+    in
+    lazyAttrsOf supersectionType;
 
-  gerritConfig = pkgs.writeText "gerrit.conf" (
-    lib.generators.toGitINI cfg.settings
-  );
+  gerritConfig = pkgs.writeText "gerrit.conf" (lib.generators.toGitINI cfg.settings);
 
   replicationConfig = pkgs.writeText "replication.conf" (
     lib.generators.toGitINI cfg.replicationSettings
@@ -35,45 +40,35 @@ let
       "$@"
   '';
 
-  gerrit-plugins = pkgs.runCommand
-    "gerrit-plugins"
-    {
-      buildInputs = [ gerrit-cli ];
-    }
-    ''
-      shopt -s nullglob
-      mkdir $out
+  gerrit-plugins =
+    pkgs.runCommand "gerrit-plugins"
+      {
+        buildInputs = [ gerrit-cli ];
+      }
+      ''
+        shopt -s nullglob
+        mkdir $out
 
-      for name in ${toString cfg.builtinPlugins}; do
-        echo "Installing builtin plugin $name.jar"
-        gerrit cat plugins/$name.jar > $out/$name.jar
-      done
+        for name in ${toString cfg.builtinPlugins}; do
+          echo "Installing builtin plugin $name.jar"
+          gerrit cat plugins/$name.jar > $out/$name.jar
+        done
 
-      for file in ${toString cfg.plugins}; do
-        name=$(echo "$file" | cut -d - -f 2-)
-        echo "Installing plugin $name"
-        ln -sf "$file" $out/$name
-      done
-    '';
+        for file in ${toString cfg.plugins}; do
+          name=$(echo "$file" | cut -d - -f 2-)
+          echo "Installing plugin $name"
+          ln -sf "$file" $out/$name
+        done
+      '';
 in
 {
   options = {
     services.gerrit = {
       enable = mkEnableOption "Gerrit service";
 
-      package = mkOption {
-        type = types.package;
-        default = pkgs.gerrit;
-        defaultText = literalExpression "pkgs.gerrit";
-        description = "Gerrit package to use";
-      };
+      package = mkPackageOption pkgs "gerrit" { };
 
-      jvmPackage = mkOption {
-        type = types.package;
-        default = pkgs.jre_headless;
-        defaultText = literalExpression "pkgs.jre_headless";
-        description = "Java Runtime Environment package to use";
-      };
+      jvmPackage = mkPackageOption pkgs "jdk21_headless" { };
 
       jvmOpts = mkOption {
         type = types.listOf types.str;
@@ -96,7 +91,7 @@ in
         type = types.str;
         default = "[::]:8080";
         description = ''
-          <literal>hostname:port</literal> to listen for HTTP traffic.
+          `hostname:port` to listen for HTTP traffic.
 
           This is bound using the systemd socket activation.
         '';
@@ -104,25 +99,25 @@ in
 
       settings = mkOption {
         type = gitIniType;
-        default = {};
+        default = { };
         description = ''
           Gerrit configuration. This will be generated to the
-          <literal>etc/gerrit.config</literal> file.
+          `etc/gerrit.config` file.
         '';
       };
 
       replicationSettings = mkOption {
         type = gitIniType;
-        default = {};
+        default = { };
         description = ''
           Replication configuration. This will be generated to the
-          <literal>etc/replication.config</literal> file.
+          `etc/replication.config` file.
         '';
       };
 
       plugins = mkOption {
         type = types.listOf types.package;
-        default = [];
+        default = [ ];
         description = ''
           List of plugins to add to Gerrit. Each derivation is a jar file
           itself where the name of the derivation is the name of plugin.
@@ -131,10 +126,10 @@ in
 
       builtinPlugins = mkOption {
         type = types.listOf (types.enum cfg.package.passthru.plugins);
-        default = [];
+        default = [ ];
         description = ''
           List of builtins plugins to install. Those are shipped in the
-          <literal>gerrit.war</literal> file.
+          `gerrit.war` file.
         '';
       };
 
@@ -144,7 +139,7 @@ in
           Set a UUID that uniquely identifies the server.
 
           This can be generated with
-          <literal>nix-shell -p util-linux --run uuidgen</literal>.
+          `nix-shell -p util-linux --run uuidgen`.
         '';
       };
     };
@@ -154,7 +149,7 @@ in
 
     assertions = [
       {
-        assertion = cfg.replicationSettings != {} -> elem "replication" cfg.builtinPlugins;
+        assertion = cfg.replicationSettings != { } -> elem "replication" cfg.builtinPlugins;
         message = "Gerrit replicationSettings require enabling the replication plugin";
       }
     ];
@@ -183,7 +178,10 @@ in
 
       wantedBy = [ "multi-user.target" ];
       requires = [ "gerrit.socket" ];
-      after = [ "gerrit.socket" "network.target" ];
+      after = [
+        "gerrit.socket"
+        "network.target"
+      ];
 
       path = [
         gerrit-cli
@@ -220,8 +218,7 @@ in
         # install the plugins
         rm -rf plugins
         ln -sv ${gerrit-plugins} plugins
-      ''
-      ;
+      '';
 
       serviceConfig = {
         CacheDirectory = "gerrit";
@@ -232,11 +229,40 @@ in
         StandardOutput = "journal";
         StateDirectory = "gerrit";
         WorkingDirectory = "%S/gerrit";
+        AmbientCapabilities = "";
+        CapabilityBoundingSet = "";
+        LockPersonality = true;
+        NoNewPrivileges = true;
+        PrivateDevices = true;
+        PrivateTmp = true;
+        ProtectClock = true;
+        ProtectControlGroups = true;
+        ProtectHome = true;
+        ProtectHostname = true;
+        ProtectKernelLogs = true;
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        ProtectProc = "noaccess";
+        ProtectSystem = "full";
+        RestrictAddressFamilies = [
+          "AF_UNIX"
+          "AF_INET"
+          "AF_INET6"
+        ];
+        RestrictNamespaces = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        SystemCallArchitectures = "native";
+        UMask = 27;
       };
     };
   };
 
-  meta.maintainers = with lib.maintainers; [ edef zimbatm ];
+  meta.maintainers = with lib.maintainers; [
+    edef
+    zimbatm
+    felixsinger
+  ];
   # uses attributes of the linked package
   meta.buildDocsInSandbox = false;
 }

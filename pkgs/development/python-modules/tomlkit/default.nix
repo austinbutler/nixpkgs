@@ -1,27 +1,38 @@
-{ lib, buildPythonPackage, fetchPypi, isPy27
-, enum34, functools32, typing ? null
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+
+  # build-system
+  poetry-core,
+
+  # tests
+  pytestCheckHook,
+  pyyaml,
 }:
 
 buildPythonPackage rec {
   pname = "tomlkit";
-  version = "0.8.0";
+  version = "0.13.3";
+  pyproject = true;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "29e84a855712dfe0e88a48f6d05c21118dbafb283bb2eed614d46f80deb8e9a1";
+    hash = "sha256-QwzyR+5X3yuU7j++WI5x02KpQeu1Rd7Cm1OWHWGt0qE=";
   };
 
-  propagatedBuildInputs =
-    lib.optionals isPy27 [ enum34 functools32 ]
-    ++ lib.optional isPy27 typing;
+  build-system = [ poetry-core ];
 
-  # The Pypi tarball doesn't include tests, and the GitHub source isn't
-  # buildable until we bootstrap poetry, see
-  # https://github.com/NixOS/nixpkgs/pull/53599#discussion_r245855665
-  doCheck = false;
+  nativeCheckInputs = [
+    pyyaml
+    pytestCheckHook
+  ];
+
+  pythonImportsCheck = [ "tomlkit" ];
 
   meta = with lib; {
     homepage = "https://github.com/sdispater/tomlkit";
+    changelog = "https://github.com/sdispater/tomlkit/blob/${version}/CHANGELOG.md";
     description = "Style-preserving TOML library for Python";
     license = licenses.mit;
     maintainers = with maintainers; [ jakewaksbaum ];

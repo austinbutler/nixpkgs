@@ -1,57 +1,72 @@
-{ lib
-, buildPythonPackage
-, isPy27
-, fetchPypi
-, fetchpatch
-, pikepdf
-, pillow
-, stdenv
-, exiftool
-, ghostscript
-, imagemagick
-, mupdf
-, netpbm
-, numpy
-, poppler_utils
-, pytestCheckHook
-, scipy
+{
+  lib,
+  pkgs,
+  buildPythonPackage,
+  fetchFromGitea,
+  replaceVars,
+  colord,
+  setuptools,
+  pikepdf,
+  pillow,
+  stdenv,
+  exiftool,
+  imagemagick,
+  mupdf-headless,
+  netpbm,
+  numpy,
+  poppler-utils,
+  pytestCheckHook,
+  runCommand,
+  scipy,
 }:
 
 buildPythonPackage rec {
   pname = "img2pdf";
-  version = "0.4.3";
-  disabled = isPy27;
+  version = "0.6.1";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-jlHFBD76lddRSBtRYHGgBvh8KkBZlhqaxD7COJFd4J8=";
+  src = fetchFromGitea {
+    domain = "gitlab.mister-muffin.de";
+    owner = "josch";
+    repo = "img2pdf";
+    tag = version;
+    hash = "sha256-71u6ex+UAEFPDtR9QI8Ezah5zCorn4gMdAnzFz4blsI=";
   };
 
   patches = [
-    # Disable tests broken by Pillow 9.0.0
-    # https://gitlab.mister-muffin.de/josch/img2pdf/issues/130#issuecomment-586
-    (fetchpatch {
-      url = "https://salsa.debian.org/debian/img2pdf/-/raw/f77fefc81e7c4b235c47ae6777d222d391c59536/debian/patches/pillow9";
-      sha256 = "sha256-8giZCuv5PzSbrBQqslNqiLOhgxbg3LsdBVwt+DWnvh4=";
+    (replaceVars ./default-icc-profile.patch {
+      srgbProfile =
+        if stdenv.hostPlatform.isDarwin then
+          "/System/Library/ColorSync/Profiles/sRGB Profile.icc"
+        else
+          # break runtime dependency chain all of colord dependencies
+          runCommand "sRGC.icc" { } ''
+            cp ${colord}/share/color/icc/colord/sRGB.icc $out
+          '';
     })
   ];
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
     pikepdf
     pillow
   ];
 
-  # https://gitlab.mister-muffin.de/josch/img2pdf/issues/128
-  doCheck = !stdenv.isAarch64;
+  # FIXME: Only add "sRGB Profile.icc" to __impureHostDeps once
+  # https://github.com/NixOS/nix/issues/9301 is fixed.
+  __impureHostDeps = lib.optionals stdenv.hostPlatform.isDarwin [
+    "/System/Library/ColorSync/Profiles"
+  ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     exiftool
-    ghostscript
+    pkgs.ghostscript
     imagemagick
-    mupdf
+    mupdf-headless
     netpbm
     numpy
-    poppler_utils
+    poppler-utils
     pytestCheckHook
     scipy
   ];
@@ -61,15 +76,29 @@ buildPythonPackage rec {
   '';
 
   disabledTests = [
-    "test_tiff_rgb"
+    # https://gitlab.mister-muffin.de/josch/img2pdf/issues/178
+    "test_jpg_cmyk"
+    "test_miff_cmyk8"
+    "test_tiff_cmyk8"
+    "test_miff_cmyk16"
+    "test_png_gray16"
+    "test_png_rgb16"
+    # these only fail on aarch64
+    "test_png_rgba8"
+    "test_png_gray8a"
   ];
 
   pythonImportsCheck = [ "img2pdf" ];
 
-  meta = with lib; {
+  meta = {
+    changelog = "https://gitlab.mister-muffin.de/josch/img2pdf/src/tag/${src.tag}/CHANGES.rst";
     description = "Convert images to PDF via direct JPEG inclusion";
     homepage = "https://gitlab.mister-muffin.de/josch/img2pdf";
-    license = licenses.lgpl2;
-    maintainers = with maintainers; [ veprbl dotlambda ];
+    license = lib.licenses.lgpl3Plus;
+    mainProgram = "img2pdf";
+    maintainers = with lib.maintainers; [
+      veprbl
+      dotlambda
+    ];
   };
 }

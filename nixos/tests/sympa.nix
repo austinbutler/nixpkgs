@@ -1,8 +1,9 @@
-import ./make-test-python.nix ({ pkgs, lib, ... }: {
+{ pkgs, lib, ... }:
+{
   name = "sympa";
-  meta.maintainers = with lib.maintainers; [ mmilata ];
+  meta.maintainers = with lib.maintainers; [ ];
 
-  machine =
+  nodes.machine =
     { ... }:
     {
 
@@ -13,7 +14,7 @@ import ./make-test-python.nix ({ pkgs, lib, ... }: {
             webHost = "localhost";
           };
         };
-        listMasters = [ "joe@example.org" ];
+        listMasters = [ "bob@example.org" ];
         web.enable = true;
         web.https = false;
         database = {
@@ -32,4 +33,4 @@ import ./make-test-python.nix ({ pkgs, lib, ... }: {
         "curl --fail --insecure -L http://localhost/"
     )
   '';
-})
+}

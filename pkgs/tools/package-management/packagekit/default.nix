@@ -1,67 +1,65 @@
-{ stdenv
-, fetchFromGitHub
-, lib
-, gettext
-, glib
-, pkg-config
-, polkit
-, python3
-, sqlite
-, gobject-introspection
-, vala
-, gtk-doc
-, nix
-, nlohmann_json ? null
-, boost
-, meson
-, ninja
-, libxslt
-, docbook-xsl-nons
-, docbook_xml_dtd_42
-, libxml2
-, gst_all_1
-, gtk3
-, enableCommandNotFound ? false
-, enableBashCompletion ? false
-, bash-completion ? null
-, enableSystemd ? stdenv.isLinux
-, systemd
+{
+  stdenv,
+  fetchFromGitHub,
+  lib,
+  gettext,
+  glib,
+  pkg-config,
+  polkit,
+  python3,
+  sqlite,
+  gobject-introspection,
+  vala,
+  gtk-doc,
+  boost,
+  meson,
+  ninja,
+  libxslt,
+  docbook-xsl-nons,
+  docbook_xml_dtd_42,
+  libxml2,
+  gst_all_1,
+  gtk3,
+  enableCommandNotFound ? false,
+  enableBashCompletion ? false,
+  bash-completion ? null,
+  enableSystemd ? lib.meta.availableOn stdenv.hostPlatform systemd,
+  systemd,
+  nixosTests,
 }:
-let
-  nix_version = lib.removeSuffix nix.VERSION_SUFFIX nix.version;
-  useNlohmann = lib.versionAtLeast "2.7" nix_version;
-in
-
-assert useNlohmann -> nlohmann_json != null;
 
 stdenv.mkDerivation rec {
   pname = "packagekit";
-  version = "1.2.5.1pre";
+  version = "1.3.1";
 
-  outputs = [ "out" "dev" "devdoc" ];
+  outputs = [
+    "out"
+    "dev"
+    "devdoc"
+  ];
 
   src = fetchFromGitHub {
     owner = "PackageKit";
     repo = "PackageKit";
-    rev = "33b847c49b4a42499e3c0f10fef62830c874e086";
-    sha256 = "UDpMswf0EBwcoHTqoWiztXnIAwM69nM+S9MPsR24amw=";
+    rev = "v${version}";
+    hash = "sha256-8sgvD6pZ2n4Du44kTPsvYtSYpkMKCpfxeSrGjWeSw50=";
   };
 
   buildInputs = [
     glib
     polkit
     python3
-    gobject-introspection
     gst_all_1.gstreamer
     gst_all_1.gst-plugins-base
     gtk3
     sqlite
-    nix
     boost
-  ] ++ lib.optional enableSystemd systemd
-  ++ lib.optional useNlohmann nlohmann_json
+  ]
+  ++ lib.optional enableSystemd systemd
   ++ lib.optional enableBashCompletion bash-completion;
   nativeBuildInputs = [
+    gobject-introspection
+    glib
     vala
     gettext
     pkg-config
@@ -76,7 +74,10 @@ stdenv.mkDerivation rec {
 
   mesonFlags = [
     (if enableSystemd then "-Dsystemd=true" else "-Dsystem=false")
-    "-Dpackaging_backend=nix"
+    # often fails to build with nix updates
+    # and remounts /nix/store as rw
+    # https://github.com/NixOS/nixpkgs/issues/177946
+    #"-Dpackaging_backend=nix"
     "-Ddbus_sys=${placeholder "out"}/share/dbus-1/system.d"
     "-Ddbus_services=${placeholder "out"}/share/dbus-1/system-services"
     "-Dsystemdsystemunitdir=${placeholder "out"}/lib/systemd/system"
@@ -98,6 +99,10 @@ stdenv.mkDerivation rec {
       --replace "install_dir: join_paths(get_option('localstatedir'), 'lib', 'PackageKit')," "install_dir: join_paths('$out', 'var', 'lib', 'PackageKit'),"
   '';
 
+  passthru.tests = {
+    nixos-test = nixosTests.packagekit;
+  };
+
   meta = with lib; {
     description = "System to facilitate installing and updating packages";
     longDescription = ''
@@ -110,7 +115,7 @@ stdenv.mkDerivation rec {
       a common set of abstractions that can be used by standard GUI and text
       mode package managers.
     '';
-    homepage = "http://www.packagekit.org/";
+    homepage = "https://github.com/PackageKit/PackageKit";
     license = licenses.gpl2Plus;
     platforms = platforms.unix;
     maintainers = with maintainers; [ matthewbauer ];

@@ -1,25 +1,27 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, numpy
-, pytestCheckHook
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  numpy,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "opensimplex";
-  version = "0.4.2";
+  version = "0.4.3";
+  format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "lmas";
-    repo = pname;
+    repo = "opensimplex";
     rev = "v${version}";
-    sha256 = "zljS0yu3cHF2Vz3rFkwLXiHnKjo970MDIrC/56FoHa4=";
+    sha256 = "C/MTKTHjxMsOgzuXvokw039Kv6N/PgBoOqKleWPLpw0=";
   };
 
   propagatedBuildInputs = [ numpy ];
 
-  checkInputs = [ pytestCheckHook ];
-  pytestFlagsArray = [ "tests/test_opensimplex.py" ];
+  nativeCheckInputs = [ pytestCheckHook ];
+  enabledTestPaths = [ "tests/test_opensimplex.py" ];
   pythonImportsCheck = [ "opensimplex" ];
 
   meta = with lib; {

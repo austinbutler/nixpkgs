@@ -1,28 +1,35 @@
-{ lib
-, mkXfceDerivation
-, clutter
-, libXcomposite
-, libXinerama
-, libXdamage
-, libX11
-, libwnck
-, libxfce4ui
-, libxfce4util
-, garcon
-, xfconf
-, gtk3
-, glib
-, dbus-glib
+{
+  lib,
+  mkXfceDerivation,
+  clutter,
+  gettext,
+  libXcomposite,
+  libXinerama,
+  libXdamage,
+  libX11,
+  libwnck,
+  libxfce4ui,
+  libxfce4util,
+  garcon,
+  xfconf,
+  gtk3,
+  glib,
+  dbus-glib,
 }:
 
 mkXfceDerivation {
   category = "apps";
   pname = "xfdashboard";
-  version = "0.9.5";
+  version = "1.0.0-unstable-2025-07-18";
+  # Fix build with gettext 0.25
+  rev = "93255940950ef5bc89cab729c8b977a706f98e0c";
   rev-prefix = "";
-  odd-unstable = false;
 
-  sha256 = "sha256-nb1zY78MUjEOJF59MYIOY1rxo3JFmzH9yTJVUGsOwOA=";
+  sha256 = "sha256-Qv0ASuJF0FzPoeLx2D6/kXkxnOJV7mdAFD6PCk+CMac=";
+
+  nativeBuildInputs = [
+    gettext
+  ];
 
   buildInputs = [
     clutter
@@ -42,6 +49,6 @@ mkXfceDerivation {
 
   meta = with lib; {
     description = "Gnome shell like dashboard";
-    maintainers = with maintainers; [ ] ++ teams.xfce.members;
+    teams = [ teams.xfce ];
   };
 }

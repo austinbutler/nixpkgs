@@ -1,42 +1,49 @@
-{ lib
-, pythonOlder
-, buildPythonPackage
-, fetchFromGitHub
+{
+  stdenv,
+  lib,
+  pythonAtLeast,
+  pythonOlder,
+  buildPythonPackage,
+  fetchFromGitHub,
+  cargo,
+  rustPlatform,
+  rustc,
+  libiconv,
   # Python requirements
-, cython
-, dill
-, numpy
-, networkx
-, ply
-, psutil
-, python-constraint
-, python-dateutil
-, retworkx
-, scipy
-, scikit-quant ? null
-, stevedore
-, symengine
-, sympy
-, tweedledum
-, withVisualization ? false
+  dill,
+  numpy,
+  networkx,
+  ply,
+  psutil,
+  python-constraint,
+  python-dateutil,
+  rustworkx,
+  scipy,
+  scikit-quant ? null,
+  setuptools-rust,
+  stevedore,
+  symengine,
+  sympy,
+  tweedledum,
+  withVisualization ? false,
   # Python visualization requirements, optional
-, ipywidgets
-, matplotlib
-, pillow
-, pydot
-, pygments
-, pylatexenc
-, seaborn
+  ipywidgets,
+  matplotlib,
+  pillow,
+  pydot,
+  pygments,
+  pylatexenc,
+  seaborn,
   # Crosstalk-adaptive layout pass
-, withCrosstalkPass ? false
-, z3
+  withCrosstalkPass ? false,
+  z3-solver,
   # test requirements
-, ddt
-, hypothesis
-, nbformat
-, nbconvert
-, pytestCheckHook
-, python
+  ddt,
+  hypothesis,
+  nbformat,
+  nbconvert,
+  pytestCheckHook,
+  python,
 }:
 
 let
@@ -49,23 +56,36 @@ let
     pylatexenc
     seaborn
   ];
-  crosstalkPackages = [ z3 ];
+  crosstalkPackages = [ z3-solver ];
 in
 
 buildPythonPackage rec {
   pname = "qiskit-terra";
-  version = "0.19.2";
+  version = "0.25.1";
+  format = "setuptools";
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.7" || pythonAtLeast "3.11";
 
   src = fetchFromGitHub {
     owner = "qiskit";
     repo = pname;
-    rev = version;
-    sha256 = "sha256-P2QTdt1H9I5T/ONNoo7XEVnoHweOdq3p2NH3l3/yAn4=";
+    rev = "refs/tags/${version}";
+    hash = "sha256-4/LVKDNxKsRztCtU/mMfKMVHHJqfadZXmxeOlnlz9Tc=";
   };
 
-  nativeBuildInputs = [ cython ];
+  nativeBuildInputs = [
+    setuptools-rust
+    rustc
+    cargo
+    rustPlatform.cargoSetupHook
+  ];
+
+  buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [ libiconv ];
+
+  cargoDeps = rustPlatform.fetchCargoVendor {
+    inherit pname version src;
+    hash = "sha256-nTYrNH3h1kAwwPx7OMw6eI61vYy8iFhm4eWDTGhWxt4=";
+  };
 
   propagatedBuildInputs = [
     dill
@@ -75,28 +95,30 @@ buildPythonPackage rec {
     psutil
     python-constraint
     python-dateutil
-    retworkx
+    rustworkx
     scipy
     scikit-quant
     stevedore
     symengine
     sympy
     tweedledum
-  ] ++ lib.optionals withVisualization visualizationPackages
+  ]
+  ++ lib.optionals withVisualization visualizationPackages
   ++ lib.optionals withCrosstalkPass crosstalkPackages;
 
   # *** Tests ***
-  checkInputs = [
+  nativeCheckInputs = [
     pytestCheckHook
     ddt
     hypothesis
     nbformat
     nbconvert
-  ] ++ lib.optionals (!withVisualization) visualizationPackages;
+  ]
+  ++ lib.optionals (!withVisualization) visualizationPackages;
 
   pythonImportsCheck = [
     "qiskit"
-    "qiskit.transpiler.passes.routing.cython.stochastic_swap.swap_trial"
+    "qiskit.pulse"
   ];
 
   disabledTestPaths = [
@@ -106,20 +128,29 @@ buildPythonPackage rec {
     "test/randomized/"
     # These tests consistently fail on GitHub Actions build
     "test/python/quantum_info/operators/test_random.py"
+    # Too many floating point arithmetic errors
+    "test/visual/mpl/circuit/test_circuit_matplotlib_drawer.py"
   ];
-  pytestFlagsArray = [ "--durations=10" ];
+  pytestFlags = [ "--durations=10" ];
   disabledTests = [
-    "TestUnitarySynthesisPlugin" # uses unittest mocks for transpiler.run(), seems incompatible somehow w/ pytest infrastructure
+    "TestUnitarySynthesisPlugin" # use unittest mocks for transpiler.run(), seems incompatible somehow w/ pytest infrastructure
+    # matplotlib tests seems to fail non-deterministically
+    "TestMatplotlibDrawer"
+    "TestGraphMatplotlibDrawer"
     "test_copy" # assertNotIn doesn't seem to work as expected w/ pytest vs unittest
+
+    "test_bound_pass_manager" # AssertionError: 0 != 2
+    "test_complex_parameter_bound_to_real" # qiskit.circuit.exceptions.CircuitError: "Invalid param type <class 'complex'> for gate rx."
+    "test_expressions_of_parameter_with_constant" # Floating point arithmetic error
+    "test_handle_measurement" # AssertionError: The two circuits are not equal
 
     # Flaky tests
     "test_pulse_limits" # Fails on GitHub Actions, probably due to minor floating point arithmetic error.
-    "test_cx_equivalence"  # Fails due to flaky test
+    "test_cx_equivalence" # Fails due to flaky test
     "test_two_qubit_synthesis_not_pulse_optimal" # test of random circuit, seems to randomly fail depending on seed
     "test_qv_natural" # fails due to sign error. Not sure why
-  ] ++ lib.optionals (lib.versionAtLeast matplotlib.version "3.4.0") [
-    "test_plot_circuit_layout"
   ]
+  ++ lib.optionals (lib.versionAtLeast matplotlib.version "3.4.0") [ "test_plot_circuit_layout" ]
   # Disabling slow tests for build constraints
   ++ [
     "test_all_examples"
@@ -153,18 +184,14 @@ buildPythonPackage rec {
     "test_two_qubit_weyl_decomposition_ab0"
     "test_sample_counts_memory_superposition"
     "test_piecewise_polynomial_function"
-    "test_vqe_qasm"
     "test_piecewise_chebyshev_mutability"
     "test_bit_conditional_no_cregbundle"
     "test_gradient_wrapper2"
     "test_two_qubit_weyl_decomposition_abmb"
     "test_two_qubit_weyl_decomposition_abb"
-    "test_two_qubit_weyl_decomposition_aac"
-    "test_aqc"
-    "test_gradient"
-    "test_piecewise_polynomial_rotations_mutability"
-    "test_confidence_intervals_1"
-    "test_trotter_from_bound"
+    "test_vqe_qasm"
+    "test_dag_from_networkx"
+    "test_defaults_to_dict_46"
   ];
 
   # Moves tests to $PACKAGEDIR/test. They can't be run from /build because of finding
@@ -184,9 +211,8 @@ buildPythonPackage rec {
     popd
   '';
 
-
   meta = with lib; {
-    description = "Provides the foundations for Qiskit.";
+    description = "Provides the foundations for Qiskit";
     longDescription = ''
       Allows the user to write quantum circuits easily, and takes care of the constraints of real hardware.
     '';

@@ -1,26 +1,32 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, cython
-, ecos
-, joblib
-, numexpr
-, numpy
-, osqp
-, pandas
-, setuptools-scm
-, scikit-learn
-, scipy
-, pytestCheckHook
+{
+  stdenv,
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  cython,
+  ecos,
+  eigen,
+  joblib,
+  numexpr,
+  numpy,
+  osqp,
+  pandas,
+  setuptools-scm,
+  scikit-learn,
+  scipy,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "scikit-survival";
-  version = "0.17.0";
+  version = "0.24.1";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "ba49325f6a31e8bdccfb88337aa85218d209e88a6a704e9c41ef13bf749e0f46";
+  src = fetchFromGitHub {
+    owner = "sebp";
+    repo = "scikit-survival";
+    tag = "v${version}";
+    hash = "sha256-El5q2eE6wJKg/8rcFZPZQl7MVxw1jMsggjiCJHj7il8=";
   };
 
   nativeBuildInputs = [
@@ -41,7 +47,12 @@ buildPythonPackage rec {
 
   pythonImportsCheck = [ "sksurv" ];
 
-  checkInputs = [ pytestCheckHook ];
+  nativeCheckInputs = [ pytestCheckHook ];
+
+  postPatch = ''
+    ln -s ${lib.getInclude eigen}/include/eigen3/Eigen \
+      sksurv/linear_model/src/eigen
+  '';
 
   # Hack needed to make pytest + cython work
   # https://github.com/NixOS/nixpkgs/pull/82410#issuecomment-827186298
@@ -61,7 +72,12 @@ buildPythonPackage rec {
     "test_pandas_inputs"
     "test_survival_svm"
     "test_tree"
-  ];
+  ]
+  ++
+    lib.optional (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64)
+      # floating point mismatch on aarch64
+      # 27079905.88052468 to far from 27079905.880496684
+      "test_coxnet";
 
   meta = with lib; {
     description = "Survival analysis built on top of scikit-learn";

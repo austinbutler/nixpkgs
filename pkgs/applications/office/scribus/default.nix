@@ -1,52 +1,127 @@
-{ lib, stdenv, fetchurl, pkg-config, freetype, lcms, libtiff, libxml2
-, libart_lgpl, qt4, python2, cups, fontconfig, libjpeg
-, zlib, libpng, xorg, cairo, podofo, hunspell, boost, cmake, imagemagick, ghostscript }:
+{
+  boost,
+  cairo,
+  cmake,
+  cups,
+  fetchurl,
+  fetchpatch,
+  fontconfig,
+  freetype,
+  graphicsmagick,
+  harfbuzzFull,
+  hunspell,
+  lcms2,
+  libcdr,
+  libfreehand,
+  libjpeg,
+  libjxl,
+  libmspub,
+  libpagemaker,
+  libqxp,
+  librevenge,
+  libsysprof-capture,
+  libtiff,
+  libvisio,
+  libwpg,
+  libxml2,
+  libzmf,
+  pixman,
+  pkg-config,
+  podofo_0_10,
+  poppler,
+  poppler_data,
+  python3,
+  lib,
+  stdenv,
+  qt6,
+}:
 
 let
-  icon = fetchurl {
-    url = "https://gist.githubusercontent.com/ejpcmac/a74b762026c9bc4000be624c3d085517/raw/18edc497c5cb6fdeef1c8aede37a0ee68413f9d3/scribus-icon-centered.svg";
-    sha256 = "0hq3i7c2l50445an9glhhg47kj26y16svfajc6naqn307ph9vzc3";
-  };
-
-  pythonEnv = python2.withPackages(ps: [ps.tkinter ps.pillow]);
-in stdenv.mkDerivation rec {
+  pythonEnv = python3.withPackages (ps: [
+    ps.pillow
+    ps.tkinter
+  ]);
+in
+stdenv.mkDerivation (finalAttrs: {
   pname = "scribus";
-  version = "1.4.8";
+
+  version = "1.7.0";
 
   src = fetchurl {
-    url = "mirror://sourceforge/${pname}/${pname}/${pname}-${version}.tar.xz";
-    sha256 = "0bq433myw6h1siqlsakxv6ghb002rp3mfz5k12bg68s0k6skn992";
+    url = "mirror://sourceforge/scribus/scribus-devel/scribus-${finalAttrs.version}.tar.xz";
+    hash = "sha256-+lnWIh/3z/qTcjV5l+hlcBYuHhiRNza3F2/RD0jCQ/Y=";
   };
 
-  nativeBuildInputs = [ pkg-config cmake ];
-  buildInputs = with xorg;
-    [ freetype lcms libtiff libxml2 libart_lgpl qt4
-      pythonEnv cups fontconfig
-      libjpeg zlib libpng podofo hunspell cairo
-      boost # for internal 2geom library
-      libXaw libXext libX11 libXtst libXi libXinerama
-      libpthreadstubs libXau libXdmcp
-      imagemagick # To build the icon
-    ];
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+    qt6.wrapQtAppsHook
+  ];
 
-  postPatch = ''
-    substituteInPlace scribus/util_ghostscript.cpp \
-      --replace 'QString gsName("gs");' \
-                'QString gsName("${ghostscript}/bin/gs");'
-  '';
+  buildInputs = [
+    boost
+    cairo
+    cups
+    fontconfig
+    freetype
+    graphicsmagick
+    harfbuzzFull
+    hunspell
+    lcms2
+    libcdr
+    libfreehand
+    libjpeg
+    libjxl
+    libpagemaker
+    libqxp
+    librevenge
+    libsysprof-capture
+    libtiff
+    libvisio
+    libwpg
+    libxml2
+    libzmf
+    pixman
+    podofo_0_10
+    poppler
+    poppler_data
+    pythonEnv
+    qt6.qt5compat
+    qt6.qtbase
+    qt6.qtdeclarative
+    qt6.qtimageformats
+    qt6.qtsvg
+    qt6.qttools
+  ]
+  ++ lib.optionals libmspub.meta.available [ libmspub ];
 
-  postInstall = ''
-    for i in 16 24 48 64 96 128 256 512; do
-      mkdir -p $out/share/icons/hicolor/''${i}x''${i}/apps
-      convert -background none -resize ''${i}x''${i} ${icon} $out/share/icons/hicolor/''${i}x''${i}/apps/scribus.png
-    done
-  '';
+  cmakeFlags = [ (lib.cmakeBool "WANT_GRAPHICSMAGICK" true) ];
+
+  patches = [
+    (fetchpatch {
+      url = "https://aur.archlinux.org/cgit/aur.git/plain/fix_build_with_qt_6.9.0.patch?h=scribus-unstable";
+      hash = "sha256-hzd9XpoVVqbwvZ40QPGBqqWkIFXug/tSojf/Ikc4nn4=";
+    })
+    (fetchpatch {
+      url = "https://aur.archlinux.org/cgit/aur.git/plain/fix_build_with_poppler_25.02.0.patch?h=scribus-unstable";
+      hash = "sha256-t9xJA6KGMGAdUFyjI8OlTNilewyMr1FFM7vjHOM15Xg=";
+    })
+  ];
 
   meta = {
-    maintainers = [ lib.maintainers.marcweber ];
-    platforms = lib.platforms.linux;
-    description = "Desktop Publishing (DTP) and Layout program for Linux";
+    maintainers = with lib.maintainers; [ arthsmn ];
+    description = "Desktop Publishing (DTP) and Layout program";
+    mainProgram = "scribus";
     homepage = "https://www.scribus.net";
-    license = lib.licenses.gpl2;
+    # There are a lot of licenses...
+    # https://github.com/scribusproject/scribus/blob/20508d69ca4fc7030477db8dee79fd1e012b52d2/COPYING#L15-L19
+    license = with lib.licenses; [
+      bsd3
+      gpl2Plus
+      mit
+      publicDomain
+    ];
+    platforms = lib.platforms.all;
+    broken = stdenv.hostPlatform.isDarwin;
   };
-}
+})

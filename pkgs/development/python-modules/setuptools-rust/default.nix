@@ -1,39 +1,74 @@
-{ callPackage
-, lib
-, buildPythonPackage
-, fetchPypi
-, pythonOlder
-, semantic-version
-, setuptools
-, setuptools-scm
-, typing-extensions
-, toml
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  maturin,
+  pythonOlder,
+  rustPlatform,
+  rustc,
+  cargo,
+  semantic-version,
+  setuptools,
+  setuptools-rust,
+  setuptools-scm,
+  tomli,
+  typing-extensions,
 }:
 
 buildPythonPackage rec {
   pname = "setuptools-rust";
-  version = "1.1.2";
+  version = "1.11.1";
+  format = "pyproject";
+
   disabled = pythonOlder "3.6";
 
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "a0adb9b503c0ffc4e8fe80b7c617898cefa78049983aaaea7f747e153a3e65d1";
+    pname = "setuptools_rust";
+    inherit version;
+    hash = "sha256-favEOSJSztMUuAUNYyduBf3F0yOY/H08zh9qasNbdsA=";
   };
 
-  nativeBuildInputs = [ setuptools-scm ];
+  build-system = [
+    setuptools
+    setuptools-scm
+  ];
 
-  propagatedBuildInputs = [ semantic-version setuptools toml typing-extensions ];
+  dependencies = [
+    semantic-version
+    setuptools
+  ];
 
-  doCheck = false;
   pythonImportsCheck = [ "setuptools_rust" ];
 
-  passthru.tests.pyo3 = callPackage ./pyo3-test { };
+  doCheck = false;
+
+  passthru.tests = {
+    pyo3 = maturin.tests.pyo3.override {
+      format = "setuptools";
+      buildAndTestSubdir = null;
+
+      nativeBuildInputs = [
+        setuptools-rust
+      ]
+      ++ [
+        rustPlatform.cargoSetupHook
+        cargo
+        rustc
+      ];
+
+      preConfigure = ''
+        # sourceRoot puts Cargo.lock in the wrong place due to the
+        # example setup.
+        cd examples/word-count
+      '';
+    };
+  };
 
   meta = with lib; {
     description = "Setuptools plugin for Rust support";
     homepage = "https://github.com/PyO3/setuptools-rust";
     changelog = "https://github.com/PyO3/setuptools-rust/releases/tag/v${version}";
     license = licenses.mit;
-    maintainers = with maintainers; [ SuperSandro2000 ];
+    maintainers = [ ];
   };
 }

@@ -1,14 +1,18 @@
-{ lib, buildDunePackage, fetchFromGitHub, containers }:
+{
+  lib,
+  buildDunePackage,
+  fetchFromGitHub,
+  containers,
+}:
 
 buildDunePackage rec {
   pname = "tsort";
-  useDune2 = true;
-  version = "2.0.0";
+  version = "2.2.0";
   src = fetchFromGitHub {
     owner = "dmbaturin";
     repo = "ocaml-tsort";
     rev = version;
-    sha256 = "0i67ys5p5i8q9p0nhkq4pjg9jav8dy0fiy975a365j7m6bhrwgc1";
+    sha256 = "sha256-/gxjXDRhQdbt0ZBdCNk/j1oWhAbm2UOfye2D9QvPr3o=";
   };
 
   propagatedBuildInputs = [ containers ];

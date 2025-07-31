@@ -1,23 +1,25 @@
-{ lib
-, fetchFromGitHub
-, buildPythonPackage
-, poetry-core
-, docopt-ng
-, easywatch
-, jinja2
-, pytestCheckHook
-, pytest-check
-, pythonOlder
-, markdown
-, testVersion
-, tomlkit
-, staticjinja
-, callPackage
+{
+  lib,
+  fetchFromGitHub,
+  buildPythonPackage,
+  poetry-core,
+  docopt-ng,
+  easywatch,
+  jinja2,
+  pytestCheckHook,
+  pytest-check,
+  pythonOlder,
+  markdown,
+  testers,
+  tomlkit,
+  typing-extensions,
+  staticjinja,
+  callPackage,
 }:
 
 buildPythonPackage rec {
   pname = "staticjinja";
-  version = "4.1.2";
+  version = "5.0.0";
   format = "pyproject";
 
   disabled = pythonOlder "3.6";
@@ -25,14 +27,12 @@ buildPythonPackage rec {
   # No tests in pypi
   src = fetchFromGitHub {
     owner = "staticjinja";
-    repo = pname;
+    repo = "staticjinja";
     rev = version;
-    sha256 = "0qqyadhqsn66b7qrpfj08qc899pjwfa2byqqzh73xq1n22i4cy30";
+    hash = "sha256-LfJTQhZtnTOm39EWF1m2MP5rxz/5reE0G1Uk9L7yx0w=";
   };
 
-  nativeBuildInputs = [
-    poetry-core
-  ];
+  nativeBuildInputs = [ poetry-core ];
 
   propagatedBuildInputs = [
     jinja2
@@ -40,11 +40,12 @@ buildPythonPackage rec {
     easywatch
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     pytestCheckHook
     pytest-check
     markdown
     tomlkit
+    typing-extensions
   ];
 
   # The tests need to find and call the installed staticjinja executable
@@ -53,12 +54,13 @@ buildPythonPackage rec {
   '';
 
   passthru.tests = {
-    version = testVersion { package = staticjinja; };
-    minimal-template = callPackage ./test-minimal-template {};
+    version = testers.testVersion { package = staticjinja; };
+    minimal-template = callPackage ./test-minimal-template { };
   };
 
   meta = with lib; {
-    description = "A library and cli tool that makes it easy to build static sites using Jinja2";
+    description = "Library and cli tool that makes it easy to build static sites using Jinja2";
+    mainProgram = "staticjinja";
     homepage = "https://staticjinja.readthedocs.io/en/latest/";
     license = licenses.mit;
     maintainers = with maintainers; [ fgaz ];

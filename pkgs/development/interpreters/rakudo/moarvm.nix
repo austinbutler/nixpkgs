@@ -1,41 +1,50 @@
-{ lib
-, stdenv
-, fetchurl
-, perl
-, CoreServices
-, ApplicationServices
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  perl,
 }:
 
 stdenv.mkDerivation rec {
   pname = "moarvm";
-  version = "2022.02";
+  version = "2025.06";
 
-  src = fetchurl {
-    url = "https://moarvm.org/releases/MoarVM-${version}.tar.gz";
-    sha256 = "sha256-T5PNzmuKVloyKCuzjMlxzv63H10CLIUMM47oFFV07pY=";
+  # nixpkgs-update: no auto update
+  src = fetchFromGitHub {
+    owner = "moarvm";
+    repo = "moarvm";
+    rev = version;
+    hash = "sha256-QtJ8cLAbsFJ26wkfQCbIMVU1ArWlAXjsQ/RJbQ0wRNo=";
+    fetchSubmodules = true;
   };
 
   postPatch = ''
     patchShebangs .
-  '' + lib.optionalString stdenv.isDarwin ''
+  ''
+  + lib.optionalString stdenv.hostPlatform.isDarwin ''
     substituteInPlace Configure.pl \
       --replace '`/usr/bin/arch`' '"${stdenv.hostPlatform.darwinArch}"' \
       --replace '/usr/bin/arch' "$(type -P true)" \
       --replace '/usr/' '/nope/'
     substituteInPlace 3rdparty/dyncall/configure \
-      --replace '`sw_vers -productVersion`' '"$MACOSX_DEPLOYMENT_TARGET"'
+      --replace '`sw_vers -productVersion`' '"11.0"'
   '';
 
-  buildInputs = [ perl ] ++ lib.optionals stdenv.isDarwin [ CoreServices ApplicationServices ];
+  buildInputs = [ perl ];
   doCheck = false; # MoarVM does not come with its own test suite
 
   configureScript = "${perl}/bin/perl ./Configure.pl";
 
-  meta = with lib; {
+  meta = {
     description = "VM with adaptive optimization and JIT compilation, built for Rakudo";
     homepage = "https://moarvm.org";
-    license = licenses.artistic2;
-    platforms = platforms.unix;
-    maintainers = with maintainers; [ thoughtpolice vrthra sgo ];
+    license = lib.licenses.artistic2;
+    maintainers = with lib.maintainers; [
+      thoughtpolice
+      sgo
+      prince213
+    ];
+    mainProgram = "moar";
+    platforms = lib.platforms.unix;
   };
 }

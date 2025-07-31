@@ -1,39 +1,66 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, scikit-learn
-, scipy
-, pytest
-, isPy27
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  poetry-core,
+
+  # dependencies
+  scikit-learn,
+  numpy,
+  scipy,
+  colorama,
+  packaging,
+
+  # tests
+  jupyter,
+  matplotlib,
+  nbconvert,
+  nbformat,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "bayesian-optimization";
-  version = "1.2.0";
-  disabled = isPy27;
+  version = "3.0.1";
+  pyproject = true;
 
   src = fetchFromGitHub {
-    owner = "fmfn";
+    owner = "bayesian-optimization";
     repo = "BayesianOptimization";
-    rev = version;
-    sha256 = "01mg9npiqh1qmq5ldnbpjmr8qkiw827msiv3crpkhbj4bdzasbfm";
+    tag = "v${version}";
+    hash = "sha256-dq5R0/gqjSzQPAmYvtByJ6gT8pOiXcezfYlKpFLnryk=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ poetry-core ];
+
+  dependencies = [
     scikit-learn
+    numpy
     scipy
+    colorama
+    packaging
   ];
 
-  checkInputs = [ pytest ];
-  checkPhase = ''
-    # New sklearn broke one test: https://github.com/fmfn/BayesianOptimization/issues/243
-    pytest tests -k "not test_suggest_with_one_observation"
-  '';
+  nativeCheckInputs = [
+    jupyter
+    matplotlib
+    nbconvert
+    nbformat
+    pytestCheckHook
+  ];
 
-  meta = with lib; {
-    description = "A Python implementation of global optimization with gaussian processes";
-    homepage = "https://github.com/fmfn/BayesianOptimization";
-    license = licenses.mit;
-    maintainers = [ maintainers.juliendehos ];
+  pythonImportsCheck = [ "bayes_opt" ];
+
+  __darwinAllowLocalNetworking = true;
+
+  meta = {
+    description = "Python implementation of global optimization with gaussian processes";
+    homepage = "https://github.com/bayesian-optimization/BayesianOptimization";
+    changelog = "https://github.com/bayesian-optimization/BayesianOptimization/releases/tag/${src.tag}";
+    license = lib.licenses.mit;
+    maintainers = [ lib.maintainers.juliendehos ];
   };
 }

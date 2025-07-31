@@ -1,30 +1,45 @@
-{ lib, fetchFromGitHub, buildDunePackage, ocaml, alcotest, bigarray-compat, pkg-config }:
+{
+  lib,
+  fetchFromGitHub,
+  buildDunePackage,
+  alcotest,
+  pkg-config,
+  dune-configurator,
+}:
 
 buildDunePackage rec {
   pname = "bigstringaf";
-  version = "0.7.0";
+  version = "0.10.0";
 
-  useDune2 = true;
-
-  minimumOCamlVersion = "4.03";
+  minimalOCamlVersion = "4.08";
 
   src = fetchFromGitHub {
     owner = "inhabitedtype";
     repo = pname;
-    rev = version;
-    sha256 = "1q1sqxzdnlrpl95ccrhl7lwy3zswgd9rbn19ildclh0lyi2vazbj";
+    tag = version;
+    hash = "sha256-p1hdB3ArOd2UX7S6YvXCFbYjEiXdMDmBaC/lFQgua7Q=";
   };
 
-  # This currently fails with dune
-  strictDeps = false;
-
   nativeBuildInputs = [ pkg-config ];
+  buildInputs = [ dune-configurator ];
+
   checkInputs = [ alcotest ];
-  propagatedBuildInputs = [ bigarray-compat ];
-  doCheck = lib.versionAtLeast ocaml.version "4.05";
+  doCheck = true;
 
   meta = {
     description = "Bigstring intrinsics and fast blits based on memcpy/memmove";
+    longDescription = ''
+      Bigstring intrinsics and fast blits based on memcpy/memmove
+
+      The OCaml compiler has a bunch of intrinsics for Bigstrings, but they're not
+      widely-known, sometimes misused, and so programs that use Bigstrings are slower
+      than they have to be. And even if a library got that part right and exposed the
+      intrinsics properly, the compiler doesn't have any fast blits between
+      Bigstrings and other string-like types.
+
+      So here they are. Go crazy.
+    '';
+    changelog = "https://github.com/inhabitedtype/bigstringaf/releases/tag/${version}";
     license = lib.licenses.bsd3;
     maintainers = [ lib.maintainers.vbgl ];
     inherit (src.meta) homepage;

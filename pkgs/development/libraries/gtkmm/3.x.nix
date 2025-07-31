@@ -1,20 +1,53 @@
-{ lib, stdenv, fetchurl, pkg-config, meson, ninja, python3, gtk3, glibmm, cairomm, pangomm, atkmm, libepoxy, gnome }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+  pkg-config,
+  meson,
+  ninja,
+  python3,
+  gtk3,
+  glibmm,
+  cairomm,
+  pangomm,
+  atkmm,
+  libepoxy,
+  gnome,
+  glib,
+  gdk-pixbuf,
+}:
 
 stdenv.mkDerivation rec {
   pname = "gtkmm";
-  version = "3.24.5";
+  version = "3.24.10";
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "1ri2msp3cmzi6r65ghwb8gfavfaxv0axpwi3q60nm7v8hvg36qw5";
+    sha256 = "erfiJmgIcW4mw5kkrOH7RtqGwX7znZiWJMQjFLMrWnY=";
   };
 
-  outputs = [ "out" "dev" ];
+  outputs = [
+    "out"
+    "dev"
+  ];
 
-  nativeBuildInputs = [ pkg-config meson ninja python3 ];
+  nativeBuildInputs = [
+    pkg-config
+    meson
+    ninja
+    python3
+    glib
+    gdk-pixbuf # for gdk-pixbuf-pixdata
+  ];
   buildInputs = [ libepoxy ];
 
-  propagatedBuildInputs = [ glibmm gtk3 atkmm cairomm pangomm ];
+  propagatedBuildInputs = [
+    glibmm
+    gtk3
+    atkmm
+    cairomm
+    pangomm
+  ];
 
   # https://bugzilla.gnome.org/show_bug.cgi?id=764521
   doCheck = false;
@@ -41,7 +74,7 @@ stdenv.mkDerivation rec {
       tutorial.
     '';
 
-    homepage = "https://gtkmm.org/";
+    homepage = "https://gtkmm.gnome.org/";
 
     license = licenses.lgpl2Plus;
 

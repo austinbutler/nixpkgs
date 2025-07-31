@@ -1,33 +1,30 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, requests
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  requests,
+  pythonOlder,
 }:
 
 buildPythonPackage rec {
   pname = "tmb";
-  version = "0.1.3";
+  version = "0.1.5";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = "alemuro";
-    repo = pname;
+    repo = "tmb";
     rev = version;
-    hash = "sha256-/syHSu9LKLDe3awrgSIHh0hV+raWqKd53f43WagHn9c=";
+    hash = "sha256-XuRhRmeTXAplb14UwISyzaqEIrFeg8/aCdMxUccMUos=";
   };
 
   VERSION = version;
 
-  propagatedBuildInputs = [
-    requests
-  ];
+  propagatedBuildInputs = [ requests ];
 
-  pythonImportsCheck = [
-    "tmb"
-  ];
+  pythonImportsCheck = [ "tmb" ];
 
   # Project has no tests
   doCheck = false;

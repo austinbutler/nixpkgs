@@ -1,67 +1,73 @@
-{ lib
-, buildPythonPackage
-, ed25519
-, fetchFromGitHub
-, nats-server
-, pytestCheckHook
-, pythonOlder
-, uvloop
+{
+  lib,
+  stdenv,
+  aiohttp,
+  buildPythonPackage,
+  ed25519,
+  fetchFromGitHub,
+  nats-server,
+  nkeys,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
+  uvloop,
 }:
 
 buildPythonPackage rec {
   pname = "nats-py";
-  version = "2.0.0";
-  format = "setuptools";
+  version = "2.11.0";
+  pyproject = true;
 
   disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = "nats-io";
     repo = "nats.py";
-    rev = "v${version}";
-    hash = "sha256-BraT30J7OIcW2NXAwjcg9PYu+kgf8f1iDjKiN9J6l7Y=";
+    tag = "v${version}";
+    hash = "sha256-wILjBhdlNU8U2lyJm4CmPy4DzOjJ7cBIkawKwW5KVgg=";
   };
 
-  propagatedBuildInputs = [
-    ed25519
-  ];
+  build-system = [ setuptools ];
 
-  checkInputs = [
+  dependencies = [ ed25519 ];
+
+  optional-dependencies = {
+    aiohttp = [ aiohttp ];
+    nkeys = [ nkeys ];
+    # fast_parse = [ fast-mail-parser ];
+  };
+
+  nativeCheckInputs = [
     nats-server
     pytestCheckHook
     uvloop
   ];
 
-  postPatch = ''
-    substituteInPlace setup.cfg \
-      --replace "--cov=nats --cov-report html" ""
-  '';
-
   disabledTests = [
-    # RuntimeError: Event loop is closed
-    "test_subscribe_no_echo"
-    "test_publish"
-    "test_publish_verbose"
-    "test_fetch_max_waiting_fetch_one"
+    # Timeouts
+    "ClientTLS"
+    # AssertionError
     "test_fetch_n"
-    "test_consumer_management"
-    "test_ephemeral_subscribe"
-    "test_queue_subscribe_deliver_group"
-    "test_subscribe_push_bound"
-    "test_double_acking_subscribe"
-    "test_flow_control"
-    "test_ordered_consumer"
-    "test_ordered_consumer_single_loss"
     "test_kv_simple"
+    "test_pull_subscribe_limits"
+    "test_stream_management"
+    "test_subscribe_no_echo"
+    # Tests fail on hydra, often Time-out
+    "test_subscribe_iterate_next_msg"
+    "test_ordered_consumer_larger_streams"
+    "test_object_file_basics"
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    "test_subscribe_iterate_next_msg"
+    "test_buf_size_force_flush_timeout"
   ];
 
-  pythonImportsCheck = [
-    "nats"
-  ];
+  pythonImportsCheck = [ "nats" ];
 
   meta = with lib; {
     description = "Python client for NATS.io";
     homepage = "https://github.com/nats-io/nats.py";
+    changelog = "https://github.com/nats-io/nats.py/releases/tag/${src.tag}";
     license = with licenses; [ asl20 ];
     maintainers = with maintainers; [ fab ];
   };

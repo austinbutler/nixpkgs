@@ -1,24 +1,31 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, fetchpatch
-, pytest-runner
-, future
-, requests
-, responses
-, requests_oauthlib
-, pytest
-, hypothesis
+{
+  buildPythonPackage,
+  fetchFromGitHub,
+  fetchpatch,
+  filetype,
+  future,
+  hypothesis,
+  lib,
+  pytestCheckHook,
+  pythonOlder,
+  requests,
+  requests-oauthlib,
+  responses,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "python-twitter";
   version = "3.5";
 
-  # No tests in PyPi Tarball
+  pyproject = true;
+  build-system = [ setuptools ];
+
+  disabled = pythonOlder "3.7";
+
   src = fetchFromGitHub {
     owner = "bear";
-    repo = pname;
+    repo = "python-twitter";
     rev = "v${version}";
     sha256 = "08ydmf6dcd416cvw6xq1wxsz6b9s21f2mf9fh3y4qz9swj6n9h8z";
   };
@@ -31,14 +38,35 @@ buildPythonPackage rec {
     })
   ];
 
-  nativeBuildInputs = [ pytest-runner ];
-  propagatedBuildInputs = [ future requests requests_oauthlib ];
-  checkInputs = [ pytest responses hypothesis ];
+  dependencies = [
+    filetype
+    future
+    requests
+    requests-oauthlib
+  ];
+
+  nativeCheckInputs = [
+    pytestCheckHook
+    responses
+    hypothesis
+  ];
+
+  postPatch = ''
+    substituteInPlace setup.py \
+      --replace-fail "'pytest-runner'" ""
+  '';
+
+  disabledTests = [
+    # AttributeError: 'FileCacheTest' object has no attribute 'assert_'
+    "test_filecache"
+  ];
+
+  pythonImportsCheck = [ "twitter" ];
 
   meta = with lib; {
-    description = "A Python wrapper around the Twitter API";
+    description = "Python wrapper around the Twitter API";
     homepage = "https://github.com/bear/python-twitter";
     license = licenses.asl20;
-    maintainers = [ maintainers.marsam ];
+    maintainers = [ ];
   };
 }

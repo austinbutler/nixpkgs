@@ -1,12 +1,14 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, pytestCheckHook
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "pyuseragents";
   version = "1.0.5";
+  format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "Animenosekai";
@@ -15,8 +17,8 @@ buildPythonPackage rec {
     sha256 = "D7Qs3vsfkRH2FDkbfakrR+FfWzQFiOCQM7q9AdJavyU=";
   };
 
-  checkInputs = [ pytestCheckHook ];
-  pytestFlagsArray = [ "test.py" ];
+  nativeCheckInputs = [ pytestCheckHook ];
+  enabledTestPaths = [ "test.py" ];
   pythonImportsCheck = [ "pyuseragents" ];
 
   meta = with lib; {

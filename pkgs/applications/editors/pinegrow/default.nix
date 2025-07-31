@@ -1,29 +1,54 @@
-{ stdenv
-, lib
-, fetchurl
-, unzip
-, udev
-, nwjs
-, gcc-unwrapped
-, autoPatchelfHook
-, gsettings-desktop-schemas
-, gtk3
-, wrapGAppsHook
+{
+  stdenv,
+  lib,
+  fetchurl,
+  unzip,
+  udev,
+  nwjs,
+  gcc-unwrapped,
+  autoPatchelfHook,
+  gsettings-desktop-schemas,
+  gtk3,
+  wrapGAppsHook3,
+  makeWrapper,
+  pinegrowVersion ? "7",
 }:
 
-stdenv.mkDerivation rec {
-  pname = "pinegrow";
-  version = "6.3";
-
-  src = fetchurl {
-    url = "https://download.pinegrow.com/PinegrowLinux64.${version}.zip";
-    sha256 = "0wldj633p67da077nfc67gr9xhq580rkfd0r3904sjq7x01r0kaz";
+let
+  # major version upgrade requires a new license. So keep version 6 around.
+  versions = {
+    "6" = {
+      version = "6.8";
+      src = fetchurl {
+        url = "https://download.pinegrow.com/PinegrowLinux64.${versions."6".version}.zip";
+        hash = "sha256-gqRmu0VR8Aj57UwYYLKICd4FnYZMhM6pTTSGIY5MLMk=";
+      };
+    };
+    "7" = {
+      version = "7.8";
+      src = fetchurl {
+        url = "https://github.com/Pinegrow/PinegrowReleases/releases/download/pg${
+          builtins.substring 0 4 (versions."7".version)
+        }/PinegrowLinux64.${versions."7".version}.zip";
+        hash = "sha256-tYQfPfzKRwClNwgSoJfMwG3LHhi3O/iFuuwIVHS8OXk=";
+      };
+    };
   };
+in
+
+stdenv.mkDerivation {
+  pname = "pinegrow";
+  # deactivate auto update, because an old 6.21 version is getting mixed up
+  # see e.g. https://github.com/NixOS/nixpkgs/pull/184460
+  version = versions.${pinegrowVersion}.version; # nixpkgs-update: no auto update
+
+  src = versions.${pinegrowVersion}.src;
 
   nativeBuildInputs = [
     unzip
     autoPatchelfHook
-    wrapGAppsHook
+    makeWrapper
+    wrapGAppsHook3
   ];
 
   buildInputs = [
@@ -32,6 +57,18 @@ stdenv.mkDerivation rec {
     gcc-unwrapped
     gsettings-desktop-schemas
     gtk3
+  ];
+
+  dontWrapGApps = true;
+  makeWrapperArgs = [
+    "--prefix LD_LIBRARY_PATH : ${
+      lib.makeLibraryPath [
+        gcc-unwrapped.lib
+        gtk3
+        udev
+      ]
+    }"
+    "--prefix PATH : ${lib.makeBinPath [ stdenv.cc ]}"
   ];
 
   sourceRoot = ".";
@@ -46,25 +83,29 @@ stdenv.mkDerivation rec {
     # we can't unzip it in $out/lib, because nw.js will start with
     # an empty screen. Therefore it will be unzipped in a non-typical
     # folder and symlinked.
-    unzip $src -d $out/opt/pinegrow
+    unzip -q $src -d $out/opt/pinegrow
     substituteInPlace $out/opt/pinegrow/Pinegrow.desktop \
-      --replace 'Exec=sh -c "$(dirname %k)/PinegrowLibrary"' 'Exec=sh -c "$out/bin/Pinegrow"'
-    mv $out/opt/pinegrow/Pinegrow.desktop $out/share/applications/Pinegrow.desktop
-    ln -s $out/opt/pinegrow/PinegrowLibrary $out/bin/Pinegrow
+      --replace 'Exec=sh -c "$(dirname %k)/PinegrowLibrary"' 'Exec=sh -c "$out/bin/pinegrow"'
+    mv $out/opt/pinegrow/Pinegrow.desktop $out/share/applications/pinegrow.desktop
+    ln -s $out/opt/pinegrow/PinegrowLibrary $out/bin/pinegrow
 
     runHook postInstall
   '';
 
+  # GSETTINGS_SCHEMAS_PATH is not set in installPhase
   preFixup = ''
-    export XDG_DATA_DIRS=${gsettings-desktop-schemas}/share/gsettings-schemas/${gsettings-desktop-schemas.name}:${gtk3}/share/gsettings-schemas/${gtk3.name}:$XDG_DATA_DIRS
-    wrapGApp "$out/opt/pinegrow/PinegrowLibrary" --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ udev ]}
+    wrapProgram $out/bin/pinegrow \
+      ''${makeWrapperArgs[@]} \
+      ''${gappsWrapperArgs[@]}
   '';
 
   meta = with lib; {
     homepage = "https://pinegrow.com";
     description = "UI Web Editor";
-    platforms = platforms.linux;
+    platforms = [ "x86_64-linux" ];
+    sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     license = with licenses; [ unfreeRedistributable ];
     maintainers = with maintainers; [ gador ];
+    mainProgram = "pinegrow";
   };
 }

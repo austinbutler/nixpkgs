@@ -1,39 +1,52 @@
-{ buildPythonPackage
-, fetchPypi
-, pythonOlder
-, lib
-
-# pythonPackages
-, dnspython
-, html2text
-, mail-parser
-, imapclient
+{
+  lib,
+  buildPythonPackage,
+  dnspython,
+  expiringdict,
+  fetchPypi,
+  hatchling,
+  html2text,
+  imapclient,
+  mail-parser,
+  publicsuffix2,
+  pythonOlder,
 }:
 
 buildPythonPackage rec {
   pname = "mailsuite";
-  version = "1.6.1";
+  version = "1.10.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "17bsnfjjzv8hx5h397p5pa92l6cqc53i0zjjz2p7bjj3xqzhs45a";
+    hash = "sha256-xYM4/Ou91WtYwiobE9ihlYGu8ViNTVbSLFGi8Y9yPc4=";
   };
 
-  propagatedBuildInputs = [
+  pythonRelaxDeps = [ "mail-parser" ];
+
+  build-system = [ hatchling ];
+
+  dependencies = [
     dnspython
+    expiringdict
     html2text
     mail-parser
     imapclient
+    publicsuffix2
   ];
 
   pythonImportsCheck = [ "mailsuite" ];
 
+  # Module has no tests
+  doCheck = false;
+
   meta = {
-    description = "A Python package to simplify receiving, parsing, and sending email";
+    description = "Python package to simplify receiving, parsing, and sending email";
     homepage = "https://seanthegeek.github.io/mailsuite/";
-    maintainers = with lib.maintainers; [ talyz ];
+    changelog = "https://github.com/seanthegeek/mailsuite/blob/master/CHANGELOG.md";
     license = lib.licenses.asl20;
+    maintainers = with lib.maintainers; [ talyz ];
   };
 }

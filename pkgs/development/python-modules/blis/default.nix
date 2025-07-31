@@ -1,39 +1,88 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, cython
-, hypothesis
-, numpy
-, pytest
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+  cython,
+  numpy,
+
+  # tests
+  hypothesis,
+  pytestCheckHook,
+
+  # passthru
+  blis,
+  numpy_1,
+  gitUpdater,
 }:
 
 buildPythonPackage rec {
   pname = "blis";
-  version = "0.7.6";
+  version = "1.3.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-/pexD2ihx7VMDlS+rahOGPTvto3UDJBvuHSPURR0PsY=";
+  src = fetchFromGitHub {
+    owner = "explosion";
+    repo = "cython-blis";
+    tag = "release-v${version}";
+    hash = "sha256-mSIfFjnLhPLqSNLHMS5gTeAmqmNfXpcbyH7ejv4YgQU=";
   };
 
-  nativeBuildInputs = [
+  build-system = [
+    setuptools
     cython
-  ];
-
-  propagatedBuildInputs = [
     numpy
   ];
 
+  env =
+    # Fallback to generic architectures when necessary:
+    # https://github.com/explosion/cython-blis?tab=readme-ov-file#building-blis-for-alternative-architectures
+    lib.optionalAttrs
+      (
+        # error: [Errno 2] No such file or directory: '/build/source/blis/_src/make/linux-cortexa57.jsonl'
+        (stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isAarch64)
 
-  checkInputs = [
+        # clang: error: unknown argument '-mavx512pf'; did you mean '-mavx512f'?
+        # Patching blis/_src/config/knl/make_defs.mk to remove the said flag does not work
+        || (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isx86_64)
+      )
+      {
+        BLIS_ARCH = "generic";
+      };
+
+  dependencies = [ numpy ];
+
+  pythonImportsCheck = [ "blis" ];
+
+  nativeCheckInputs = [
     hypothesis
-    pytest
+    pytestCheckHook
   ];
 
-  meta = with lib; {
+  # remove src module, so tests use the installed module instead
+  preCheck = ''
+    rm -rf ./blis
+  '';
+
+  passthru = {
+    tests = {
+      numpy_1 = blis.overridePythonAttrs (old: {
+        numpy = numpy_1;
+      });
+    };
+    updateScript = gitUpdater {
+      rev-prefix = "release-v";
+    };
+  };
+
+  meta = {
+    changelog = "https://github.com/explosion/cython-blis/releases/tag/release-v${version}";
     description = "BLAS-like linear algebra library";
     homepage = "https://github.com/explosion/cython-blis";
-    license = licenses.bsd3;
-    platforms = platforms.x86_64;
+    license = lib.licenses.bsd3;
+    maintainers = with lib.maintainers; [ nickcao ];
   };
 }

@@ -1,41 +1,70 @@
-{ lib, buildPythonPackage, fetchFromGitHub
-, beautifulsoup4
-, empty-files
-, numpy
-, pyperclip
-, pytest
+{
+  lib,
+  allpairspy,
+  approval-utilities,
+  beautifulsoup4,
+  buildPythonPackage,
+  empty-files,
+  fetchFromGitHub,
+  mock,
+  numpy,
+  pyperclip,
+  pytest,
+  pytest-asyncio,
+  pytestCheckHook,
+  setuptools,
+  testfixtures,
+  typing-extensions,
 }:
 
 buildPythonPackage rec {
-  version = "3.6.0";
   pname = "approvaltests";
+  version = "15.0.0";
+  pyproject = true;
 
-  # no tests included in PyPI tarball
   src = fetchFromGitHub {
     owner = "approvals";
     repo = "ApprovalTests.Python";
-    rev = "v${version}";
-    sha256 = "sha256-pgGuIoYV6JRM9h7hR8IeNduqsGm+UrKq+P/T1LM30NE=";
+    tag = "v${version}";
+    hash = "sha256-lXc81hQzxHxpg96OSWkkWmdmLOf4nU56dIKYVgLo+s8=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
+    allpairspy
+    approval-utilities
     beautifulsoup4
     empty-files
-    numpy
+    mock
     pyperclip
     pytest
+    testfixtures
+    typing-extensions
   ];
 
-  postPatch = ''
-    substituteInPlace setup.py \
-      --replace bs4 beautifulsoup4 \
-      --replace "pyperclip==1.5.27" "pyperclip>=1.5.27"
-  '';
+  nativeCheckInputs = [
+    numpy
+    pytest-asyncio
+    pytestCheckHook
+  ];
 
-  meta = with lib; {
+  disabledTests = [
+    "test_warnings"
+    # test runs another python interpreter, ignoring $PYTHONPATH
+    "test_command_line_verify"
+  ];
+
+  pythonImportsCheck = [
+    "approvaltests.approvals"
+    "approvaltests.reporters.generic_diff_reporter_factory"
+  ];
+
+  meta = {
     description = "Assertion/verification library to aid testing";
     homepage = "https://github.com/approvals/ApprovalTests.Python";
-    license = licenses.asl20;
-    maintainers = [ maintainers.marsam ];
+    changelog = "https://github.com/approvals/ApprovalTests.Python/releases/tag/${src.tag}";
+    license = lib.licenses.asl20;
+    maintainers = [ ];
   };
 }

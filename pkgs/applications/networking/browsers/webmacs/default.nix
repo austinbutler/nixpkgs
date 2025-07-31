@@ -1,13 +1,18 @@
-{ lib
-, mkDerivationWith
-, fetchFromGitHub
-, python3Packages
-, herbstluftwm
+{
+  lib,
+  stdenv,
+  mkDerivationWith,
+  fetchFromGitHub,
+  python3Packages,
+  herbstluftwm,
 }:
 
 mkDerivationWith python3Packages.buildPythonApplication rec {
+  inherit stdenv;
+
   pname = "webmacs";
   version = "0.8";
+  format = "setuptools";
 
   disabled = python3Packages.isPy27;
 
@@ -27,7 +32,7 @@ mkDerivationWith python3Packages.buildPythonApplication rec {
     pygments
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     python3Packages.pytest
     #python3Packages.pytest-xvfb
     #python3Packages.pytest-qt
@@ -44,7 +49,7 @@ mkDerivationWith python3Packages.buildPythonApplication rec {
   # See https://github.com/parkouss/webmacs/blob/1a04fb7bd3f33d39cb4d71621b48c2458712ed39/setup.py#L32
   # Don't know why they're using CC for g++.
   preConfigure = ''
-   export CC=$CXX
+    export CC=$CXX
   '';
 
   doCheck = false; # test dependencies not packaged up yet
@@ -57,6 +62,7 @@ mkDerivationWith python3Packages.buildPythonApplication rec {
 
   meta = with lib; {
     description = "Keyboard-based web browser with Emacs/conkeror heritage";
+    mainProgram = "webmacs";
     longDescription = ''
       webmacs is yet another browser for keyboard-based web navigation.
 

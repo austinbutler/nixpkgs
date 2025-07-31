@@ -1,47 +1,49 @@
-{ lib
-, buildPythonApplication
-, fetchPypi
-, pythonOlder
-, mock
-, lxml
-, relatorio
-, genshi
-, python-dateutil
-, polib
-, python-sql
-, werkzeug
-, wrapt
-, passlib
-, pillow
-, bcrypt
-, pydot
-, python-Levenshtein
-, simplejson
-, html2text
-, psycopg2
-, withPostgresql ? true
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchPypi,
+  pythonOlder,
+  setuptools,
+  defusedxml,
+  lxml,
+  relatorio,
+  genshi,
+  python-dateutil,
+  polib,
+  python-sql,
+  werkzeug,
+  passlib,
+  pydot,
+  levenshtein,
+  html2text,
+  weasyprint,
+  gevent,
+  pillow,
+  pwdlib,
+  simpleeval,
+  withPostgresql ? true,
+  psycopg2,
+  unittestCheckHook,
+  writableTmpDirAsHomeHook,
 }:
 
-buildPythonApplication rec {
+buildPythonPackage rec {
   pname = "trytond";
-  version = "6.2.3";
-  format = "setuptools";
+  version = "7.6.3";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "9be5d27aff9ae9b0ab73a8805145b2cc89900b9b513e6d5bfce89e9b7167f8f4";
+    hash = "sha256-i/EI9XGtQhdWPfyVIsiFX01b+nv2VmTOuevVKUu43nI=";
   };
 
-  # Tells the tests which database to use
-  DB_NAME = ":memory:";
+  build-system = [ setuptools ];
 
-  buildInputs = [
-    mock
-  ];
-
-  propagatedBuildInputs = [
+  dependencies = [
+    defusedxml
     lxml
     relatorio
     genshi
@@ -49,25 +51,43 @@ buildPythonApplication rec {
     polib
     python-sql
     werkzeug
-    wrapt
-    pillow
     passlib
 
     # extra dependencies
-    bcrypt
     pydot
-    python-Levenshtein
-    simplejson
+    levenshtein
     html2text
-  ] ++ lib.optional withPostgresql psycopg2;
+    weasyprint
+    gevent
+    pillow
+    pwdlib
+    simpleeval
+  ]
+  ++ relatorio.optional-dependencies.fodt
+  ++ passlib.optional-dependencies.bcrypt
+  ++ passlib.optional-dependencies.argon2
+  ++ lib.optional withPostgresql psycopg2;
 
-  # If unset, trytond will try to mkdir /homeless-shelter
+  # Fontconfig error: Cannot load default config file: No such file: (null)
+  doCheck = false;
+
+  nativeCheckInputs = [
+    unittestCheckHook
+    writableTmpDirAsHomeHook
+  ];
+
   preCheck = ''
-    export HOME=$(mktemp -d)
+    export TRYTOND_DATABASE_URI="sqlite://"
+    export DB_NAME=":memory:";
   '';
 
-  meta = with lib; {
-    description = "The server of the Tryton application platform";
+  unittestFlagsArray = [
+    "-s"
+    "trytond.tests"
+  ];
+
+  meta = {
+    description = "Server of the Tryton application platform";
     longDescription = ''
       The server for Tryton, a three-tier high-level general purpose
       application platform under the license GPL-3 written in Python and using
@@ -77,7 +97,12 @@ buildPythonApplication rec {
       modularity, scalability and security.
     '';
     homepage = "http://www.tryton.org/";
-    license = licenses.gpl3Plus;
-    maintainers = with maintainers; [ udono johbo ];
+    changelog = "https://foss.heptapod.net/tryton/tryton/-/blob/trytond-${version}/trytond/CHANGELOG?ref_type=tags";
+    license = lib.licenses.gpl3Plus;
+    broken = stdenv.hostPlatform.isDarwin;
+    maintainers = with lib.maintainers; [
+      udono
+      johbo
+    ];
   };
 }

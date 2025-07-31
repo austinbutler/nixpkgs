@@ -1,22 +1,29 @@
-{ lib, buildPythonPackage, fetchPypi }:
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  setuptools,
+}:
 
 buildPythonPackage rec {
   pname = "autopage";
-  version = "0.5.0";
+  version = "0.5.2";
 
   format = "pyproject";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-UwW0PMB5gXDXEk5aL+7Plp5F9KC691yzUROBFOr3a4M=";
+    hash = "sha256-gmmW10xaqfS2kWGVVHMSrGOEusOBC4UXBj8pMkgle3I=";
   };
+
+  nativeBuildInputs = [ setuptools ];
 
   pythonImportsCheck = [ "autopage" ];
 
   meta = with lib; {
-    description = "A library to provide automatic paging for console output";
+    description = "Library to provide automatic paging for console output";
     homepage = "https://github.com/zaneb/autopage";
     license = licenses.asl20;
-    maintainers = teams.openstack.members;
+    teams = [ teams.openstack ];
   };
 }

@@ -1,34 +1,41 @@
-{ lib, stdenv
-, fetchurl
-, fetchpatch
-, meson
-, ninja
-, pkg-config
-, gtk-doc
-, docbook_xsl
-, docbook_xml_dtd_412
-, libX11
-, glib
-, gtk3
-, pango
-, cairo
-, libXres
-, libstartup_notification
-, gettext
-, gobject-introspection
-, gnome
+{
+  stdenv,
+  lib,
+  fetchurl,
+  meson,
+  mesonEmulatorHook,
+  ninja,
+  pkg-config,
+  gtk-doc,
+  docbook_xsl,
+  docbook_xml_dtd_412,
+  libX11,
+  glib,
+  gtk3,
+  pango,
+  cairo,
+  libXres,
+  libXi,
+  libstartup_notification,
+  gettext,
+  gobject-introspection,
+  gnome,
 }:
 
 stdenv.mkDerivation rec {
   pname = "libwnck";
-  version = "40.1";
+  version = "43.2";
 
-  outputs = [ "out" "dev" "devdoc" ];
+  outputs = [
+    "out"
+    "dev"
+    "devdoc"
+  ];
   outputBin = "dev";
 
   src = fetchurl {
-    url = "mirror://gnome/sources/${pname}/${lib.versions.major version}/${pname}-${version}.tar.xz";
-    sha256 = "AxNPoRTvP740B1qoNnj1iqLevp/O9OojwHeeKGAdZhE=";
+    url = "mirror://gnome/sources/libwnck/${lib.versions.major version}/libwnck-${version}.tar.xz";
+    sha256 = "VadETsH7uVwIbUCWc4jyMbXAu8jP+qCGv5KQrkSeUdU=";
   };
 
   nativeBuildInputs = [
@@ -40,6 +47,9 @@ stdenv.mkDerivation rec {
     gtk-doc
     docbook_xsl
     docbook_xml_dtd_412
+  ]
+  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+    mesonEmulatorHook
   ];
 
   buildInputs = [
@@ -48,6 +58,7 @@ stdenv.mkDerivation rec {
     pango
     cairo
     libXres
+    libXi
   ];
 
   propagatedBuildInputs = [
@@ -61,7 +72,7 @@ stdenv.mkDerivation rec {
 
   passthru = {
     updateScript = gnome.updateScript {
-      packageName = pname;
+      packageName = "libwnck";
     };
   };
 

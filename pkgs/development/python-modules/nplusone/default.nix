@@ -1,23 +1,26 @@
-{ lib
-, blinker
-, buildPythonPackage
-, fetchFromGitHub
-, flake8
-, flask_sqlalchemy
-, isPy27
-, mock
-, peewee
-, pytest-django
-, pytest-pythonpath
-, pytestCheckHook
-, six
-, sqlalchemy
-, webtest
+{
+  lib,
+  blinker,
+  buildPythonPackage,
+  django,
+  fetchFromGitHub,
+  flake8,
+  flask-sqlalchemy,
+  isPy27,
+  mock,
+  peewee,
+  pytest-django,
+  pytestCheckHook,
+  pytest-cov-stub,
+  six,
+  sqlalchemy,
+  webtest,
 }:
 
 buildPythonPackage rec {
   pname = "nplusone";
   version = "1.0.0";
+  format = "setuptools";
   disabled = isPy27;
 
   src = fetchFromGitHub {
@@ -32,14 +35,14 @@ buildPythonPackage rec {
     six
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     flake8
-    flask_sqlalchemy
+    flask-sqlalchemy
     mock
     peewee
     pytest-django
-    pytest-pythonpath
     pytestCheckHook
+    pytest-cov-stub
     sqlalchemy
     webtest
   ];
@@ -54,7 +57,7 @@ buildPythonPackage rec {
 
   postPatch = ''
     substituteInPlace pytest.ini \
-      --replace "--cov nplusone --cov-report term-missing" ""
+      --replace "python_paths" "pythonpath"
   '';
 
   disabledTests = [
@@ -80,5 +83,6 @@ buildPythonPackage rec {
     homepage = "https://github.com/jmcarp/nplusone";
     maintainers = with maintainers; [ cript0nauta ];
     license = licenses.mit;
+    broken = lib.versionAtLeast django.version "4";
   };
 }

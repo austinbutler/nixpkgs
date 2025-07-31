@@ -1,48 +1,54 @@
-{ stdenv
-, lib
-, fetchFromGitHub
-, unstableGitUpdater
-, dosbox
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  unstableGitUpdater,
+  dosbox,
 
-# Docs cause an immense increase in build time, up to 2 additional hours
-, withDocs ? false
-, ghostscript
-, withGUI ? false
+  # Docs cause an immense increase in build time, up to 2 additional hours
+  withDocs ? false,
+  ghostscript,
+  withGUI ? false,
 }:
 
 stdenv.mkDerivation rec {
-  pname = "open-watcom-v2";
-  version = "unstable-2022-02-22";
-  name = "${pname}-unwrapped-${version}";
+  pname = "${passthru.prettyName}-unwrapped";
+  # nixpkgs-update: no auto update
+  version = "0-unstable-2025-05-07";
 
   src = fetchFromGitHub {
     owner = "open-watcom";
     repo = "open-watcom-v2";
-    rev = "9e25b3d6b8066f09b4f7131a31de1cf2af691e9a";
-    sha256 = "1w336070kmhc6cmn2aqr8vm0fmw3yza2n0w4asvs2kqxjgmbn6i2";
+    rev = "b168de07a7c32ad82b77dd56671b6a51a11dab70";
+    hash = "sha256-9NNJcDHxOo+NKZraGqsHqK5whO3nL0QTeh+imzhThTg=";
   };
 
   postPatch = ''
     patchShebangs *.sh
 
-    for dateSource in cmnvars.sh bld/wipfc/configure; do
+    for dateSource in bld/wipfc/configure; do
       substituteInPlace $dateSource \
-        --replace '`date ' '`date -ud "@$SOURCE_DATE_EPOCH" '
+        --replace-fail '`date ' '`date -ud "@$SOURCE_DATE_EPOCH" '
     done
 
     substituteInPlace bld/watcom/h/banner.h \
-      --replace '__DATE__' "\"$(date -ud "@$SOURCE_DATE_EPOCH" +'%b %d %Y')\"" \
-      --replace '__TIME__' "\"$(date -ud "@$SOURCE_DATE_EPOCH" +'%T')\""
+      --replace-fail '__DATE__' "\"$(date -ud "@$SOURCE_DATE_EPOCH" +'%b %d %Y')\"" \
+      --replace-fail '__TIME__' "\"$(date -ud "@$SOURCE_DATE_EPOCH" +'%T')\""
 
     substituteInPlace build/makeinit \
-      --replace '%__CYEAR__' '%OWCYEAR'
-  '' + lib.optionalString (!stdenv.hostPlatform.isDarwin) ''
+      --replace-fail '$+$(%__CYEAR__)$-' "$(date -ud "@$SOURCE_DATE_EPOCH" +'%Y')"
+  ''
+  + lib.optionalString (!stdenv.hostPlatform.isDarwin) ''
     substituteInPlace build/mif/local.mif \
-      --replace '-static' ""
+      --replace-fail '-static' ""
   '';
 
-  nativeBuildInputs = [ dosbox ]
-    ++ lib.optional withDocs ghostscript;
+  nativeBuildInputs = [
+    dosbox
+  ]
+  ++ lib.optionals withDocs [
+    ghostscript
+  ];
 
   configurePhase = ''
     runHook preConfigure
@@ -82,12 +88,17 @@ stdenv.mkDerivation rec {
   # Stripping breaks many tools
   dontStrip = true;
 
-  passthru.updateScript = unstableGitUpdater {
-    url = "https://github.com/open-watcom/open-watcom-v2.git";
+  passthru = {
+    prettyName = "open-watcom-v2";
+    updateScript = unstableGitUpdater {
+      url = "https://github.com/open-watcom/open-watcom-v2.git";
+      # no numerical releases, monthly "YYYY-MM-DD-Build" tags and daily "Current-build", "Last-CI-build" & "Coverity-scan" retagging
+      hardcodeZeroVersion = true;
+    };
   };
 
   meta = with lib; {
-    description = "The v2 fork of the Open Watcom suite of compilers and tools";
+    description = "V2 fork of the Open Watcom suite of compilers and tools";
     longDescription = ''
       A fork of Open Watcom: A C/C++/Fortran compiler and assembler suite
       targeting a multitude of architectures (x86, IA-32, Alpha AXP, MIPS,
@@ -110,14 +121,20 @@ stdenv.mkDerivation rec {
       - Broken C++ compiler pre-compiled header template support is fixed
       - Many C++ compiler crashes are fixed
       - Debugger has no length limit for any used environment variable
-    '' + lib.optionalString (!withDocs) ''
+    ''
+    + lib.optionalString (!withDocs) ''
 
       The documentation has been excluded from this build for build time reasons. It can be found here:
       https://github.com/open-watcom/open-watcom-v2/wiki/Open-Watcom-Documentation
     '';
     homepage = "https://open-watcom.github.io";
     license = licenses.watcom;
-    platforms = [ "x86_64-linux" "i686-linux" "x86_64-darwin" "x86_64-windows" "i686-windows" ];
+    platforms = with platforms; windows ++ unix;
+    badPlatforms = platforms.riscv ++ [
+      "powerpc64-linux"
+      "powerpc64le-linux"
+      "mips64el-linux"
+    ];
     maintainers = with maintainers; [ OPNA2608 ];
   };
 }

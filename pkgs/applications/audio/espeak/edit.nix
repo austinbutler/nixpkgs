@@ -1,4 +1,13 @@
-{ lib, stdenv, fetchurl, pkg-config, unzip, portaudio, wxGTK, sox }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+  pkg-config,
+  unzip,
+  portaudio,
+  wxGTK32,
+  sox,
+}:
 
 stdenv.mkDerivation rec {
   pname = "espeakedit";
@@ -9,8 +18,14 @@ stdenv.mkDerivation rec {
     sha256 = "0x8s7vpb7rw5x37yjzy1f98m4f2csdg89libb74fm36gn8ly0hli";
   };
 
-  nativeBuildInputs = [ pkg-config unzip ];
-  buildInputs = [ portaudio wxGTK ];
+  nativeBuildInputs = [
+    pkg-config
+    unzip
+  ];
+  buildInputs = [
+    portaudio
+    wxGTK32
+  ];
 
   # TODO:
   # Uhm, seems like espeakedit still wants espeak-data/ in $HOME, even thought
@@ -27,6 +42,7 @@ stdenv.mkDerivation rec {
     ./espeakedit-configurable-sox-path.patch
     ./espeakedit-configurable-path-espeak-data.patch
     ./espeakedit-gcc6.patch
+    ./espeakedit-wxgtk30.patch
   ];
 
   postPatch = ''
@@ -39,7 +55,8 @@ stdenv.mkDerivation rec {
             -e "s|@prefix@|$out|" \
             -i "$file"
     done
-  '' + lib.optionalString (portaudio.api_version == 19) ''
+  ''
+  + lib.optionalString (portaudio.api_version == 19) ''
     cp src/portaudio19.h src/portaudio.h
   '';
 
@@ -54,7 +71,8 @@ stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "Phoneme editor for espeak";
-    homepage = "http://espeak.sourceforge.net/";
+    mainProgram = "espeakedit";
+    homepage = "https://espeak.sourceforge.net/";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
   };

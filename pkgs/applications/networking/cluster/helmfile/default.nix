@@ -1,29 +1,63 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{
+  lib,
+  buildGoModule,
+  fetchFromGitHub,
+  installShellFiles,
+  makeWrapper,
+  pluginsDir ? null,
+}:
 
 buildGoModule rec {
   pname = "helmfile";
-  version = "0.143.0";
+  version = "1.1.3";
 
   src = fetchFromGitHub {
-    owner = "roboll";
+    owner = "helmfile";
     repo = "helmfile";
     rev = "v${version}";
-    sha256 = "sha256-3Kuj3umyD7fooa4alNJAm7Adu+7EQvoB7Gt/LRjgW94=";
+    hash = "sha256-Nsfqd54QNRkeqUxUA05+0gtcoopz090/wW+zdFsEii8=";
   };
 
-  vendorSha256 = "sha256-/MbKYPcZ7cOPQKT+nYQaaCiahKLcesrSVKNo8hKFlf0=";
+  vendorHash = "sha256-fiwxmF91UCTNi3jgrJnWgPswWXQFLg70d+h3frnu7kU=";
+
+  proxyVendor = true; # darwin/linux hash mismatch
 
   doCheck = false;
 
   subPackages = [ "." ];
 
-  ldflags = [ "-s" "-w" "-X github.com/roboll/helmfile/pkg/app/version.Version=${version}" ];
+  ldflags = [
+    "-s"
+    "-w"
+    "-X go.szostok.io/version.version=v${version}"
+  ];
+
+  nativeBuildInputs = [ installShellFiles ] ++ lib.optional (pluginsDir != null) makeWrapper;
+
+  postInstall =
+    lib.optionalString (pluginsDir != null) ''
+      wrapProgram $out/bin/helmfile \
+        --set HELM_PLUGINS "${pluginsDir}"
+    ''
+    + ''
+      installShellCompletion --cmd helmfile \
+        --bash <($out/bin/helmfile completion bash) \
+        --fish <($out/bin/helmfile completion fish) \
+        --zsh <($out/bin/helmfile completion zsh)
+    '';
 
   meta = {
-    description = "Deploy Kubernetes Helm charts";
-    homepage = "https://github.com/roboll/helmfile";
+    description = "Declarative spec for deploying Helm charts";
+    mainProgram = "helmfile";
+    longDescription = ''
+      Declaratively deploy your Kubernetes manifests, Kustomize configs,
+      and charts as Helm releases in one shot.
+    '';
+    homepage = "https://helmfile.readthedocs.io/";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ pneumaticat yurrriq ];
-    platforms = lib.platforms.unix;
+    maintainers = with lib.maintainers; [
+      pneumaticat
+      yurrriq
+    ];
   };
 }

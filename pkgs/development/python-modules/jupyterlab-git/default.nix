@@ -1,61 +1,79 @@
-{ lib
-, stdenv
-, buildPythonPackage
-, fetchPypi
-, git
-, jupyter_server
-, jupyter-packaging
-, jupyterlab
-, nbdime
-, nbformat
-, pexpect
-, pytest-asyncio
-, pytest-tornasync
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  git,
+  gitMinimal,
+  nodejs,
+  writableTmpDirAsHomeHook,
+  yarn-berry_3,
+  jupyter-server,
+  hatch-jupyter-builder,
+  hatch-nodejs-version,
+  hatchling,
+  jupyterlab,
+  nbdime,
+  nbformat,
+  packaging,
+  pexpect,
+  pytest-asyncio,
+  pytest-jupyter,
+  pytest-tornasync,
+  pytestCheckHook,
+  traitlets,
 }:
 
 buildPythonPackage rec {
   pname = "jupyterlab-git";
-  version = "0.34.1";
+  version = "0.51.2";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
-
-  src = fetchPypi {
-    pname = "jupyterlab_git";
-    inherit version;
-    sha256 = "c7a03f526eb19175df73fedd5dee3cdae2d39e0474eef8f55c1c55b219ab26d9";
+  src = fetchFromGitHub {
+    owner = "jupyterlab";
+    repo = "jupyterlab-git";
+    tag = "v${version}";
+    hash = "sha256-YQWS+/GfQzkQ/n0xBq+K8lJ9tjvIRJxa3w3AzNARpDo=";
   };
 
   nativeBuildInputs = [
-    jupyter-packaging
+    nodejs
+    yarn-berry_3.yarnBerryConfigHook
   ];
 
-  propagatedBuildInputs = [
-    jupyter_server
-    nbdime
-    git
-    nbformat
-    pexpect
-  ];
+  offlineCache = yarn-berry_3.fetchYarnBerryDeps {
+    inherit src;
+    hash = "sha256-9GmQv4UYH+uRPgAZed6IJC+7uMKhlXvokVwd248yi/4=";
+  };
 
-  checkInputs = [
+  build-system = [
+    hatch-jupyter-builder
+    hatch-nodejs-version
+    hatchling
     jupyterlab
+  ];
+
+  dependencies = [
+    jupyter-server
+    nbdime
+    nbformat
+    packaging
+    pexpect
+    traitlets
+  ];
+
+  propagatedBuildInputs = [ git ];
+
+  nativeCheckInputs = [
+    gitMinimal
     pytest-asyncio
+    pytest-jupyter
     pytest-tornasync
     pytestCheckHook
+    writableTmpDirAsHomeHook
   ];
-
-  # All Tests on darwin fail or are skipped due to sandbox
-  doCheck = !stdenv.isDarwin;
 
   disabledTestPaths = [
     "jupyterlab_git/tests/test_handlers.py"
-    # PyPI doesn't ship all required files for the tests
-    "jupyterlab_git/tests/test_config.py"
-    "jupyterlab_git/tests/test_integrations.py"
-    "jupyterlab_git/tests/test_remote.py"
-    "jupyterlab_git/tests/test_settings.py"
   ];
 
   disabledTests = [
@@ -63,13 +81,14 @@ buildPythonPackage rec {
     "test_Git_get_nbdiff_dict"
   ];
 
-  pythonImportsCheck = [
-    "jupyterlab_git"
-  ];
+  pythonImportsCheck = [ "jupyterlab_git" ];
+
+  __darwinAllowLocalNetworking = true;
 
   meta = with lib; {
     description = "Jupyter lab extension for version control with Git";
     homepage = "https://github.com/jupyterlab/jupyterlab-git";
+    changelog = "https://github.com/jupyterlab/jupyterlab-git/blob/v${version}/CHANGELOG.md";
     license = with licenses; [ bsd3 ];
     maintainers = with maintainers; [ chiroptical ];
   };

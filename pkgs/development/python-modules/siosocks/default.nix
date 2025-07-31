@@ -1,33 +1,44 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pytest-asyncio
-, pytest-trio
-, pytestCheckHook
-, pythonOlder
-, trio
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  pytest-asyncio,
+  pytest-trio,
+  pytest-mock,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
+  trio,
 }:
 
 buildPythonPackage rec {
   pname = "siosocks";
-  version = "0.2.0";
-  format = "setuptools";
+  version = "0.3.0";
+  pyproject = true;
 
   disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-k2+qTtxkF0rT5LLPW8icePbf9jNopdo9uDp3NPA9SRo=";
+    hash = "sha256-uja79vWhPYOhhTUBIh+XpS4GnrYJy0/XpDXXQjnyHWM=";
   };
 
-  propagatedBuildInputs = [
-    trio
-  ];
+  build-system = [ setuptools ];
 
-  checkInputs = [
+  dependencies = [ trio ];
+
+  nativeCheckInputs = [
     pytest-asyncio
+    pytest-mock
     pytestCheckHook
     pytest-trio
+  ];
+
+  disabledTests = [
+    # network access
+    "test_connection_direct_success"
+    "test_connection_socks_success"
+    "test_connection_socks_failed"
   ];
 
   disabledTestPaths = [
@@ -37,9 +48,7 @@ buildPythonPackage rec {
     "tests/test_socketserver.py"
   ];
 
-  pythonImportsCheck = [
-    "siosocks"
-  ];
+  pythonImportsCheck = [ "siosocks" ];
 
   meta = with lib; {
     description = "Python socks 4/5 client/server library/framework";

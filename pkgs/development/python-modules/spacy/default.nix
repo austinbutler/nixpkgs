@@ -1,91 +1,155 @@
-{ lib
-, buildPythonPackage
-, callPackage
-, fetchPypi
-, pythonOlder
-, pytest
-, blis
-, catalogue
-, cymem
-, jinja2
-, jsonschema
-, murmurhash
-, numpy
-, preshed
-, requests
-, setuptools
-, srsly
-, spacy-legacy
-, thinc
-, typer
-, wasabi
-, packaging
-, pathy
-, pydantic
-, python
-, tqdm
-, typing-extensions
-, spacy-loggers
-, langcodes
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  cymem,
+  cython,
+  murmurhash,
+  numpy,
+  preshed,
+  thinc,
+
+  # dependencies
+  catalogue,
+  jinja2,
+  langcodes,
+  packaging,
+  pydantic,
+  requests,
+  setuptools,
+  spacy-legacy,
+  spacy-loggers,
+  srsly,
+  tqdm,
+  typer,
+  wasabi,
+  weasel,
+
+  # optional-dependencies
+  spacy-transformers,
+  spacy-lookups-data,
+
+  # tests
+  pytestCheckHook,
+  hypothesis,
+  mock,
+
+  # passthru
+  writeScript,
+  git,
+  nix,
+  nix-update,
+  callPackage,
 }:
 
 buildPythonPackage rec {
   pname = "spacy";
-  version = "3.2.3";
+  version = "3.8.7";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
-
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-JdAz/Ae4+/yb3Te3cLilhtxBTb1gMShEmvMldqOJFnM=";
+  src = fetchFromGitHub {
+    owner = "explosion";
+    repo = "spaCy";
+    tag = "release-v${version}";
+    hash = "sha256-mRra5/4W3DFVI/KbReTg2Ey9mOC6eQQ31/QDt7Pw0fU=";
   };
 
-  propagatedBuildInputs = [
-    blis
+  build-system = [
+    cymem
+    cython
+    murmurhash
+    numpy
+    preshed
+    thinc
+  ];
+
+  pythonRelaxDeps = [ "thinc" ];
+
+  dependencies = [
     catalogue
     cymem
     jinja2
-    jsonschema
+    langcodes
     murmurhash
     numpy
     packaging
-    pathy
     preshed
     pydantic
     requests
     setuptools
-    srsly
     spacy-legacy
+    spacy-loggers
+    srsly
     thinc
     tqdm
     typer
     wasabi
-    spacy-loggers
-    langcodes
-  ] ++ lib.optional (pythonOlder "3.8") typing-extensions;
-
-  postPatch = ''
-    substituteInPlace setup.cfg \
-      --replace "pydantic>=1.7.4,!=1.8,!=1.8.1,<1.9.0" "pydantic~=1.2"
-  '';
-
-  checkInputs = [
-    pytest
+    weasel
   ];
 
-  doCheck = false;
-  checkPhase = ''
-    ${python.interpreter} -m pytest spacy/tests --vectors --models --slow
+  optional-dependencies = {
+    transformers = [ spacy-transformers ];
+    lookups = [ spacy-lookups-data ];
+  };
+
+  nativeCheckInputs = [
+    pytestCheckHook
+    hypothesis
+    mock
+  ];
+
+  # Fixes ModuleNotFoundError when running tests on Cythonized code. See #255262
+  preCheck = ''
+    cd $out
   '';
+
+  disabledTestMarks = [ "slow" ];
+
+  disabledTests = [
+    # touches network
+    "test_download_compatibility"
+    "test_validate_compatibility_table"
+    "test_project_assets"
+    "test_find_available_port"
+
+    # Tests for presence of outdated (and thus missing) spacy models
+    # https://github.com/explosion/spaCy/issues/13856
+    "test_registry_entries"
+  ];
 
   pythonImportsCheck = [ "spacy" ];
 
-  passthru.tests.annotation = callPackage ./annotation-test { };
+  passthru = {
+    updateScript = writeScript "update-spacy" ''
+      #!${stdenv.shell}
+      set -eou pipefail
+      PATH=${
+        lib.makeBinPath [
+          git
+          nix
+          nix-update
+        ]
+      }
 
-  meta = with lib; {
-    description = "Industrial-strength Natural Language Processing (NLP) with Python and Cython";
+      nix-update python3Packages.spacy --version-regex 'release-v([0-9.]+)'
+
+      # update spacy models as well
+      echo | nix-shell maintainers/scripts/update.nix --argstr package python3Packages.spacy-models.en_core_web_sm
+    '';
+    tests.annotation = callPackage ./annotation-test { };
+  };
+
+  __darwinAllowLocalNetworking = true; # needed for test_find_available_port
+
+  meta = {
+    description = "Industrial-strength Natural Language Processing (NLP)";
     homepage = "https://github.com/explosion/spaCy";
-    license = licenses.mit;
-    maintainers = with maintainers; [ ];
+    changelog = "https://github.com/explosion/spaCy/releases/tag/release-v${version}";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ sarahec ];
+    mainProgram = "spacy";
   };
 }

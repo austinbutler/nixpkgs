@@ -1,49 +1,58 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pythonOlder
-, setuptools
-, pytest-runner
-, pytest
-, pytest-asyncio
-, twisted
-, treq
-, tornado
-, aiohttp
-, uritemplate
-, pyjwt
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  pythonOlder,
+  flit-core,
+  uritemplate,
+  pyjwt,
+  pytestCheckHook,
+  aiohttp,
+  httpx,
+  importlib-resources,
+  pytest-asyncio,
+  pytest-tornasync,
 }:
 
 buildPythonPackage rec {
   pname = "gidgethub";
-  version = "5.0.1";
+  version = "5.4.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "3efbd6998600254ec7a2869318bd3ffde38edc3a0d37be0c14bc46b45947b682";
+    hash = "sha256-dHDXcj18F0NHGi1i55yHUvuhKxwJcuS61XJSM4pQHb0=";
   };
 
-  nativeBuildInputs = [ setuptools pytest-runner ];
-  checkInputs = [ pytest pytest-asyncio twisted treq tornado aiohttp ];
-  propagatedBuildInputs = [
+  build-system = [ flit-core ];
+
+  dependencies = [
     uritemplate
     pyjwt
+  ]
+  ++ pyjwt.optional-dependencies.crypto;
+
+  nativeCheckInputs = [
+    pytestCheckHook
+    aiohttp
+    httpx
+    importlib-resources
+    pytest-asyncio
+    pytest-tornasync
   ];
 
-  postPatch = ''
-    substituteInPlace setup.py \
-      --replace "extras_require=extras_require," "extras_require=None,"
-  '';
-
-  # requires network (reqests github.com)
-  doCheck = false;
+  disabledTests = [
+    # Require internet connection
+    "test__request"
+    "test_get"
+  ];
 
   meta = with lib; {
-    description = "An async GitHub API library";
+    description = "Async GitHub API library";
     homepage = "https://github.com/brettcannon/gidgethub";
     license = licenses.asl20;
-    maintainers = [ maintainers.costrouc ];
+    maintainers = [ ];
   };
 }

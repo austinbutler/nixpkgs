@@ -1,101 +1,81 @@
-{ lib
-, stdenv
-, buildPythonPackage
-, python
-, fetchPypi
-, pytestCheckHook
-, blis
-, catalogue
-, cymem
-, cython
-, contextvars
-, dataclasses
-, Accelerate
-, CoreFoundation
-, CoreGraphics
-, CoreVideo
-, hypothesis
-, mock
-, murmurhash
-, numpy
-, plac
-, pythonOlder
-, preshed
-, pydantic
-, srsly
-, tqdm
-, typing-extensions
-, wasabi
+{
+  lib,
+  blas,
+  blis,
+  buildPythonPackage,
+  catalogue,
+  confection,
+  cymem,
+  cython,
+  fetchPypi,
+  hypothesis,
+  mock,
+  murmurhash,
+  numpy,
+  preshed,
+  pydantic,
+  pytestCheckHook,
+  setuptools,
+  srsly,
+  wasabi,
 }:
 
 buildPythonPackage rec {
   pname = "thinc";
-  version = "8.0.13";
-  format = "setuptools";
-
-  disabled = pythonOlder "3.6";
+  version = "8.3.6";
+  pyproject = true;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-R2YqOuM9RFp3tup7dyREgFx7uomR8SLjUNr3Le3IFxo=";
+    hash = "sha256-SZg/m33cQ0OpUyaUqRGN0hbXpgBSCiGEmkO2wmjsbK0=";
   };
 
-  postPatch = ''
-    substituteInPlace setup.cfg \
-      --replace "pydantic>=1.7.4,!=1.8,!=1.8.1,<1.9.0" "pydantic"
-  '';
-
-  buildInputs = [
+  build-system = [
+    blis
+    cymem
     cython
-  ] ++ lib.optionals stdenv.isDarwin [
-    Accelerate
-    CoreFoundation
-    CoreGraphics
-    CoreVideo
+    murmurhash
+    numpy
+    preshed
+    setuptools
   ];
 
-  propagatedBuildInputs = [
+  buildInputs = [
+    blas
+  ];
+
+  dependencies = [
     blis
     catalogue
+    confection
     cymem
     murmurhash
     numpy
-    plac
     preshed
-    srsly
-    tqdm
     pydantic
+    srsly
     wasabi
-  ] ++ lib.optional (pythonOlder "3.8") [
-    typing-extensions
-  ] ++ lib.optional (pythonOlder "3.7") [
-    contextvars
-    dataclasses
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     hypothesis
     mock
     pytestCheckHook
   ];
 
-  # Add native extensions.
   preCheck = ''
-    export PYTHONPATH=$out/${python.sitePackages}:$PYTHONPATH
-
     # avoid local paths, relative imports wont resolve correctly
     mv thinc/tests tests
     rm -r thinc
   '';
 
-  pythonImportsCheck = [
-    "thinc"
-  ];
+  pythonImportsCheck = [ "thinc" ];
 
-  meta = with lib; {
-    description = "Practical Machine Learning for NLP in Python";
+  meta = {
+    description = "Library for NLP machine learning";
     homepage = "https://github.com/explosion/thinc";
-    license = licenses.mit;
-    maintainers = with maintainers; [ aborsu ];
+    changelog = "https://github.com/explosion/thinc/releases/tag/v${version}";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ aborsu ];
   };
 }

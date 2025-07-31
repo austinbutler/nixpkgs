@@ -1,26 +1,37 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, libGLU, libGL
-, xorg
-, numpy
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  setuptools,
+  libGLU,
+  libGL,
+  xorg,
+  numpy,
 }:
 
 buildPythonPackage rec {
   pname = "pybullet";
-  version = "3.2.0";
+  version = "3.2.7";
+  pyproject = true;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "df02fb0ab74a6e7c4e1d7a3e2ffd7e4760a30cdeccb9fa6dd19f334122ec00f2";
+    hash = "sha256-BCh5240QGsdZDe5HX8at7VCLhf4Sc/27/eHYi9IA4U8=";
   };
 
+  nativeBuildInputs = [ setuptools ];
+
   buildInputs = [
-    libGLU libGL
+    libGLU
+    libGL
     xorg.libX11
   ];
 
-  propagatedBuildInputs =  [ numpy ];
+  propagatedBuildInputs = [ numpy ];
+
+  # Fix GCC 14 build.
+  # from incompatible pointer type [-Wincompatible-pointer-types
+  env.NIX_CFLAGS_COMPILE = "-Wno-error=incompatible-pointer-types";
 
   patches = [
     # make sure X11 and OpenGL can be found at runtime
@@ -29,6 +40,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Open-source software for robot simulation, integrated with OpenAI Gym";
+    downloadPage = "https://github.com/bulletphysics/bullet3";
     homepage = "https://pybullet.org/";
     license = licenses.zlib;
     maintainers = with maintainers; [ timokau ];

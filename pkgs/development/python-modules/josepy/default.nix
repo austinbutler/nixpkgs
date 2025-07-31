@@ -1,49 +1,40 @@
-{ lib
-, buildPythonPackage
-, cryptography
-, fetchPypi
-, pyopenssl
-, pytestCheckHook
-, pythonOlder
-, setuptools
+{
+  lib,
+  buildPythonPackage,
+  cryptography,
+  fetchFromGitHub,
+  poetry-core,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "josepy";
-  version = "1.12.0";
-  format = "setuptools";
+  version = "2.0.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
-
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "267004a64f08c016cd54b7aaf7c323fa3ef3679fb62f4b086cd56448d0fecb25";
+  src = fetchFromGitHub {
+    owner = "certbot";
+    repo = "josepy";
+    tag = "v${version}";
+    hash = "sha256-9hY3A+XSoVrRLds4tNV+5HWkmMwcS9UtehrKoj0OIEw=";
   };
 
-  propagatedBuildInputs = [
-    pyopenssl
+  build-system = [ poetry-core ];
+
+  dependencies = [
     cryptography
-    setuptools
   ];
 
-  checkInputs = [
-    pytestCheckHook
-  ];
+  nativeCheckInputs = [ pytestCheckHook ];
 
-  postPatch = ''
-    substituteInPlace pytest.ini \
-      --replace " --flake8 --cov-report xml --cov-report=term-missing --cov=josepy --cov-config .coveragerc" ""
-    sed -i '/flake8-ignore/d' pytest.ini
-  '';
+  pythonImportsCheck = [ "josepy" ];
 
-  pythonImportsCheck = [
-    "josepy"
-  ];
-
-  meta = with lib; {
+  meta = {
+    changelog = "https://github.com/certbot/josepy/blob/${src.tag}/CHANGELOG.rst";
     description = "JOSE protocol implementation in Python";
-    homepage = "https://github.com/jezdez/josepy";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ ];
+    mainProgram = "jws";
+    homepage = "https://github.com/certbot/josepy";
+    license = lib.licenses.asl20;
+    maintainers = with lib.maintainers; [ dotlambda ];
   };
 }

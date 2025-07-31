@@ -1,43 +1,59 @@
-{ lib
-, assertpy
-, buildPythonPackage
-, fetchFromGitHub
-, poetry-core
-, pytest-asyncio
-, pytest-mockservers
-, pytest-resource-path
-, pytest-sugar
-, pytestCheckHook
-, time-machine
+{
+  lib,
+  aiohttp,
+  assertpy,
+  buildPythonPackage,
+  fetchFromGitHub,
+  freezegun,
+  poetry-core,
+  pycryptodome,
+  pytest-asyncio,
+  pytest-mockservers,
+  pytest-resource-path,
+  pytestCheckHook,
+  pythonAtLeast,
+  pythonOlder,
+  pytz,
+  time-machine,
 }:
 
 buildPythonPackage rec {
   pname = "aioswitcher";
-  version = "2.0.8";
-  format = "pyproject";
+  version = "6.0.1";
+  pyproject = true;
+
+  disabled = pythonOlder "3.9";
 
   src = fetchFromGitHub {
     owner = "TomerFi";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-4+XGSaHZNYjId0bTOwCkYpb1K/pM8WtN5/NI+GVaI7M=";
+    repo = "aioswitcher";
+    tag = version;
+    hash = "sha256-w1gTLieZkn4iGrswyqRjwMrHX9ZtEMPB2zaKblJFlSw=";
   };
 
-  nativeBuildInputs = [
-    poetry-core
+  __darwinAllowLocalNetworking = true;
+
+  build-system = [ poetry-core ];
+
+  pythonRelaxDeps = [ "aiohttp" ];
+
+  dependencies = [
+    aiohttp
+    pycryptodome
   ];
 
   preCheck = ''
     export TZ=Asia/Jerusalem
   '';
 
-  checkInputs = [
+  nativeCheckInputs = [
     assertpy
+    freezegun
     pytest-asyncio
     pytest-mockservers
     pytest-resource-path
-    pytest-sugar
     pytestCheckHook
+    pytz
     time-machine
   ];
 
@@ -47,6 +63,11 @@ buildPythonPackage rec {
     "test_schedule_parser_with_a_daily_recurring_enabled_schedule_data"
     "test_schedule_parser_with_a_partial_daily_recurring_enabled_schedule_data"
     "test_schedule_parser_with_a_non_recurring_enabled_schedule_data"
+  ]
+  ++ lib.optionals (pythonAtLeast "3.12") [
+    # ssertionError: Expected <'I' format requires 0 <= number <= 4294967295> to be equal to <argument out of range>, but was not.
+    "test_minutes_to_hexadecimal_seconds_with_a_negative_value_should_throw_an_error"
+    "test_current_timestamp_to_hexadecimal_with_errornous_value_should_throw_an_error"
   ];
 
   pythonImportsCheck = [ "aioswitcher" ];
@@ -54,7 +75,8 @@ buildPythonPackage rec {
   meta = with lib; {
     description = "Python module to interact with Switcher water heater";
     homepage = "https://github.com/TomerFi/aioswitcher";
-    license = with licenses; [ mit ];
+    changelog = "https://github.com/TomerFi/aioswitcher/releases/tag/${src.tag}";
+    license = licenses.asl20;
     maintainers = with maintainers; [ fab ];
   };
 }

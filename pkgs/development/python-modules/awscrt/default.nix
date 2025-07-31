@@ -1,51 +1,33 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, cmake
-, perl
-, stdenv
-, gcc10
-, CoreFoundation
-, Security
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  setuptools,
+  cmake,
+  perl,
+  stdenv,
+  pythonOlder,
 }:
 
 buildPythonPackage rec {
   pname = "awscrt";
-  version = "0.13.3";
-  format = "setuptools";
+  version = "0.27.4";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-1GaKDpOGX/YbM4rByTw0nYgwHYFvOLHZ0GRvanX3vAU=";
+    hash = "sha256-yyPLdnyi48AAfImbKJ1mjSiusFVTTfNadBhHE19s2Rw=";
   };
 
-  buildInputs = lib.optionals stdenv.isDarwin [
-    CoreFoundation
-    Security
-  ];
+  build-system = [ setuptools ];
 
-  # Required to suppress -Werror
-  # https://github.com/NixOS/nixpkgs/issues/39687
-  hardeningDisable = lib.optionals stdenv.cc.isClang [
-    "strictoverflow"
-  ];
-
-  # gcc <10 is not supported, LLVM on darwin is just fine
-  nativeBuildInputs = [
-    cmake
-  ] ++ lib.optionals (!stdenv.isDarwin && stdenv.isAarch64) [
-    gcc10
-    perl
-  ];
+  nativeBuildInputs = [ cmake ] ++ lib.optionals (!stdenv.hostPlatform.isDarwin) [ perl ];
 
   dontUseCmakeConfigure = true;
 
-  pythonImportsCheck = [
-    "awscrt"
-  ];
+  pythonImportsCheck = [ "awscrt" ];
 
   # Unable to import test module
   # https://github.com/awslabs/aws-crt-python/issues/281
@@ -53,6 +35,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     homepage = "https://github.com/awslabs/aws-crt-python";
+    changelog = "https://github.com/awslabs/aws-crt-python/releases/tag/v${version}";
     description = "Python bindings for the AWS Common Runtime";
     license = licenses.asl20;
     maintainers = with maintainers; [ davegallant ];

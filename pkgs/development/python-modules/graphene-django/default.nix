@@ -1,33 +1,37 @@
-{ lib
-, buildPythonPackage
-, pythonOlder
-, fetchFromGitHub
+{
+  stdenv,
+  lib,
+  buildPythonPackage,
+  pythonOlder,
+  fetchFromGitHub,
 
-, graphene
-, graphql-core
-, django
-, djangorestframework
-, promise
-, text-unidecode
+  graphene,
+  graphql-core,
+  django,
+  djangorestframework,
+  promise,
+  text-unidecode,
 
-, django-filter
-, mock
-, pytest-django
-, pytest-random-order
-, pytestCheckHook
+  django-filter,
+  mock,
+  py,
+  pytest-django,
+  pytest-random-order,
+  pytest7CheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "graphene-django";
-  version = "unstable-2021-06-11";
+  version = "3.2.3";
   format = "setuptools";
+
   disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "graphql-python";
-    repo = pname;
-    rev = "e7f7d8da07ba1020f9916153f17e97b0ec037712";
-    sha256 = "0b33q1im90ahp3gzy9wx5amfzy6q57ydjpy5rn988gh81hbyqaxv";
+    repo = "graphene-django";
+    tag = "v${version}";
+    hash = "sha256-uMkzgXn3YRgEU46Sv5lg60cvetHir9bv0mzJGDv79DI=";
   };
 
   postPatch = ''
@@ -48,17 +52,31 @@ buildPythonPackage rec {
     export DJANGO_SETTINGS_MODULE=examples.django_test_settings
   '';
 
-  checkInputs = [
+  nativeCheckInputs = [
     django-filter
     mock
+    py
     pytest-django
     pytest-random-order
-    pytestCheckHook
+    pytest7CheckHook
+  ];
+
+  disabledTests = [
+    # https://github.com/graphql-python/graphene-django/issues/1510
+    "test_should_filepath_convert_string"
+    "test_should_choice_convert_enum"
+    "test_should_multiplechoicefield_convert_to_list_of_enum"
+    "test_perform_mutate_success_with_enum_choice_field"
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    # this test touches files in the "/" directory and fails in darwin sandbox
+    "test_should_filepath_convert_string"
   ];
 
   meta = with lib; {
     description = "Integrate GraphQL into your Django project";
     homepage = "https://github.com/graphql-python/graphene-django";
+    changelog = "https://github.com/graphql-python/graphene-django/releases/tag/v${version}";
     license = licenses.mit;
     maintainers = with maintainers; [ hexa ];
   };

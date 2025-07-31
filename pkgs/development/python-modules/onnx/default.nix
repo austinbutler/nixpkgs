@@ -1,52 +1,90 @@
-{ lib
-, buildPythonPackage
-, cmake
-, fetchPypi
-, isPy27
-, nbval
-, numpy
-, protobuf
-, pytestCheckHook
-, six
-, tabulate
-, typing-extensions
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  cmake,
+  pybind11,
+  setuptools,
+
+  # buildInputs
+  abseil-cpp,
+  protobuf,
+  gtest,
+
+  # dependencies
+  numpy,
+  typing-extensions,
+
+  # tests
+  google-re2,
+  ml-dtypes,
+  nbval,
+  parameterized,
+  pillow,
+  pytestCheckHook,
+  tabulate,
+  writableTmpDirAsHomeHook,
 }:
 
+let
+  gtestStatic = gtest.override { static = true; };
+in
 buildPythonPackage rec {
   pname = "onnx";
-  version = "1.10.2";
-  format = "setuptools";
+  version = "1.18.0";
+  pyproject = true;
 
-  disabled = isPy27;
-
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-JNc8p9/X5sczmUT4lVS0AQcZiZM3kk/KFEfY8bXbUNY=";
+  src = fetchFromGitHub {
+    owner = "onnx";
+    repo = "onnx";
+    tag = "v${version}";
+    hash = "sha256-UhtF+CWuyv5/Pq/5agLL4Y95YNP63W2BraprhRqJOag=";
   };
 
-  nativeBuildInputs = [
+  build-system = [
     cmake
+    protobuf
+    setuptools
   ];
 
-  propagatedBuildInputs = [
+  buildInputs = [
+    abseil-cpp
+    gtestStatic
+    pybind11
+  ];
+
+  dependencies = [
     protobuf
     numpy
-    six
     typing-extensions
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
+    google-re2
+    ml-dtypes
     nbval
+    parameterized
+    pillow
     pytestCheckHook
     tabulate
+    writableTmpDirAsHomeHook
   ];
 
   postPatch = ''
-    chmod +x tools/protoc-gen-mypy.sh.in
-    patchShebangs tools/protoc-gen-mypy.sh.in tools/protoc-gen-mypy.py
+    rm -r third_party
 
-    substituteInPlace setup.py \
-      --replace "setup_requires.append('pytest-runner')" ""
+    chmod +x tools/protoc-gen-mypy.sh.in
+    patchShebangs tools/protoc-gen-mypy.sh.in
+  '';
+
+  preConfigure = ''
+    # Set CMAKE_INSTALL_LIBDIR to lib explicitly, because otherwise it gets set
+    # to lib64 and cmake incorrectly looks for the protobuf library in lib64
+    export CMAKE_ARGS="-DCMAKE_INSTALL_LIBDIR=lib -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+    export CMAKE_ARGS+=" -Dgoogletest_STATIC_LIBRARIES=${gtestStatic}/lib/libgtest.a"
+    export ONNX_BUILD_TESTS=1
   '';
 
   preBuild = ''
@@ -61,14 +99,30 @@ buildPythonPackage rec {
   # The setup.py does all the configuration
   dontUseCmakeConfigure = true;
 
-  pythonImportsCheck = [
-    "onnx"
+  # detecting source dir as a python package confuses pytest
+  preCheck = ''
+    rm onnx/__init__.py
+  '';
+
+  enabledTestPaths = [
+    "onnx/test"
+    "examples"
   ];
 
-  meta = with lib; {
+  __darwinAllowLocalNetworking = true;
+
+  postCheck = ''
+    # run "cpp" tests
+    .setuptools-cmake-build/onnx_gtests
+  '';
+
+  pythonImportsCheck = [ "onnx" ];
+
+  meta = {
     description = "Open Neural Network Exchange";
     homepage = "https://onnx.ai";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ acairncross ];
+    changelog = "https://github.com/onnx/onnx/releases/tag/v${version}";
+    license = lib.licenses.asl20;
+    maintainers = with lib.maintainers; [ acairncross ];
   };
 }

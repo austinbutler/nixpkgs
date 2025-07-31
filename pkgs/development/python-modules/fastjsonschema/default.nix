@@ -1,55 +1,52 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, fetchpatch
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchFromGitHub,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "fastjsonschema";
-  version = "2.15.2";
-  format = "setuptools";
+  version = "2.21.1";
+  pyproject = true;
 
-  disabled = pythonOlder "3.3";
+  disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = "horejsek";
     repo = "python-fastjsonschema";
     rev = "v${version}";
     fetchSubmodules = true;
-    hash = "sha256-zrdQVFfLZxZRr9qvss4CI3LJK97xl+bY+AcPzcweYeU=";
+    hash = "sha256-H/jmvm5U4RB9KuD5EgCedbc499Fl8L2S9Y5SXy51JP0=";
   };
 
-  checkInputs = [
-    pytestCheckHook
-  ];
+  build-system = [ setuptools ];
 
-  dontUseSetuptoolsCheck = true;
-
-  patches = [
-    # Can be removed with the next release, https://github.com/horejsek/python-fastjsonschema/pull/134
-    (fetchpatch {
-      name = "fix-exception-name.patch";
-      url = "https://github.com/horejsek/python-fastjsonschema/commit/f639dcba0299926d688e1d8d08a6a91bfe70ce8b.patch";
-      sha256 = "sha256-yPV5ZNeyAobLrYf5QHanPsEomBPJ/7ZN2148R8NO4/U=";
-    })
-  ];
-
+  nativeCheckInputs = [ pytestCheckHook ];
 
   disabledTests = [
     "benchmark"
     # these tests require network access
     "remote ref"
     "definitions"
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    "test_compile_to_code_custom_format" # cannot import temporary module created during test
   ];
 
-  pythonImportsCheck = [
-    "fastjsonschema"
+  disabledTestPaths = [
+    # fastjsonschema.exceptions.JsonSchemaDefinitionException: Unknown format uuid/duration
+    "tests/json_schema/test_draft2019.py::test"
   ];
+
+  pythonImportsCheck = [ "fastjsonschema" ];
 
   meta = with lib; {
     description = "JSON schema validator for Python";
+    downloadPage = "https://github.com/horejsek/python-fastjsonschema";
     homepage = "https://horejsek.github.io/python-fastjsonschema/";
     license = licenses.bsd3;
     maintainers = with maintainers; [ drewrisinger ];

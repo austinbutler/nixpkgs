@@ -1,41 +1,41 @@
-{ lib
-, isPy3k
-, fetchFromGitHub
-, buildPythonPackage
-, flake8-import-order
-, pyflakes
-, mock
-, setuptools
+{
+  lib,
+  fetchFromGitHub,
+  buildPythonPackage,
+  flake8-import-order,
+  pyflakes,
+  tomli,
+  setuptools,
+  pytestCheckHook,
+  pythonAtLeast,
+  pythonOlder,
 }:
 
 buildPythonPackage rec {
   pname = "zimports";
-  version = "0.4.1";
+  version = "0.6.1";
+  format = "setuptools";
+
+  # upstream technically support 3.7 through 3.9, but 3.10 happens to work while 3.11 breaks with an import error
+  disabled = pythonOlder "3.7" || pythonAtLeast "3.11";
 
   src = fetchFromGitHub {
     owner = "sqlalchemyorg";
     repo = "zimports";
-    rev = "v${version}";
-    sha256 = "11mg7j7xiypv9hki4qbnp9jsgwgfdrgdzfqyrzk5x0s4hycgi4q0";
+    rev = "refs/tags/v${version}";
+    hash = "sha256-+sDvl8z0O0cZyS1oZgt924hlOkYeHiStpXL9y9+JZ5I=";
   };
 
-  disabled = !isPy3k;
-
   propagatedBuildInputs = [
-    pyflakes
     flake8-import-order
+    pyflakes
     setuptools
+    tomli
   ];
 
-  checkInputs = [
-    mock
-  ];
+  nativeCheckInputs = [ pytestCheckHook ];
 
-  checkPhase = ''
-    runHook preInstallCheck
-    PYTHONPATH= $out/bin/zimports --help >/dev/null
-    runHook postInstallCheck
-  '';
+  pythonImportsCheck = [ "zimports" ];
 
   meta = with lib; {
     description = "Python import rewriter";

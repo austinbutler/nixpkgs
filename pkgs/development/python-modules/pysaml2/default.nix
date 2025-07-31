@@ -1,71 +1,88 @@
-{ lib
-, buildPythonPackage
-, cryptography
-, defusedxml
-, fetchFromGitHub
-, importlib-resources
-, mock
-, pyasn1
-, pymongo
-, pyopenssl
-, pytestCheckHook
-, python-dateutil
-, pythonOlder
-, pytz
-, requests
-, responses
-, six
-, substituteAll
-, xmlschema
-, xmlsec
+{
+  lib,
+  buildPythonPackage,
+  cryptography,
+  defusedxml,
+  fetchFromGitHub,
+  fetchpatch,
+  paste,
+  poetry-core,
+  pyasn1,
+  pymongo,
+  pyopenssl,
+  pytestCheckHook,
+  python-dateutil,
+  pythonOlder,
+  pytz,
+  repoze-who,
+  requests,
+  responses,
+  setuptools,
+  replaceVars,
+  xmlschema,
+  xmlsec,
+  zope-interface,
 }:
 
 buildPythonPackage rec {
   pname = "pysaml2";
-  version = "7.1.1";
-  format = "setuptools";
-
-  disabled = pythonOlder "3.6";
+  version = "7.5.2";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "IdentityPython";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-uRfcn3nCK+tx6ol6ZFarOSrDOh0cfC9gZXBZ7EICQzw=";
+    repo = "pysaml2";
+    tag = "v${version}";
+    hash = "sha256-2mvAXTruZqoSBUgfT2VEAnWQXVdviG0e49y7LPK5x00=";
   };
+
+  patches = [
+    (replaceVars ./hardcode-xmlsec1-path.patch {
+      inherit xmlsec;
+    })
+    # Replaces usages of deprecated/removed pyopenssl APIs
+    (fetchpatch {
+      url = "https://github.com/IdentityPython/pysaml2/pull/977/commits/930a652a240c8cd1489429a7d70cf5fa7ef1606a.patch";
+      hash = "sha256-kBNvGk5pwVmpW1wsIWVH9wapu6kjFavaTt4e3Llaw2c=";
+    })
+  ];
+
+  postPatch = ''
+    # Fix failing tests on systems with 32bit time_t
+    sed -i 's/2999\(-.*T\)/2029\1/g' tests/*.xml
+  '';
+
+  pythonRelaxDeps = [ "xmlschema" ];
+
+  nativeBuildInputs = [
+    poetry-core
+  ];
 
   propagatedBuildInputs = [
     cryptography
-    python-dateutil
     defusedxml
     pyopenssl
+    python-dateutil
     pytz
     requests
-    six
+    setuptools
     xmlschema
-  ] ++ lib.optionals (pythonOlder "3.9") [
-    importlib-resources
   ];
 
-  checkInputs = [
-    mock
+  optional-dependencies = {
+    s2repoze = [
+      paste
+      repoze-who
+      zope-interface
+    ];
+  };
+
+  nativeCheckInputs = [
     pyasn1
     pymongo
     pytestCheckHook
     responses
   ];
-
-  patches = [
-    (substituteAll {
-      src = ./hardcode-xmlsec1-path.patch;
-      inherit xmlsec;
-    })
-  ];
-
-  postPatch = ''
-    # fix failing tests on systems with 32bit time_t
-    sed -i 's/2999\(-.*T\)/2029\1/g' tests/*.xml
-  '';
 
   disabledTests = [
     # Disabled tests try to access the network
@@ -73,16 +90,18 @@ buildPythonPackage rec {
     "test_load_remote_encoding"
     "test_load_external"
     "test_conf_syslog"
+
+    # Broken XML schema check in 7.5.2
+    "test_namespace_processing"
   ];
 
-  pythonImportsCheck = [
-    "saml2"
-  ];
+  pythonImportsCheck = [ "saml2" ];
 
   meta = with lib; {
     description = "Python implementation of SAML Version 2 Standard";
     homepage = "https://github.com/IdentityPython/pysaml2";
+    changelog = "https://github.com/IdentityPython/pysaml2/blob/v${version}/CHANGELOG.md";
     license = licenses.asl20;
-    maintainers = with maintainers; [ ];
+    maintainers = [ ];
   };
 }

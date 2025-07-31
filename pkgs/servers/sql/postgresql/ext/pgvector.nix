@@ -1,30 +1,27 @@
-{ lib, stdenv, fetchFromGitHub, postgresql }:
+{
+  fetchFromGitHub,
+  lib,
+  postgresql,
+  postgresqlBuildExtension,
+}:
 
-stdenv.mkDerivation rec {
+postgresqlBuildExtension (finalAttrs: {
   pname = "pgvector";
-  version = "0.2.5";
+  version = "0.8.0";
 
   src = fetchFromGitHub {
-    owner = "ankane";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-5tnitx2KdyARgeaaDINWbn5JtQ4j0aq2BQBljRZOmsk=";
+    owner = "pgvector";
+    repo = "pgvector";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-JsZV+I4eRMypXTjGmjCtMBXDVpqTIPHQa28ogXncE/Q=";
   };
 
-  buildInputs = [ postgresql ];
-
-  installPhase = ''
-    install -D -t $out/lib vector.so
-    install -D -t $out/share/postgresql/extension sql/vector-*.sql
-    install -D -t $out/share/postgresql/extension vector.control
-  '';
-
-  meta = with lib; {
+  meta = {
     description = "Open-source vector similarity search for PostgreSQL";
-    homepage = "https://github.com/ankane/pgvector";
-    changelog = "https://github.com/ankane/pgvector/raw/v${version}/CHANGELOG.md";
-    license = licenses.postgresql;
+    homepage = "https://github.com/pgvector/pgvector";
+    changelog = "https://github.com/pgvector/pgvector/raw/v${finalAttrs.version}/CHANGELOG.md";
+    license = lib.licenses.postgresql;
     platforms = postgresql.meta.platforms;
-    maintainers = [ maintainers.marsam ];
+    maintainers = [ ];
   };
-}
+})

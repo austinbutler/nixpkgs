@@ -1,36 +1,49 @@
-{ lib
-, fetchPypi
-, buildPythonPackage
-, pythonOlder
-, ifaddr
-, bitstring
+{
+  lib,
+  async-timeout,
+  bitstring,
+  buildPythonPackage,
+  click,
+  fetchPypi,
+  ifaddr,
+  inquirerpy,
+  pythonOlder,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "aiolifx";
-  version = "0.7.1";
+  version = "1.2.1";
+  pyproject = true;
 
-  disabled = pythonOlder "3.4";
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-ktXnAgrxfDELfMQATcWHn/u6C4bKQii+mbT4mA54coo=";
+    hash = "sha256-h82KPrHcWUUrQFyMy3fY6BmQFA5a4DFJdhJ6zRnKMsc=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
+    async-timeout
     bitstring
+    click
     ifaddr
+    inquirerpy
   ];
 
-  # tests are not implemented
+  # Module has no tests
   doCheck = false;
 
   pythonImportsCheck = [ "aiolifx" ];
 
   meta = with lib; {
-    description = "API for local communication with LIFX devices over a LAN";
-    homepage = "https://github.com/frawau/aiolifx";
+    description = "Module for local communication with LIFX devices over a LAN";
+    homepage = "https://github.com/aiolifx/aiolifx";
+    changelog = "https://github.com/aiolifx/aiolifx/releases/tag/${version}";
     license = licenses.mit;
     maintainers = with maintainers; [ netixx ];
+    mainProgram = "aiolifx";
   };
 }

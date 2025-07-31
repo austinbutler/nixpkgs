@@ -1,54 +1,68 @@
-{ lib
-, aiohttp
-, buildPythonPackage
-, fetchFromGitHub
-, pydevccu
-, pytest-aiohttp
-, pytestCheckHook
-, python-slugify
-, pythonOlder
-, voluptuous
-, websocket-client
-, xmltodict
+{
+  lib,
+  aiohttp,
+  buildPythonPackage,
+  fetchFromGitHub,
+  freezegun,
+  orjson,
+  pydevccu,
+  pytest-aiohttp,
+  pytest-socket,
+  pytestCheckHook,
+  python-slugify,
+  pythonOlder,
+  setuptools,
+  voluptuous,
 }:
 
 buildPythonPackage rec {
   pname = "hahomematic";
-  version = "0.36.0";
-  format = "setuptools";
+  version = "2025.6.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.9";
+  disabled = pythonOlder "3.13";
 
   src = fetchFromGitHub {
-    owner = "danielperna84";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-yBkWBIT+FsOk9g3NgBTI3q4hN/dL6gI5UkoZnRcS3Jw=";
+    owner = "SukramJ";
+    repo = "hahomematic";
+    tag = version;
+    hash = "sha256-1gZ0TWBFDe+RN5Rb3dUEZyEsy1kyR8Qhlpj9eJRuh60=";
   };
 
-  propagatedBuildInputs = [
+  __darwinAllowLocalNetworking = true;
+
+  postPatch = ''
+    substituteInPlace pyproject.toml \
+      --replace-fail "setuptools==80.9.0" "setuptools" \
+  '';
+
+  build-system = [ setuptools ];
+
+  dependencies = [
     aiohttp
+    orjson
     python-slugify
     voluptuous
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
+    freezegun
     pydevccu
     pytest-aiohttp
+    pytest-socket
     pytestCheckHook
   ];
 
-  # Starting with 0.30 the tests are broken, check with the next major release
-  doCheck = false;
-
-  pythonImportsCheck = [
-    "hahomematic"
-  ];
+  pythonImportsCheck = [ "hahomematic" ];
 
   meta = with lib; {
     description = "Python module to interact with HomeMatic devices";
-    homepage = "https://github.com/danielperna84/hahomematic";
-    license = with licenses; [ mit ];
-    maintainers = with maintainers; [ fab ];
+    homepage = "https://github.com/SukramJ/hahomematic";
+    changelog = "https://github.com/SukramJ/hahomematic/blob/${src.tag}/changelog.md";
+    license = licenses.mit;
+    maintainers = with maintainers; [
+      dotlambda
+      fab
+    ];
   };
 }

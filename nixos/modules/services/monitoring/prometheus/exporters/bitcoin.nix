@@ -1,13 +1,19 @@
-{ config, lib, pkgs, options }:
-
-with lib;
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.services.prometheus.exporters.bitcoin;
+  inherit (lib) mkOption types;
 in
 {
   port = 9332;
   extraOpts = {
+    package = lib.mkPackageOption pkgs "prometheus-bitcoin-exporter" { };
+
     rpcUser = mkOption {
       type = types.str;
       default = "bitcoinrpc";
@@ -24,7 +30,10 @@ in
     };
 
     rpcScheme = mkOption {
-      type = types.enum [ "http" "https" ];
+      type = types.enum [
+        "http"
+        "https"
+      ];
       default = "http";
       description = ''
         Whether to connect to bitcoind over http or https.
@@ -57,7 +66,7 @@ in
 
     extraEnv = mkOption {
       type = types.attrsOf types.str;
-      default = {};
+      default = { };
       description = ''
         Extra environment variables for the exporter.
       '';
@@ -65,8 +74,9 @@ in
   };
   serviceOpts = {
     script = ''
-      export BITCOIN_RPC_PASSWORD=$(cat ${cfg.rpcPasswordFile})
-      exec ${pkgs.prometheus-bitcoin-exporter}/bin/bitcoind-monitor.py
+      BITCOIN_RPC_PASSWORD=$(cat ${cfg.rpcPasswordFile})
+      export BITCOIN_RPC_PASSWORD
+      exec ${cfg.package}/bin/bitcoind-monitor.py
     '';
 
     environment = {
@@ -77,6 +87,7 @@ in
       METRICS_ADDR = cfg.listenAddress;
       METRICS_PORT = toString cfg.port;
       REFRESH_SECONDS = toString cfg.refreshSeconds;
-    } // cfg.extraEnv;
+    }
+    // cfg.extraEnv;
   };
 }

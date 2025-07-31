@@ -1,74 +1,125 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, ansiwrap
-, click
-, future
-, pyyaml
-, nbformat
-, nbconvert
-, nbclient
-, six
-, tqdm
-, jupyter-client
-, requests
-, entrypoints
-, tenacity
-, futures ? null
-, black
-, backports_tempfile
-, isPy27
-, pytest
-, pytest-cov
-, pytest-mock
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
+  # dependencies
+  ansicolors,
+  click,
+  entrypoints,
+  nbclient,
+  nbformat,
+  pyyaml,
+  requests,
+  tenacity,
+  tqdm,
+  pythonAtLeast,
+  aiohttp,
+
+  # optional-dependencies
+  azure-datalake-store,
+  azure-identity,
+  azure-storage-blob,
+  gcsfs,
+  pygithub,
+  pyarrow,
+  boto3,
+
+  # tests
+  ipykernel,
+  moto,
+  pytest-mock,
+  pytestCheckHook,
+  versionCheckHook,
+  writableTmpDirAsHomeHook,
 }:
 
 buildPythonPackage rec {
   pname = "papermill";
-  version = "2.3.4";
+  version = "2.6.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "be12d2728989c0ae17b42fcb05b623500004e94b34f56bd153355ccebb84a59a";
+  src = fetchFromGitHub {
+    owner = "nteract";
+    repo = "papermill";
+    tag = version;
+    hash = "sha256-NxC5+hRDdMCl/7ZIho5ml4hdENrgO+wzi87GRPeMv8Q=";
   };
 
-  propagatedBuildInputs = [
-    ansiwrap
+  build-system = [ setuptools ];
+
+  dependencies = [
+    ansicolors
     click
-    future
-    pyyaml
-    nbformat
-    nbconvert
-    nbclient
-    six
-    tqdm
-    jupyter-client
-    requests
     entrypoints
+    nbclient
+    nbformat
+    pyyaml
+    requests
     tenacity
-    black
-  ] ++ lib.optionals isPy27 [
-    futures
-    backports_tempfile
-  ];
+    tqdm
+  ]
+  ++ lib.optionals (pythonAtLeast "3.12") [ aiohttp ];
 
-  checkInputs = [
-    pytest
-    pytest-cov
+  optional-dependencies = {
+    azure = [
+      azure-datalake-store
+      azure-identity
+      azure-storage-blob
+    ];
+    gcs = [ gcsfs ];
+    github = [ pygithub ];
+    hdfs = [ pyarrow ];
+    s3 = [ boto3 ];
+  };
+
+  nativeCheckInputs = [
+    ipykernel
+    moto
     pytest-mock
+    pytestCheckHook
+    versionCheckHook
+    writableTmpDirAsHomeHook
+  ]
+  ++ optional-dependencies.azure
+  ++ optional-dependencies.s3
+  ++ optional-dependencies.gcs;
+  versionCheckProgramArg = "--version";
+
+  pythonImportsCheck = [ "papermill" ];
+
+  disabledTests = [
+    # pytest 8 compat
+    "test_read_with_valid_file_extension"
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    # might fail due to the sandbox
+    "test_end2end_autosave_slow_notebook"
   ];
 
-  checkPhase = ''
-    HOME=$(mktemp -d) pytest
-  '';
+  disabledTestPaths = [
+    # ImportError: cannot import name 'mock_s3' from 'moto'
+    "papermill/tests/test_s3.py"
 
-  # the test suite depends on cloud resources azure/aws
-  doCheck = false;
+    # AssertionError: 'error' != 'display_data'
+    "papermill/tests/test_execute.py::TestBrokenNotebook2::test"
 
-  meta = with lib; {
-    description = "Parametrize and run Jupyter and nteract Notebooks";
+    # AssertionError: '\x1b[31mSystemExit\x1b[39m\x1b[31m:\x1b[39m 1\n' != '\x1b[0;31mSystemExit\x1b[0m\x1b[0;31m:\x1b[0m 1\n'
+    "papermill/tests/test_execute.py::TestOutputFormatting::test_output_formatting"
+  ];
+
+  __darwinAllowLocalNetworking = true;
+
+  meta = {
+    description = "Parametrize and run Jupyter and interact with notebooks";
     homepage = "https://github.com/nteract/papermill";
-    license = licenses.bsd3;
-    maintainers = [ maintainers.costrouc ];
+    changelog = "https://papermill.readthedocs.io/en/latest/changelog.html";
+    license = lib.licenses.bsd3;
+    maintainers = [ ];
+    mainProgram = "papermill";
   };
 }

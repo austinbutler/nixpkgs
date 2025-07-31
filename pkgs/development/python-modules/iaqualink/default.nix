@@ -1,36 +1,50 @@
-{ lib
-, aiohttp
-, buildPythonPackage
-, fetchFromGitHub
-, pytest-runner
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  hatch-vcs,
+  hatchling,
+  httpx,
+  pytest-cov-stub,
+  pytestCheckHook,
+  pythonOlder,
+  respx,
 }:
 
 buildPythonPackage rec {
   pname = "iaqualink";
-  version = "0.4.1";
-  disabled = pythonOlder "3.8";
+  version = "0.5.3";
+  pyproject = true;
+
+  disabled = pythonOlder "3.12";
 
   src = fetchFromGitHub {
     owner = "flz";
     repo = "iaqualink-py";
-    rev = "v${version}";
-    sha256 = "0xgxajw38jrc55xh8w8mq0dk82ml77mfs8yn05gcpv8l24y70chq";
+    tag = "v${version}";
+    hash = "sha256-2DqZJlsbDWo9fxIDg5P0CvZs8AuAh8XrhNiwIvuRm80=";
   };
 
-  nativeBuildInputs = [ pytest-runner ];
+  build-system = [
+    hatch-vcs
+    hatchling
+  ];
 
-  propagatedBuildInputs = [ aiohttp ];
+  dependencies = [ httpx ] ++ httpx.optional-dependencies.http2;
 
-  checkInputs = [ pytestCheckHook ];
+  nativeCheckInputs = [
+    pytest-cov-stub
+    pytestCheckHook
+    respx
+  ];
 
   pythonImportsCheck = [ "iaqualink" ];
 
   meta = with lib; {
     description = "Python library for Jandy iAqualink";
     homepage = "https://github.com/flz/iaqualink-py";
-    license = with licenses; [ bsd3 ];
+    changelog = "https://github.com/flz/iaqualink-py/releases/tag/v${src.tag}";
+    license = licenses.bsd3;
     maintainers = with maintainers; [ fab ];
   };
 }

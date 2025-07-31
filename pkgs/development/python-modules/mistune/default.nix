@@ -1,12 +1,40 @@
-self: rec {
-  mistune_0_8 = self.callPackage ./common.nix {
-    version = "0.8.4";
-    sha256 = "59a3429db53c50b5c6bcc8a07f8848cb00d7dc8bdb431a4ab41920d201d4756e";
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
+  typing-extensions,
+}:
+
+buildPythonPackage rec {
+  pname = "mistune";
+  version = "3.1.3";
+  pyproject = true;
+
+  src = fetchFromGitHub {
+    owner = "lepture";
+    repo = "mistune";
+    tag = "v${version}";
+    hash = "sha256-aD+c41nuSmLUoYzK8adP0eLYRU0FihHEqG4e0b0GZ9k=";
   };
-  mistune_2_0 = self.callPackage ./common.nix {
-    version = "2.0.2";
-    sha256 = "sha256-b8iMPLSduosWaHtBcl5mHPhXhMEuiXSim50zbdWWw6E=";
-    format = "pyproject";
+
+  dependencies = lib.optionals (pythonOlder "3.11") [
+    typing-extensions
+  ];
+
+  build-system = [ setuptools ];
+
+  nativeCheckInputs = [ pytestCheckHook ];
+
+  pythonImportsCheck = [ "mistune" ];
+
+  meta = {
+    changelog = "https://github.com/lepture/mistune/blob/${src.tag}/docs/changes.rst";
+    description = "Sane Markdown parser with useful plugins and renderers";
+    homepage = "https://github.com/lepture/mistune";
+    license = lib.licenses.bsd3;
+    maintainers = with lib.maintainers; [ dotlambda ];
   };
-  mistune = mistune_0_8;
 }

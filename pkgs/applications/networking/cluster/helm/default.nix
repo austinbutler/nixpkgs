@@ -1,39 +1,87 @@
-{ lib, buildGoModule, fetchFromGitHub, installShellFiles }:
+{
+  lib,
+  stdenv,
+  buildGoModule,
+  fetchFromGitHub,
+  installShellFiles,
+  testers,
+}:
 
-buildGoModule rec {
-  pname = "helm";
-  version = "3.8.0";
-  gitCommit = "d14138609b01886f544b2025f5000351c9eb092e";
+buildGoModule (finalAttrs: {
+  pname = "kubernetes-helm";
+  version = "3.18.4";
 
   src = fetchFromGitHub {
     owner = "helm";
     repo = "helm";
-    rev = "v${version}";
-    sha256 = "sha256-/vxf3YfBP1WHFpqll6iq4m+X4NA16qHnuGA0wvrVRsg=";
+    rev = "v${finalAttrs.version}";
+    sha256 = "sha256-2xOrTguenFzX7rvwm1ojSqV6ARCUSPUs07y3ut9Teec=";
   };
-  vendorSha256 = "sha256-M7XId+2HIh1mFzU54qQZEisWdVq67RlGJjlw+2dpiDc=";
-
-  doCheck = false;
+  vendorHash = "sha256-Z3OAbuoeAtChd9Sk4bbzgwIxmFrw+/1c4zyxpNP0xXg=";
 
   subPackages = [ "cmd/helm" ];
   ldflags = [
     "-w"
     "-s"
-    "-X helm.sh/helm/v3/internal/version.version=v${version}"
-    "-X helm.sh/helm/v3/internal/version.gitCommit=${gitCommit}"
+    "-X helm.sh/helm/v3/internal/version.version=v${finalAttrs.version}"
+    "-X helm.sh/helm/v3/internal/version.gitCommit=${finalAttrs.src.rev}"
   ];
 
-  nativeBuildInputs = [ installShellFiles ];
-  postInstall = ''
-    $out/bin/helm completion bash > helm.bash
-    $out/bin/helm completion zsh > helm.zsh
-    installShellCompletion helm.{bash,zsh}
+  preBuild = ''
+    # set k8s version to client-go version, to match upstream
+    K8S_MODULES_VER="$(go list -f '{{.Version}}' -m k8s.io/client-go)"
+    K8S_MODULES_MAJOR_VER="$(($(cut -d. -f1 <<<"$K8S_MODULES_VER") + 1))"
+    K8S_MODULES_MINOR_VER="$(cut -d. -f2 <<<"$K8S_MODULES_VER")"
+    old_ldflags="''${ldflags}"
+    ldflags="''${ldflags} -X helm.sh/helm/v3/pkg/lint/rules.k8sVersionMajor=''${K8S_MODULES_MAJOR_VER}"
+    ldflags="''${ldflags} -X helm.sh/helm/v3/pkg/lint/rules.k8sVersionMinor=''${K8S_MODULES_MINOR_VER}"
+    ldflags="''${ldflags} -X helm.sh/helm/v3/pkg/chartutil.k8sVersionMajor=''${K8S_MODULES_MAJOR_VER}"
+    ldflags="''${ldflags} -X helm.sh/helm/v3/pkg/chartutil.k8sVersionMinor=''${K8S_MODULES_MINOR_VER}"
   '';
 
-  meta = with lib; {
-    homepage = "https://github.com/kubernetes/helm";
-    description = "A package manager for kubernetes";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ rlupton20 edude03 saschagrunert Frostman Chili-Man ];
+  __darwinAllowLocalNetworking = true;
+
+  preCheck = ''
+    # restore ldflags for tests
+    ldflags="''${old_ldflags}"
+
+    # skipping version tests because they require dot git directory
+    substituteInPlace cmd/helm/version_test.go \
+      --replace "TestVersion" "SkipVersion"
+    # skipping plugin tests
+    substituteInPlace cmd/helm/plugin_test.go \
+      --replace "TestPluginDynamicCompletion" "SkipPluginDynamicCompletion" \
+      --replace "TestLoadPlugins" "SkipLoadPlugins"
+    substituteInPlace cmd/helm/helm_test.go \
+      --replace "TestPluginExitCode" "SkipPluginExitCode"
+  '';
+
+  nativeBuildInputs = [ installShellFiles ];
+  postInstall = lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
+    $out/bin/helm completion bash > helm.bash
+    $out/bin/helm completion zsh > helm.zsh
+    $out/bin/helm completion fish > helm.fish
+    installShellCompletion helm.{bash,zsh,fish}
+  '';
+
+  passthru.tests.version = testers.testVersion {
+    package = finalAttrs.finalPackage;
+    command = "helm version";
+    version = "v${finalAttrs.version}";
   };
-}
+
+  meta = with lib; {
+    homepage = "https://github.com/helm/helm";
+    description = "Package manager for kubernetes";
+    mainProgram = "helm";
+    license = licenses.asl20;
+    maintainers = with maintainers; [
+      rlupton20
+      edude03
+      saschagrunert
+      Frostman
+      Chili-Man
+      techknowlogick
+    ];
+  };
+})

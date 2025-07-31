@@ -1,29 +1,31 @@
-{ lib
-, stdenv
-, pythonOlder
-, buildPythonPackage
-, fetchFromGitHub
-, numpy
-, qiskit-terra
-, scikit-learn
-, scipy
+{
+  lib,
+  stdenv,
+  pythonOlder,
+  buildPythonPackage,
+  fetchFromGitHub,
+  numpy,
+  qiskit-terra,
+  scikit-learn,
+  scipy,
   # Optional package inputs
-, withVisualization ? false
-, matplotlib
-, withCvx ? false
-, cvxpy
-, withJit ? false
-, numba
+  withVisualization ? false,
+  matplotlib,
+  withCvx ? false,
+  cvxpy,
+  withJit ? false,
+  numba,
   # Check Inputs
-, pytestCheckHook
-, ddt
-, pyfakefs
-, qiskit-aer
+  pytestCheckHook,
+  ddt,
+  pyfakefs,
+  qiskit-aer,
 }:
 
 buildPythonPackage rec {
   pname = "qiskit-ignis";
-  version = "0.7.0";
+  version = "0.7.1";
+  format = "setuptools";
 
   disabled = pythonOlder "3.6";
 
@@ -31,8 +33,8 @@ buildPythonPackage rec {
   src = fetchFromGitHub {
     owner = "Qiskit";
     repo = "qiskit-ignis";
-    rev = version;
-    hash = "sha256-5dsRKsz/nruWKuox/WJBghp2CWSDuYvax+G5ZxjZG4s=";
+    rev = "refs/tags/${version}";
+    hash = "sha256-WyLNtZhtuGzqCJdOBvtBjZZiGFQihpeSjJQtP7lI248=";
   };
 
   propagatedBuildInputs = [
@@ -40,17 +42,17 @@ buildPythonPackage rec {
     qiskit-terra
     scikit-learn
     scipy
-  ] ++ lib.optionals (withCvx) [ cvxpy ]
+  ]
+  ++ lib.optionals (withCvx) [ cvxpy ]
   ++ lib.optionals (withVisualization) [ matplotlib ]
   ++ lib.optionals (withJit) [ numba ];
 
   # Tests
   pythonImportsCheck = [ "qiskit.ignis" ];
-  dontUseSetuptoolsCheck = true;
   preCheck = ''
     export HOME=$TMPDIR
   '';
-  checkInputs = [
+  nativeCheckInputs = [
     pytestCheckHook
     ddt
     pyfakefs
@@ -58,7 +60,8 @@ buildPythonPackage rec {
   ];
   disabledTests = [
     "test_tensored_meas_cal_on_circuit" # Flaky test, occasionally returns result outside bounds
-  ] ++ lib.optionals stdenv.isAarch64 [
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isAarch64 [
     "test_fitters" # Fails check that arrays are close. Might be due to aarch64 math issues.
   ];
 

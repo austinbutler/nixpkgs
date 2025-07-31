@@ -1,35 +1,65 @@
-{ lib
-, buildPythonApplication
-, fetchPypi
-, coreutils
-, pbr
-, prettytable
-, keystoneauth1
-, requests
-, warlock
-, oslo-utils
-, oslo-i18n
-, wrapt
-, pyopenssl
-, stestr
-, testscenarios
-, ddt
-, requests-mock
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  coreutils,
+  setuptools,
+  pbr,
+  prettytable,
+  keystoneauth1,
+  requests,
+  warlock,
+  oslo-utils,
+  oslo-i18n,
+  wrapt,
+  pyopenssl,
+  stestr,
+  testscenarios,
+  ddt,
+  requests-mock,
+  writeText,
 }:
-
-buildPythonApplication rec {
+let
   pname = "python-glanceclient";
-  version = "3.5.0";
+  version = "4.9.0";
+
+  disabledTests = [
+    # Skip tests which require networking.
+    "test_http_chunked_response"
+    "test_v1_download_has_no_stray_output_to_stdout"
+    "test_v2_requests_valid_cert_verification"
+    "test_download_has_no_stray_output_to_stdout"
+    "test_v1_requests_cert_verification_no_compression"
+    "test_v1_requests_cert_verification"
+    "test_v2_download_has_no_stray_output_to_stdout"
+    "test_v2_requests_bad_ca"
+    "test_v2_requests_bad_cert"
+    "test_v2_requests_cert_verification_no_compression"
+    "test_v2_requests_cert_verification"
+    "test_v2_requests_valid_cert_no_key"
+    "test_v2_requests_valid_cert_verification_no_compression"
+    "test_log_request_id_once"
+    # asserts exact amount of mock calls
+    "test_cache_schemas_gets_when_forced"
+    "test_cache_schemas_gets_when_not_exists"
+  ];
+in
+buildPythonPackage {
+  inherit pname version;
+  pyproject = true;
 
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "417b9d814b43e62df4351f26a0d5569b801e9f99f7758bd8c82ef994c3629356";
+    pname = "python_glanceclient";
+    inherit version;
+    hash = "sha256-+PANkCIO8wtLFgV64MfELMKdhHIcBntoVNU50sXdsVQ=";
   };
 
   postPatch = ''
     substituteInPlace glanceclient/tests/unit/v1/test_shell.py \
-      --replace "/bin/echo" "${coreutils}/bin/echo"
+      --replace-fail "/bin/echo" "${lib.getExe' coreutils "echo"}"
   '';
+
+  nativeBuildInputs = [ setuptools ];
 
   propagatedBuildInputs = [
     pbr
@@ -43,7 +73,7 @@ buildPythonApplication rec {
     pyopenssl
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     stestr
     testscenarios
     ddt
@@ -51,7 +81,9 @@ buildPythonApplication rec {
   ];
 
   checkPhase = ''
-    stestr run
+    runHook preCheck
+    stestr run -e ${writeText "disabled-tests" (lib.concatStringsSep "\n" disabledTests)}
+    runHook postCheck
   '';
 
   pythonImportsCheck = [ "glanceclient" ];
@@ -60,6 +92,6 @@ buildPythonApplication rec {
     description = "Python bindings for the OpenStack Images API";
     homepage = "https://github.com/openstack/python-glanceclient/";
     license = licenses.asl20;
-    maintainers = teams.openstack.members;
+    teams = [ teams.openstack ];
   };
 }

@@ -1,37 +1,47 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pythonOlder
-, dask
-, numpy, toolz # dask[array]
-, numba
-, pandas
-, scikit-learn
-, scipy
-, dask-glm
-, six
-, multipledispatch
-, packaging
-, distributed
-, setuptools-scm
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  hatch-vcs,
+  hatchling,
+
+  # dependencies
+  dask-glm,
+  distributed,
+  multipledispatch,
+  numba,
+  numpy,
+  packaging,
+  pandas,
+  scikit-learn,
+  scipy,
+  dask,
+
+  # tests
+  pytest-mock,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
-  version = "2022.1.22";
   pname = "dask-ml";
-  disabled = pythonOlder "3.6"; # >= 3.6
+  version = "2025.1.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "21a128e9f4f10e3b39cf82b36266eae28b17d16f2f6aa351bd73eb361e49326a";
+  src = fetchFromGitHub {
+    owner = "dask";
+    repo = "dask-ml";
+    tag = "v${version}";
+    hash = "sha256-DHxx0LFuJmGWYuG/WGHj+a5XHAEekBmlHUUb90rl2IY=";
   };
 
-  nativeBuildInputs = [
-    setuptools-scm
+  build-system = [
+    hatch-vcs
+    hatchling
   ];
 
-  propagatedBuildInputs = [
-    dask
+  dependencies = [
     dask-glm
     distributed
     multipledispatch
@@ -41,14 +51,10 @@ buildPythonPackage rec {
     pandas
     scikit-learn
     scipy
-    six
-    toolz
-  ];
+  ]
+  ++ dask.optional-dependencies.array
+  ++ dask.optional-dependencies.dataframe;
 
-  # has non-standard build from source, and pypi doesn't include tests
-  doCheck = false;
-
-  # in lieu of proper tests
   pythonImportsCheck = [
     "dask_ml"
     "dask_ml.naive_bayes"
@@ -56,10 +62,41 @@ buildPythonPackage rec {
     "dask_ml.utils"
   ];
 
-  meta = with lib; {
-    homepage = "https://github.com/dask/dask-ml";
+  nativeCheckInputs = [
+    pytest-mock
+    pytestCheckHook
+  ];
+
+  disabledTestPaths = [
+    # RuntimeError: Attempting to use an asynchronous Client in a synchronous context of `dask.compute`
+    # https://github.com/dask/dask-ml/issues/1016
+    "tests/model_selection/test_hyperband.py"
+    "tests/model_selection/test_incremental.py"
+    "tests/model_selection/test_incremental_warns.py"
+    "tests/model_selection/test_successive_halving.py"
+  ];
+
+  disabledTests = [
+    # AssertionError: Regex pattern did not match.
+    "test_unknown_category_transform_array"
+
+    # ValueError: cannot broadcast shape (nan,) to shape (nan,)
+    # https://github.com/dask/dask-ml/issues/1012
+    "test_fit_array"
+    "test_fit_frame"
+    "test_fit_transform_frame"
+    "test_laziness"
+    "test_lr_score"
+    "test_ok"
+    "test_scoring_string"
+  ];
+
+  __darwinAllowLocalNetworking = true;
+
+  meta = {
     description = "Scalable Machine Learn with Dask";
-    license = licenses.bsd3;
-    maintainers = [ maintainers.costrouc ];
+    homepage = "https://github.com/dask/dask-ml";
+    license = lib.licenses.bsd3;
+    maintainers = with lib.maintainers; [ GaetanLepage ];
   };
 }

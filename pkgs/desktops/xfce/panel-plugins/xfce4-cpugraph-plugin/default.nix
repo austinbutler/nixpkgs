@@ -1,57 +1,57 @@
-{ lib
-, stdenv
-, fetchurl
-, pkg-config
-, intltool
-, glib
-, exo
-, libXtst
-, xorgproto
-, libxfce4util
-, xfce4-panel
-, libxfce4ui
-, xfconf
-, gtk3
-, hicolor-icon-theme
-, xfce
+{
+  stdenv,
+  lib,
+  fetchFromGitLab,
+  gettext,
+  meson,
+  ninja,
+  pkg-config,
+  glib,
+  gtk3,
+  libxfce4ui,
+  libxfce4util,
+  xfce4-panel,
+  xfconf,
+  gitUpdater,
 }:
 
-let
-  category = "panel-plugins";
-in stdenv.mkDerivation rec {
-  pname  = "xfce4-cpugraph-plugin";
-  version = "1.2.6";
+stdenv.mkDerivation (finalAttrs: {
+  pname = "xfce4-cpugraph-plugin";
+  version = "1.3.0";
 
-  src = fetchurl {
-    url = "mirror://xfce/src/${category}/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.bz2";
-    sha256 = "sha256-dzJG9XwYJKhUaNQRnBeusHFw7R66zo+kBsf7z1tHr5k=";
+  src = fetchFromGitLab {
+    domain = "gitlab.xfce.org";
+    owner = "panel-plugins";
+    repo = "xfce4-cpugraph-plugin";
+    tag = "xfce4-cpugraph-plugin-${finalAttrs.version}";
+    hash = "sha256-IXAoxMzKZhABiiZYhL4UGkzqFNGMJicGQqSIfy2DEfc=";
   };
 
+  strictDeps = true;
+
   nativeBuildInputs = [
+    gettext
+    meson
+    ninja
     pkg-config
-    intltool
   ];
 
   buildInputs = [
     glib
-    exo
-    libXtst
-    xorgproto
-    libxfce4util
+    gtk3
     libxfce4ui
+    libxfce4util
     xfce4-panel
     xfconf
-    gtk3
-    hicolor-icon-theme
   ];
 
-  passthru.updateScript = xfce.archiveUpdater { inherit category pname version; };
+  passthru.updateScript = gitUpdater { rev-prefix = "xfce4-cpugraph-plugin-"; };
 
-  meta = with lib; {
-    homepage = "https://docs.xfce.org/panel-plugins/xfce4-cpugraph-plugin";
+  meta = {
     description = "CPU graph show for Xfce panel";
-    license = licenses.gpl2Plus;
-    platforms = platforms.linux;
-    maintainers = with maintainers; [ ] ++ teams.xfce.members;
+    homepage = "https://gitlab.xfce.org/panel-plugins/xfce4-cpugraph-plugin";
+    license = lib.licenses.gpl2Plus;
+    teams = [ lib.teams.xfce ];
+    platforms = lib.platforms.linux;
   };
-}
+})

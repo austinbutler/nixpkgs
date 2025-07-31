@@ -1,26 +1,31 @@
-{ stdenv, lib, fetchFromGitHub
-, meson, ninja, pkg-config
-, python3
-, curl
-, icu
-, pugixml
-, zimlib
-, zlib
-, libmicrohttpd
-, mustache-hpp
-, gtest
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  nix-update-script,
+  meson,
+  ninja,
+  pkg-config,
+  python3,
+  curl,
+  icu,
+  libzim,
+  pugixml,
+  zlib,
+  libmicrohttpd,
+  mustache-hpp,
+  gtest,
 }:
 
-
-stdenv.mkDerivation rec {
-  pname = "kiwix-lib";
-  version = "9.4.1";
+stdenv.mkDerivation (finalAttrs: {
+  pname = "libkiwix";
+  version = "14.0.0";
 
   src = fetchFromGitHub {
     owner = "kiwix";
-    repo = pname;
-    rev = version;
-    sha256 = "034nk6l623v78clrs2d0k1vg69sbzrd8c0q79qiqmlkinck1nkxw";
+    repo = "libkiwix";
+    rev = finalAttrs.version;
+    hash = "sha256-QP23ZS0FJsMVtnWOofywaAPIU0GJ2L+hLP/x0LXMKiU=";
   };
 
   nativeBuildInputs = [
@@ -39,11 +44,11 @@ stdenv.mkDerivation rec {
   propagatedBuildInputs = [
     curl
     libmicrohttpd
+    libzim
     pugixml
-    zimlib
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     gtest
   ];
 
@@ -51,5 +56,19 @@ stdenv.mkDerivation rec {
 
   postPatch = ''
     patchShebangs scripts
+    substituteInPlace meson.build \
+        --replace-fail "libicu_dep = dependency('icu-i18n', static:static_deps)" \
+                       "libicu_dep = [dependency('icu-i18n', static:static_deps), dependency('icu-uc', static:static_deps)]"
   '';
-}
+
+  passthru.updateScript = nix-update-script { };
+
+  meta = with lib; {
+    description = "Common code base for all Kiwix ports";
+    homepage = "https://kiwix.org";
+    changelog = "https://github.com/kiwix/libkiwix/releases/tag/${finalAttrs.version}";
+    license = licenses.gpl3Plus;
+    platforms = platforms.linux;
+    maintainers = with maintainers; [ colinsane ];
+  };
+})

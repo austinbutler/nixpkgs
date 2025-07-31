@@ -1,46 +1,74 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, isPy27
-, future
-, pytestCheckHook
-, pytorch
-, pyyaml
-, tensorflow-tensorboard
-, tqdm }:
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
+  # dependencies
+  fsspec,
+  lightning-utilities,
+  numpy,
+  packaging,
+  pyyaml,
+  torch,
+  torchmetrics,
+  tqdm,
+  traitlets,
+
+  # tests
+  psutil,
+  pytestCheckHook,
+}:
 
 buildPythonPackage rec {
   pname = "pytorch-lightning";
-  version = "1.5.8";
-
-  disabled = isPy27;
+  version = "2.5.2";
+  pyproject = true;
 
   src = fetchFromGitHub {
-    owner = "PyTorchLightning";
-    repo = pname;
-    rev = version;
-    sha256 = "161mz66l11z4350q93fmmq3x0jzbp5761lf4fx3yvz17qzp7ygkn";
+    owner = "Lightning-AI";
+    repo = "pytorch-lightning";
+    tag = version;
+    hash = "sha256-zYPjMahC8/9uYomzSFMbswJoh+CcBsnO0h4pkgCxIcQ=";
   };
 
-  propagatedBuildInputs = [
-    future
-    pytorch
+  preConfigure = ''
+    export PACKAGE_NAME=pytorch
+  '';
+
+  build-system = [ setuptools ];
+
+  dependencies = [
+    fsspec
+    lightning-utilities
+    numpy
+    packaging
     pyyaml
-    tensorflow-tensorboard
+    torch
+    torchmetrics
     tqdm
+    traitlets
+  ]
+  ++ fsspec.optional-dependencies.http;
+
+  nativeCheckInputs = [
+    psutil
+    pytestCheckHook
   ];
 
-  checkInputs = [ pytestCheckHook ];
   # Some packages are not in NixPkgs; other tests try to build distributed
   # models, which doesn't work in the sandbox.
   doCheck = false;
 
   pythonImportsCheck = [ "pytorch_lightning" ];
 
-  meta = with lib; {
+  meta = {
     description = "Lightweight PyTorch wrapper for machine learning researchers";
-    homepage = "https://pytorch-lightning.readthedocs.io";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ tbenst ];
+    homepage = "https://github.com/Lightning-AI/pytorch-lightning";
+    changelog = "https://github.com/Lightning-AI/pytorch-lightning/releases/tag/${src.tag}";
+    license = lib.licenses.asl20;
+    maintainers = with lib.maintainers; [ tbenst ];
   };
 }

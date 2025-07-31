@@ -1,38 +1,36 @@
-{ lib
-, aiodns
-, aiohttp
-, boto3
-, buildPythonPackage
-, codecov
-, databases
-, fetchFromGitHub
-, flake8
-, flask-sockets
-, moto
-, pythonOlder
-, psutil
-, pytest-asyncio
-, pytestCheckHook
-, sqlalchemy
-, websocket-client
-, websockets
+{
+  lib,
+  aiodns,
+  aiohttp,
+  aiosqlite,
+  boto3,
+  buildPythonPackage,
+  fetchFromGitHub,
+  moto,
+  pytest-asyncio,
+  pytestCheckHook,
+  setuptools,
+  sqlalchemy,
+  websocket-client,
+  websockets,
+  writableTmpDirAsHomeHook,
 }:
 
 buildPythonPackage rec {
   pname = "slack-sdk";
-  version = "3.15.1";
-  format = "setuptools";
-
-  disabled = pythonOlder "3.6";
+  version = "3.36.0";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "slackapi";
     repo = "python-slack-sdk";
-    rev = "v${version}";
-    sha256 = "sha256-N8JvNK1ddlCabzCmEv9TItqXDT7A4Dt8dhMLBICWXHA=";
+    tag = "v${version}";
+    hash = "sha256-Y6w4osSpirBjxPdZRlODwEAWd4Z+sPHrr7alVl/6mPA=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  optional-dependencies.optional = [
     aiodns
     aiohttp
     boto3
@@ -41,41 +39,36 @@ buildPythonPackage rec {
     websockets
   ];
 
-  checkInputs = [
-    codecov
-    databases
-    flake8
-    flask-sockets
+  pythonImportsCheck = [ "slack_sdk" ];
+
+  nativeCheckInputs = [
+    aiosqlite
     moto
-    psutil
     pytest-asyncio
     pytestCheckHook
-  ];
-
-  preCheck = ''
-    export HOME=$(mktemp -d)
-  '';
-
-  disabledTestPaths = [
-    # Exclude tests that requires network features
-    "integration_tests"
-  ];
+  ]
+  ++ optional-dependencies.optional;
 
   disabledTests = [
-    # Requires network features
+    # Requires internet access (to slack API)
     "test_start_raises_an_error_if_rtm_ws_url_is_not_returned"
-    "test_org_installation"
-    "test_interactions"
+    # Requires network access: [Errno 111] Connection refused
+    "test_send_message_while_disconnection"
   ];
 
-  pythonImportsCheck = [
-    "slack_sdk"
+  disabledTestPaths = [
+    # Event loop issues
+    "tests/slack_sdk/oauth/installation_store/test_file.py"
+    "tests/slack_sdk/oauth/state_store/test_file.py"
   ];
 
-  meta = with lib; {
+  __darwinAllowLocalNetworking = true;
+
+  meta = {
     description = "Slack Developer Kit for Python";
     homepage = "https://slack.dev/python-slack-sdk/";
-    license = with licenses; [ mit ];
-    maintainers = with maintainers; [ fab ];
+    changelog = "https://github.com/slackapi/python-slack-sdk/releases/tag/v${version}";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ fab ];
   };
 }

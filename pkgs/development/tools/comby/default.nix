@@ -1,57 +1,72 @@
-{ ocamlPackages
-, fetchFromGitHub
-, lib
-, zlib
-, pkg-config
-, cacert
-, gmp
-, libev
-, autoconf
-, sqlite
-, stdenv
+{
+  ocamlPackages,
+  fetchFromGitHub,
+  lib,
+  zlib,
+  pkg-config,
+  cacert,
+  gmp,
+  libev,
+  autoconf,
+  sqlite,
+  stdenv,
 }:
 let
-  mkCombyPackage = { pname, extraBuildInputs ? [ ], extraNativeInputs ? [ ], preBuild ? "" }:
+  mkCombyPackage =
+    {
+      pname,
+      extraBuildInputs ? [ ],
+      extraNativeInputs ? [ ],
+      preBuild ? "",
+    }:
     ocamlPackages.buildDunePackage rec {
       inherit pname preBuild;
-      version = "1.7.0";
-      useDune2 = true;
-      minimumOcamlVersion = "4.08.1";
+      version = "1.8.1";
+      duneVersion = "3";
+      minimalOCamlVersion = "4.08.1";
       doCheck = true;
 
       src = fetchFromGitHub {
         owner = "comby-tools";
         repo = "comby";
         rev = version;
-        sha256 = "sha256-Y2RcYvJOSqppmxxG8IZ5GlFkXCOIQU+1jJZ6j+PBHC4";
+        sha256 = "sha256-yQrfSzJgJm0OWJxhxst2XjZULIVHeEfPMvMIwH7BYDc=";
       };
 
-      nativeBuildInputs = [
-        ocamlPackages.ppx_deriving
-        ocamlPackages.ppx_deriving_yojson
-        ocamlPackages.ppx_sexp_conv
-        ocamlPackages.ppx_sexp_message
-      ] ++ extraNativeInputs;
+      patches = [ ./comby.patch ];
+
+      nativeBuildInputs = extraNativeInputs;
 
       buildInputs = [
         ocamlPackages.core
+        ocamlPackages.core_kernel
         ocamlPackages.ocaml_pcre
         ocamlPackages.mparser
         ocamlPackages.mparser-pcre
         ocamlPackages.angstrom
-      ] ++ extraBuildInputs;
+        ocamlPackages.ppx_deriving
+        ocamlPackages.ppx_deriving_yojson
+        ocamlPackages.ppx_sexp_conv
+        ocamlPackages.ppx_sexp_message
+      ]
+      ++ extraBuildInputs;
 
-      checkInputs = [ cacert ];
+      nativeCheckInputs = [ cacert ];
 
       meta = {
         description = "Tool for searching and changing code structure";
+        mainProgram = "comby";
         license = lib.licenses.asl20;
         homepage = "https://comby.dev";
+        broken = true; # Not compatible with ocamlPackages.tar ≥ 3
       };
     };
 
   combyKernel = mkCombyPackage { pname = "comby-kernel"; };
-  combySemantic = mkCombyPackage { pname = "comby-semantic"; extraBuildInputs = [ ocamlPackages.cohttp-lwt-unix ]; };
+  combySemantic = mkCombyPackage {
+    pname = "comby-semantic";
+    extraBuildInputs = [ ocamlPackages.cohttp-lwt-unix ];
+  };
 in
 mkCombyPackage {
   pname = "comby";
@@ -76,26 +91,29 @@ mkCombyPackage {
     ocamlPackages.patience_diff
     ocamlPackages.toml
     ocamlPackages.cohttp-lwt-unix
-    ocamlPackages.opium
     ocamlPackages.textutils
     ocamlPackages.jst-config
     ocamlPackages.parany
     ocamlPackages.conduit-lwt-unix
     ocamlPackages.lwt_react
+    ocamlPackages.tar-unix
     ocamlPackages.tls
+    ocamlPackages.ppx_jane
+    ocamlPackages.ppx_expect
+    ocamlPackages.dune-configurator
     combyKernel
     combySemantic
-  ] ++ (if !stdenv.isAarch32 && !stdenv.isAarch64 then
-    [ ocamlPackages.hack_parallel ]
-  else
-    [ ]);
+  ]
+  ++ (
+    if !stdenv.hostPlatform.isAarch32 && !stdenv.hostPlatform.isAarch64 then
+      [ ocamlPackages.hack_parallel ]
+    else
+      [ ]
+  );
 
   extraNativeInputs = [
     autoconf
     pkg-config
-    ocamlPackages.ppx_jane
-    ocamlPackages.ppx_expect
-    ocamlPackages.dune-configurator
   ];
 
 }

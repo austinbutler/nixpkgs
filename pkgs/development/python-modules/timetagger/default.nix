@@ -1,25 +1,40 @@
-{ lib
-, python3Packages
-, fetchFromGitHub
-, pytestCheckHook
-, requests
-, pytest
-, pythonOlder
+{
+  lib,
+  asgineer,
+  bcrypt,
+  buildPythonPackage,
+  fetchFromGitHub,
+  iptools,
+  itemdb,
+  jinja2,
+  markdown,
+  nodejs,
+  pscript,
+  pyjwt,
+  pytestCheckHook,
+  pythonOlder,
+  requests,
+  uvicorn,
 }:
 
-python3Packages.buildPythonPackage rec {
+buildPythonPackage rec {
   pname = "timetagger";
-  version = "22.2.3";
+  version = "25.06.1";
+  format = "setuptools";
+
+  disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "almarklein";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-tQel+IVqP+MngAvFgr7Yh+XCSIPWpzCBXHOj9b0Os98=";
+    repo = "timetagger";
+    tag = "v${version}";
+    hash = "sha256-fuZj4DoqtgIcRd/u7l0GsWqmuLEgF3BW5gN5wY8FdK0=";
   };
 
-  propagatedBuildInputs = with python3Packages; [
+  propagatedBuildInputs = [
     asgineer
+    bcrypt
+    iptools
     itemdb
     jinja2
     markdown
@@ -32,19 +47,18 @@ python3Packages.buildPythonPackage rec {
     export HOME=$(mktemp -d)
   '';
 
-  checkInputs = [
+  nativeCheckInputs = [
+    nodejs
     pytestCheckHook
     requests
-    pytest
   ];
 
-  # fails with `No module named pytest` on python version 3.10
-  doCheck = pythonOlder "3.10";
-
   meta = with lib; {
-    homepage = "https://timetagger.app";
+    description = "Library to interact with TimeTagger";
+    mainProgram = "timetagger";
+    homepage = "https://github.com/almarklein/timetagger";
+    changelog = "https://github.com/almarklein/timetagger/releases/tag/${src.tag}";
     license = licenses.gpl3Only;
-    description = "Tag your time, get the insight";
     maintainers = with maintainers; [ matthiasbeyer ];
   };
 }

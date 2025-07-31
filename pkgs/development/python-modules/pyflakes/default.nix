@@ -1,23 +1,43 @@
-{ lib, buildPythonPackage, fetchPypi, pythonOlder, unittest2 }:
+{
+  lib,
+  buildPythonPackage,
+  isPyPy,
+  fetchFromGitHub,
+  setuptools,
+  pytestCheckHook,
+}:
 
 buildPythonPackage rec {
   pname = "pyflakes";
-  version = "2.4.0";
+  version = "3.4.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "05a85c2872edf37a4ed30b0cce2f6093e1d0581f8c19d7393122da7e25b2b24c";
+  src = fetchFromGitHub {
+    owner = "PyCQA";
+    repo = "pyflakes";
+    tag = version;
+    hash = "sha256-4UEJjn9Eey1vHeaG468x/nMlbfGu3ohZX1R7RR2R5ik=";
   };
 
-  checkInputs = [ unittest2 ];
+  build-system = [ setuptools ];
 
-  # some tests are output dependent, which have changed slightly
-  doCheck = pythonOlder "3.9";
+  nativeCheckInputs = [ pytestCheckHook ];
 
-  meta = with lib; {
-    homepage = "https://launchpad.net/pyflakes";
-    description = "A simple program which checks Python source files for errors";
-    license = licenses.mit;
-    maintainers = with maintainers; [ ];
+  disabledTests = lib.optionals isPyPy [
+    # https://github.com/PyCQA/pyflakes/issues/779
+    "test_eofSyntaxError"
+    "test_misencodedFileUTF8"
+    "test_multilineSyntaxError"
+  ];
+
+  pythonImportsCheck = [ "pyflakes" ];
+
+  meta = {
+    homepage = "https://github.com/PyCQA/pyflakes";
+    changelog = "https://github.com/PyCQA/pyflakes/blob/${src.tag}/NEWS.rst";
+    description = "Simple program which checks Python source files for errors";
+    mainProgram = "pyflakes";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ dotlambda ];
   };
 }

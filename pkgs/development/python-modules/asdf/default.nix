@@ -1,60 +1,76 @@
-{ lib
-, astropy
-, buildPythonPackage
-, fetchPypi
-, importlib-resources
-, jmespath
-, jsonschema
-, numpy
-, packaging
-, pytest-astropy
-, pytestCheckHook
-, pythonOlder
-, pyyaml
-, semantic-version
-, setuptools-scm
+{
+  lib,
+  asdf-standard,
+  asdf-transform-schemas,
+  attrs,
+  buildPythonPackage,
+  fetchFromGitHub,
+  fsspec,
+  importlib-metadata,
+  jmespath,
+  lz4,
+  numpy,
+  packaging,
+  psutil,
+  pytest-remotedata,
+  pytestCheckHook,
+  pythonOlder,
+  pyyaml,
+  semantic-version,
+  setuptools,
+  setuptools-scm,
 }:
 
 buildPythonPackage rec {
   pname = "asdf";
-  version = "2.8.3";
-  disabled = pythonOlder "3.6";
-  format = "pyproject";
+  version = "4.1.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "de0f70ffb2e0d539461940d6f7529c3548541fa098d8edc37af256af61c09b44";
+  disabled = pythonOlder "3.9";
+
+  src = fetchFromGitHub {
+    owner = "asdf-format";
+    repo = "asdf";
+    tag = version;
+    hash = "sha256-h7OkLq9+sW507Va22cF0eez6xrI7iIaLV5D7EZFWxJQ=";
   };
 
-  nativeBuildInputs = [ setuptools-scm ];
+  build-system = [
+    setuptools
+    setuptools-scm
+  ];
 
-  propagatedBuildInputs = [
+  dependencies = [
+    asdf-standard
+    asdf-transform-schemas
+    importlib-metadata
     jmespath
-    jsonschema
     numpy
     packaging
     pyyaml
     semantic-version
-  ] ++ lib.optionals (pythonOlder "3.9") [
-    importlib-resources
+    attrs
   ];
 
-  checkInputs = [
-    pytest-astropy
-    astropy
+  nativeCheckInputs = [
+    fsspec
+    lz4
+    psutil
+    pytest-remotedata
     pytestCheckHook
   ];
 
-  preCheck = ''
-    export PY_IGNORE_IMPORTMISMATCH=1
-  '';
+  disabledTests = [
+    # AssertionError: assert 527033 >= 1048801
+    "test_update_add_array_at_end"
+  ];
 
   pythonImportsCheck = [ "asdf" ];
 
   meta = with lib; {
     description = "Python tools to handle ASDF files";
-    homepage = "https://github.com/spacetelescope/asdf";
+    homepage = "https://github.com/asdf-format/asdf";
     license = licenses.bsd3;
-    maintainers = with maintainers; [ costrouc ];
+    maintainers = [ ];
   };
 }

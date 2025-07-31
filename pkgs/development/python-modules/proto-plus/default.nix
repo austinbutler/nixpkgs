@@ -1,26 +1,40 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, isPy3k
-, protobuf
-, googleapis-common-protos
-, pytestCheckHook
-, pytz
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  setuptools,
+  protobuf,
+  googleapis-common-protos,
+  pytestCheckHook,
+  pytz,
 }:
 
 buildPythonPackage rec {
   pname = "proto-plus";
-  version = "1.19.8";
-  disabled = !isPy3k;
+  version = "1.26.1";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "bdf45f0e0be71510eb2ec9db4da78afde7b5fb8b0a507a36340a9b6ce8e48e58";
+  src = fetchFromGitHub {
+    owner = "googleapis";
+    repo = "proto-plus-python";
+    tag = "v${version}";
+    hash = "sha256-7FonHHXpgJC0vg9Y26bqz0g1NmLWwaZWyFZ0kv7PjY8=";
   };
 
-  propagatedBuildInputs = [ protobuf ];
+  build-system = [ setuptools ];
 
-  checkInputs = [ pytestCheckHook pytz googleapis-common-protos ];
+  dependencies = [ protobuf ];
+
+  nativeCheckInputs = [
+    pytestCheckHook
+    pytz
+    googleapis-common-protos
+  ];
+
+  pytestFlags = [
+    # pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+    "-Wignore::DeprecationWarning"
+  ];
 
   pythonImportsCheck = [ "proto" ];
 
@@ -28,6 +42,6 @@ buildPythonPackage rec {
     description = "Beautiful, idiomatic protocol buffers in Python";
     homepage = "https://github.com/googleapis/proto-plus-python";
     license = licenses.asl20;
-    maintainers = with maintainers; [ ruuda SuperSandro2000 ];
+    maintainers = with maintainers; [ ruuda ];
   };
 }

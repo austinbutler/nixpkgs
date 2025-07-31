@@ -1,33 +1,109 @@
-{ lib, buildPythonPackage, fetchPypi, requests, dparse, click, setuptools, pytestCheckHook }:
+{
+  lib,
+  buildPythonPackage,
+  pythonOlder,
+  fetchFromGitHub,
+  hatchling,
+  setuptools,
+  click,
+  requests,
+  packaging,
+  dparse,
+  ruamel-yaml,
+  jinja2,
+  marshmallow,
+  nltk,
+  authlib,
+  typer,
+  pydantic,
+  safety-schemas,
+  typing-extensions,
+  filelock,
+  psutil,
+  httpx,
+  tenacity,
+  tomlkit,
+  git,
+  pytestCheckHook,
+  tomli,
+  writableTmpDirAsHomeHook,
+}:
 
 buildPythonPackage rec {
   pname = "safety";
-  version = "1.10.3";
+  version = "3.5.2";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-MOOU0CogrEm39lKS0Z04+pJ6j5WCzf060a27xmxkGtU=";
+  src = fetchFromGitHub {
+    owner = "pyupio";
+    repo = "safety";
+    tag = version;
+    hash = "sha256-kYGoJpFkZo4kZmbmak/+nOS2gzDO/xAwfbcGPOFxyrY=";
   };
 
-  propagatedBuildInputs = [ requests dparse click setuptools ];
-
-  # Disable tests depending on online services
-  checkInputs = [ pytestCheckHook ];
-  dontUseSetuptoolsCheck = true;
-  disabledTests = [
-    "test_check_live"
-    "test_check_live_cached"
+  patches = [
+    ./disable-telemetry.patch
   ];
 
-  preCheck = ''
-    export HOME=$(mktemp -d)
-  '';
+  build-system = [ hatchling ];
 
-  meta = with lib; {
-    description =
-      "Safety checks your installed dependencies for known security vulnerabilities";
+  pythonRelaxDeps = [
+    "filelock"
+    "pydantic"
+    "psutil"
+  ];
+
+  dependencies = [
+    setuptools
+    click
+    requests
+    packaging
+    dparse
+    ruamel-yaml
+    jinja2
+    marshmallow
+    nltk
+    authlib
+    typer
+    pydantic
+    safety-schemas
+    typing-extensions
+    filelock
+    psutil
+    httpx
+    tenacity
+    tomlkit
+  ];
+
+  nativeCheckInputs = [
+    git
+    pytestCheckHook
+    tomli
+    writableTmpDirAsHomeHook
+  ];
+
+  disabledTests = [
+    # Disable tests depending on online services
+    "test_announcements_if_is_not_tty"
+    "test_check_live"
+    "test_debug_flag"
+    "test_get_packages_licenses_without_api_key"
+    "test_init_project"
+    "test_validate_with_basic_policy_file"
+  ];
+
+  # ImportError: cannot import name 'get_command_for' from partially initialized module 'safety.cli_util' (most likely due to a circular import)
+  disabledTestPaths = [ "tests/alerts/test_utils.py" ];
+
+  meta = {
+    description = "Checks installed dependencies for known vulnerabilities";
+    mainProgram = "safety";
     homepage = "https://github.com/pyupio/safety";
-    license = licenses.mit;
-    maintainers = with maintainers; [ thomasdesr ];
+    changelog = "https://github.com/pyupio/safety/blob/${src.tag}/CHANGELOG.md";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [
+      thomasdesr
+      dotlambda
+    ];
   };
 }

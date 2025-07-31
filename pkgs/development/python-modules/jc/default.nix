@@ -1,28 +1,49 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, ruamel-yaml
-, xmltodict
-, pygments
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  stdenv,
+  buildPackages,
+  buildPythonPackage,
+  fetchFromGitHub,
+  installShellFiles,
+  ruamel-yaml,
+  xmltodict,
+  pygments,
+  pytestCheckHook,
+  pythonOlder,
 }:
 
 buildPythonPackage rec {
   pname = "jc";
-  version = "1.18.3";
+  version = "1.25.5";
+  format = "setuptools";
   disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "kellyjonbrazil";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-OMFW2xR6X/6H8ouHAe5qX8ltuwkNG9esjdosac+MiNw=";
+    repo = "jc";
+    tag = "v${version}";
+    hash = "sha256-tv466jVjLtmn2U8t3sSyQLuzGcVf0RHtE+cFd8j8T5k=";
   };
 
-  propagatedBuildInputs = [ ruamel-yaml xmltodict pygments ];
+  propagatedBuildInputs = [
+    ruamel-yaml
+    xmltodict
+    pygments
+  ];
 
-  checkInputs = [ pytestCheckHook ];
+  nativeBuildInputs = [ installShellFiles ];
+
+  postInstall =
+    let
+      emulator = stdenv.hostPlatform.emulator buildPackages;
+    in
+    ''
+      installShellCompletion --cmd jc \
+        --bash <(${emulator} $out/bin/jc --bash-comp) \
+        --zsh  <(${emulator} $out/bin/jc --zsh-comp)
+    '';
+
+  nativeCheckInputs = [ pytestCheckHook ];
 
   pythonImportsCheck = [ "jc" ];
 
@@ -34,5 +55,7 @@ buildPythonPackage rec {
     homepage = "https://github.com/kellyjonbrazil/jc";
     license = licenses.mit;
     maintainers = with maintainers; [ atemu ];
+    changelog = "https://github.com/kellyjonbrazil/jc/blob/${src.tag}/CHANGELOG";
+    mainProgram = "jc";
   };
 }

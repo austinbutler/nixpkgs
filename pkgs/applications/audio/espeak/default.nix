@@ -1,4 +1,10 @@
-{ lib, stdenv, fetchurl, unzip, portaudio }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+  unzip,
+  portaudio,
+}:
 
 stdenv.mkDerivation rec {
   pname = "espeak";
@@ -19,9 +25,10 @@ stdenv.mkDerivation rec {
   prePatch = ''
     sed -e s,/bin/ln,ln,g -i src/Makefile
     sed -e 's,^CXXFLAGS=-O2,CXXFLAGS=-O2 -D PATH_ESPEAK_DATA=\\\"$(DATADIR)\\\",' -i src/Makefile
-  '' + (if portaudio.api_version == 19 then ''
+  ''
+  + (lib.optionalString (portaudio.api_version == 19) ''
     cp src/portaudio19.h src/portaudio.h
-  '' else "");
+  '');
 
   configurePhase = ''
     cd src
@@ -30,7 +37,8 @@ stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "Compact open source software speech synthesizer";
-    homepage = "http://espeak.sourceforge.net/";
+    mainProgram = "espeak";
+    homepage = "https://espeak.sourceforge.net/";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
   };

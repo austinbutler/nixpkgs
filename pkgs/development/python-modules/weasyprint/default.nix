@@ -1,103 +1,121 @@
-{ buildPythonPackage
-, fetchPypi
-, fetchpatch
-, pytestCheckHook
-, brotli
-, cairosvg
-, flit-core
-, fonttools
-, pydyf
-, pyphen
-, cffi
-, cssselect
-, lxml
-, html5lib
-, tinycss
-, zopfli
-, glib
-, harfbuzz
-, pango
-, fontconfig
-, lib
-, stdenv
-, ghostscript
-, isPy3k
-, substituteAll
+{
+  lib,
+  stdenv,
+  pkgs,
+  buildPythonPackage,
+  fetchFromGitHub,
+  fontconfig,
+  glib,
+  harfbuzz,
+  pango,
+
+  # build-system
+  flit-core,
+
+  # dependencies
+  cffi,
+  cssselect2,
+  fonttools,
+  pillow,
+  pydyf,
+  pyphen,
+  tinycss2,
+  tinyhtml5,
+
+  # tests
+  pytest-cov-stub,
+  pytestCheckHook,
+  replaceVars,
+  versionCheckHook,
+  writableTmpDirAsHomeHook,
 }:
 
 buildPythonPackage rec {
   pname = "weasyprint";
-  version = "54.2";
-  disabled = !isPy3k;
+  version = "65.1";
+  pyproject = true;
 
-  format = "pyproject";
-
-  src = fetchPypi {
-    inherit version;
-    pname = "weasyprint";
-    sha256 = "sha256-1eiqguPiokd6RUPwZG2fsUCAybo0oIWXUesjdXzABGY=";
+  src = fetchFromGitHub {
+    owner = "Kozea";
+    repo = "WeasyPrint";
+    tag = "v${version}";
+    hash = "sha256-iSeuRX1dnnrGZbcb1yTxOJPD5kgIWY6oz/0v02QJqSs=";
   };
 
   patches = [
-    (substituteAll {
-      src = ./library-paths.patch;
+    (replaceVars ./library-paths.patch {
       fontconfig = "${fontconfig.lib}/lib/libfontconfig${stdenv.hostPlatform.extensions.sharedLibrary}";
-      pangoft2 = "${pango.out}/lib/libpangoft2-1.0${stdenv.hostPlatform.extensions.sharedLibrary}";
       gobject = "${glib.out}/lib/libgobject-2.0${stdenv.hostPlatform.extensions.sharedLibrary}";
-      pango = "${pango.out}/lib/libpango-1.0${stdenv.hostPlatform.extensions.sharedLibrary}";
-      pangocairo = "${pango.out}/lib/libpangocairo-1.0${stdenv.hostPlatform.extensions.sharedLibrary}";
       harfbuzz = "${harfbuzz.out}/lib/libharfbuzz${stdenv.hostPlatform.extensions.sharedLibrary}";
+      harfbuzz_subset = "${harfbuzz.out}/lib/libharfbuzz-subset${stdenv.hostPlatform.extensions.sharedLibrary}";
+      pango = "${pango.out}/lib/libpango-1.0${stdenv.hostPlatform.extensions.sharedLibrary}";
+      pangoft2 = "${pango.out}/lib/libpangoft2-1.0${stdenv.hostPlatform.extensions.sharedLibrary}";
     })
   ];
 
-  nativeBuildInputs = [
-    flit-core
-  ];
+  build-system = [ flit-core ];
 
-  propagatedBuildInputs = [
-    brotli
-    cairosvg
+  dependencies = [
     cffi
-    cssselect
+    cssselect2
     fonttools
-    html5lib
-    lxml
-    flit-core
+    pillow
     pydyf
     pyphen
-    tinycss
-    zopfli
-  ];
+    tinycss2
+    tinyhtml5
+  ]
+  ++ fonttools.optional-dependencies.woff;
 
-  checkInputs = [
+  nativeCheckInputs = [
+    pkgs.ghostscript
+    pytest-cov-stub
     pytestCheckHook
-    ghostscript
+    versionCheckHook
+    writableTmpDirAsHomeHook
   ];
+  versionCheckProgramArg = "--version";
 
   disabledTests = [
     # needs the Ahem font (fails on macOS)
     "test_font_stretch"
     # sensitive to sandbox environments
+    "test_linear_gradients_12"
+    "test_linear_gradients_5"
     "test_tab_size"
     "test_tabulation_character"
+    # rounding issues in sandbox
+    "test_empty_inline_auto_margins"
+    "test_images_transparent_text"
+    "test_layout_table_auto_44"
+    "test_layout_table_auto_45"
+    "test_margin_boxes_element"
+    "test_running_elements"
+    "test_vertical_align_4"
+    "test_visibility_1"
+    "test_visibility_3"
+    "test_visibility_4"
+    "test_woff_simple"
   ];
 
   FONTCONFIG_FILE = "${fontconfig.out}/etc/fonts/fonts.conf";
 
-  postPatch = ''
-    substituteInPlace pyproject.toml \
-      --replace "--isort --flake8 --cov --no-cov-on-fail" ""
-  '';
+  # Set env variable explicitly for Darwin, but allow overriding when invoking directly
+  makeWrapperArgs = [ "--set-default FONTCONFIG_FILE ${FONTCONFIG_FILE}" ];
 
-  preCheck = ''
-    # Fontconfig wants to create a cache.
-    export HOME=$TMPDIR
-  '';
+  pythonImportsCheck = [ "weasyprint" ];
 
-  meta = with lib; {
-    homepage = "https://weasyprint.org/";
+  meta = {
+    changelog = "https://github.com/Kozea/WeasyPrint/releases/tag/v${version}";
     description = "Converts web documents to PDF";
-    license = licenses.bsd3;
-    maintainers = with maintainers; [ elohmeier ];
+    mainProgram = "weasyprint";
+    homepage = "https://weasyprint.org/";
+    license = lib.licenses.bsd3;
+    teams = [ lib.teams.apm ];
+    badPlatforms = [
+      # Fatal Python error: Segmentation fault
+      # "...weasyprint/pdf/fonts.py", line 221 in _harfbuzz_subset
+      lib.systems.inspect.patterns.isDarwin
+    ];
   };
 }

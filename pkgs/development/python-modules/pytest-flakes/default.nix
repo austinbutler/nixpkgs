@@ -1,6 +1,10 @@
-{ lib, buildPythonPackage, fetchPypi, pythonOlder
-, pytest
-, pyflakes
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  pythonOlder,
+  pytest,
+  pyflakes,
 }:
 
 buildPythonPackage rec {
@@ -8,6 +12,7 @@ buildPythonPackage rec {
   # retaining package to not break other packages
   pname = "pytest-flakes";
   version = "4.0.5";
+  format = "setuptools";
   disabled = pythonOlder "3.5";
 
   src = fetchPypi {
@@ -17,7 +22,7 @@ buildPythonPackage rec {
 
   buildInputs = [ pytest ];
   propagatedBuildInputs = [ pyflakes ];
-  checkInputs = [ pytest ];
+  nativeCheckInputs = [ pytest ];
 
   # no longer passes
   doCheck = false;
@@ -30,6 +35,6 @@ buildPythonPackage rec {
   meta = with lib; {
     license = licenses.mit;
     homepage = "https://pypi.python.org/pypi/pytest-flakes";
-    description = "pytest plugin to check source code with pyflakes";
+    description = "Pytest plugin to check source code with pyflakes";
   };
 }

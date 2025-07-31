@@ -1,30 +1,35 @@
-{ stdenv
-, lib
-, fetchurl
-, meson
-, ninja
-, pkg-config
-, python3
-, gettext
-, gobject-introspection
-, gst-plugins-base
-, gst-plugins-bad
+{
+  stdenv,
+  lib,
+  fetchurl,
+  meson,
+  ninja,
+  pkg-config,
+  python3,
+  gettext,
+  gobject-introspection,
+  gst-plugins-base,
+  gst-plugins-bad,
+  # Checks meson.is_cross_build(), so even canExecute isn't enough.
+  enableDocumentation ? stdenv.hostPlatform == stdenv.buildPlatform,
+  hotdoc,
+  directoryListingUpdater,
+  apple-sdk_gstreamer,
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "gst-rtsp-server";
-  version = "1.20.0";
-
-  src = fetchurl {
-    url = "https://gstreamer.freedesktop.org/src/${pname}/${pname}-${version}.tar.xz";
-    sha256 = "sha256-wgn17ZBtpxP91EqIROkJqmyK89+2MCWbCSz7d6d1WEM=";
-  };
+  version = "1.26.0";
 
   outputs = [
     "out"
     "dev"
-    # "devdoc" # disabled until `hotdoc` is packaged in nixpkgs
   ];
+
+  src = fetchurl {
+    url = "https://gstreamer.freedesktop.org/src/gst-rtsp-server/gst-rtsp-server-${finalAttrs.version}.tar.xz";
+    hash = "sha256-6YPAOUluP3XjlpZVTOdNtBIOJGXeF6ocw3FgVo6bQLw=";
+  };
 
   nativeBuildInputs = [
     meson
@@ -33,27 +38,33 @@ stdenv.mkDerivation rec {
     gobject-introspection
     pkg-config
     python3
-
-    # documentation
-    # TODO add hotdoc here
+  ]
+  ++ lib.optionals enableDocumentation [
+    hotdoc
   ];
 
   buildInputs = [
     gst-plugins-base
     gst-plugins-bad
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    apple-sdk_gstreamer
   ];
 
   mesonFlags = [
+    "-Dglib_debug=disabled" # cast checks should be disabled on stable releases
     "-Dexamples=disabled" # requires many dependencies and probably not useful for our users
-    "-Ddoc=disabled" # `hotdoc` not packaged in nixpkgs as of writing
-  ] ++ lib.optionals (stdenv.buildPlatform != stdenv.hostPlatform) [
-    "-Dintrospection=disabled"
+    (lib.mesonEnable "doc" enableDocumentation)
   ];
 
   postPatch = ''
     patchShebangs \
       scripts/extract-release-date-from-doap-file.py
   '';
+
+  passthru = {
+    updateScript = directoryListingUpdater { };
+  };
 
   meta = with lib; {
     description = "GStreamer RTSP server";
@@ -65,4 +76,4 @@ stdenv.mkDerivation rec {
     platforms = platforms.unix;
     maintainers = with maintainers; [ bkchr ];
   };
-}
+})

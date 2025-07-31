@@ -1,46 +1,58 @@
-{ lib
-, asynctest
-, buildPythonPackage
-, docutils
-, fetchFromGitHub
-, imaplib2
-, mock
-, nose
-, pyopenssl
-, pytestCheckHook
-, pytz
-, tzlocal
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchFromGitHub,
+  imaplib2,
+  mock,
+  poetry-core,
+  pyopenssl,
+  pytest-asyncio,
+  pytestCheckHook,
+  pytz,
 }:
 
 buildPythonPackage rec {
   pname = "aioimaplib";
-  version = "0.9.0";
+  version = "2.0.1";
+  pyproject = true;
 
   src = fetchFromGitHub {
-    owner = "bamthomas";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-xxZAeJDuqrPv4kGgDr0ypFuZJk1zcs/bmgeEzI0jpqY=";
+    owner = "iroco-co";
+    repo = "aioimaplib";
+    tag = version;
+    hash = "sha256-njzSpKPis033eLoRKXL538ljyMOB43chslio1wodrKU=";
   };
 
-  checkInputs = [
-    asynctest
-    docutils
+  build-system = [ poetry-core ];
+
+  nativeCheckInputs = [
     imaplib2
     mock
-    nose
     pyopenssl
+    pytest-asyncio
     pytestCheckHook
     pytz
-    tzlocal
   ];
+
+  disabledTests = [
+    # TimeoutError
+    "test_idle_start__exits_queue_get_without_timeout_error"
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    # Comparison to magic strings
+    "test_idle_loop"
+  ];
+
+  __darwinAllowLocalNetworking = true;
 
   pythonImportsCheck = [ "aioimaplib" ];
 
-  meta = with lib; {
+  meta = {
     description = "Python asyncio IMAP4rev1 client library";
-    homepage = "https://github.com/bamthomas/aioimaplib";
-    license = licenses.gpl3Plus;
-    maintainers = with maintainers; [ dotlambda ];
+    homepage = "https://github.com/iroco-co/aioimaplib";
+    changelog = "https://github.com/iroco-co/aioimaplib/blob/${src.tag}/CHANGES.rst";
+    license = lib.licenses.gpl3Plus;
+    maintainers = [ lib.maintainers.dotlambda ];
   };
 }

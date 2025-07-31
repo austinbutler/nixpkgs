@@ -1,38 +1,45 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pythonOlder
-, decorator
-, requests
-, typing ? null
-, configparser
-, click
-, freezegun
-, mock
-, pytestCheckHook
-, pytest-vcr
-, python-dateutil
-, vcrpy
+{
+  lib,
+  stdenvNoCC,
+  buildPythonPackage,
+  fetchFromGitHub,
+  pythonAtLeast,
+
+  # build-system
+  hatchling,
+
+  # dependencies
+  requests,
+
+  # testing
+  click,
+  freezegun,
+  mock,
+  pytest-vcr,
+  pytestCheckHook,
+  python-dateutil,
+  vcrpy,
 }:
 
 buildPythonPackage rec {
   pname = "datadog";
-  version = "0.43.0";
+  version = "0.52.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "1f2123083d9e1add6f238c62714b76ac2fc134d7d1c435cd82b976487b191b96";
+  src = fetchFromGitHub {
+    owner = "DataDog";
+    repo = "datadogpy";
+    tag = "v${version}";
+    hash = "sha256-CmSUbqctElk9sCyQAL+SKqJBpT1vlpmp6mEX6HWN8Po=";
   };
 
-  postPatch = ''
-    find . -name '*.pyc' -exec rm {} \;
-  '';
+  build-system = [ hatchling ];
 
-  propagatedBuildInputs = [ decorator requests ]
-    ++ lib.optional (pythonOlder "3.5") typing
-    ++ lib.optional (pythonOlder "3.0") configparser;
+  dependencies = [ requests ];
 
-  checkInputs = [
+  __darwinAllowLocalNetworking = true;
+
+  nativeCheckInputs = [
     click
     freezegun
     mock
@@ -44,17 +51,40 @@ buildPythonPackage rec {
 
   disabledTestPaths = [
     "tests/performance"
+    # https://github.com/DataDog/datadogpy/issues/800
+    "tests/integration/api/test_*.py"
   ];
 
   disabledTests = [
     "test_default_settings_set"
+    # https://github.com/DataDog/datadogpy/issues/746
+    "TestDogshell"
+
+    # Flaky: test execution time against magic values
+    "test_distributed"
+    "test_timed"
+    "test_timed_in_ms"
+    "test_timed_start_stop_calls"
+
+    # OSError: AF_UNIX path too long
+    "test_socket_connection"
+  ]
+  ++ lib.optionals (pythonAtLeast "3.13") [
+    # https://github.com/DataDog/datadogpy/issues/880
+    "test_timed_coroutine"
+  ]
+  ++ lib.optionals stdenvNoCC.hostPlatform.isDarwin [
+    # PermissionError: [Errno 1] Operation not permitted
+    "test_dedicated_uds_telemetry_dest"
   ];
 
   pythonImportsCheck = [ "datadog" ];
 
-  meta = with lib; {
-    description = "The Datadog Python library";
-    license = licenses.bsd3;
+  meta = {
+    description = "Datadog Python library";
     homepage = "https://github.com/DataDog/datadogpy";
+    changelog = "https://github.com/DataDog/datadogpy/blob/${src.tag}/CHANGELOG.md";
+    license = lib.licenses.bsd3;
+    maintainers = [ lib.maintainers.sarahec ];
   };
 }

@@ -37,14 +37,12 @@ prefetchExtensionUnpacked() {
   1>&2 echo "zipStorePath='$zipStorePath'"
 
   function rm_tmpdir() {
-    1>&2 printf "rm -rf -- %q\n" "$tmpDir"
-    rm -rf -- "$tmpDir"
-    unset tmpDir
-    trap - INT TERM HUP EXIT
+    1>&2 printf "rm -rf %q\n" "$tmpDir"
+    rm -rf "$tmpDir"
   }
   function make_trapped_tmpdir() {
     tmpDir=$(mktemp -d)
-    trap rm_tmpdir INT TERM HUP EXIT
+    trap rm_tmpdir EXIT
   }
 
   1>&2 echo
@@ -62,7 +60,7 @@ prefetchExtensionUnpacked() {
   declare unpackedStorePath
   unpackedStorePath="$(nix add-to-store -n "$unpackedStoreName" "$tmpDir")"
   declare unpackedSha256
-  unpackedSha256="$(nix hash-path --base32 --type sha256 "$unpackedStorePath")"
+  unpackedSha256="$(nix --extra-experimental-features nix-command hash path --base32 --type sha256 "$unpackedStorePath")"
   1>&2 echo "unpackedStorePath='$unpackedStorePath'"
   1>&2 echo "unpackedSha256='$unpackedSha256'"
 

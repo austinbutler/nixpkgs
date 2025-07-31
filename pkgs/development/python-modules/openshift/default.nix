@@ -1,32 +1,30 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, jinja2
-, kubernetes
-, ruamel-yaml
-, six
-, python-string-utils
-, pytest-bdd
-, pytestCheckHook
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  jinja2,
+  kubernetes,
+  ruamel-yaml,
+  six,
+  python-string-utils,
+  pytest-bdd,
+  pytest-cov-stub,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "openshift";
-  version = "0.12.1";
+  version = "0.13.2";
+  format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "openshift";
     repo = "openshift-restclient-python";
-    rev = "v${version}";
-    sha256 = "1di55xg3nl4dwrrfw314p4mfm6593kdi7ia517v1sm6x5p4hjl78";
+    tag = "v${version}";
+    hash = "sha256-uLfewj7M8KNs3oL1AM18sR/WhAR2mvBfqadyhR73FP0=";
   };
 
-  postPatch = ''
-    substituteInPlace requirements.txt \
-      --replace "kubernetes ~= 12.0" "kubernetes"
-
-    sed -i '/--cov/d' setup.cfg
-  '';
+  pythonRelaxDeps = [ "kubernetes" ];
 
   propagatedBuildInputs = [
     jinja2
@@ -36,16 +34,17 @@ buildPythonPackage rec {
     six
   ];
 
-  pythonImportsCheck = ["openshift"];
+  pythonImportsCheck = [ "openshift" ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     pytest-bdd
+    pytest-cov-stub
     pytestCheckHook
   ];
 
   disabledTestPaths = [
-    # requires docker
-    "test/functional"
+    # requires kubeconfig
+    "test/integration"
   ];
 
   meta = with lib; {

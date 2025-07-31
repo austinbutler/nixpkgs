@@ -1,19 +1,41 @@
-{ lib, fetchPypi, buildPythonPackage, pytest, pytest-html }:
+{
+  lib,
+  fetchFromGitHub,
+  buildPythonPackage,
+  pytestCheckHook,
+  pytest-html,
+  pyyaml,
+  setuptools,
+  setuptools-scm,
+}:
 
 buildPythonPackage rec {
   pname = "cucumber-tag-expressions";
-  version = "4.1.0";
+  version = "6.2.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "e314d5fed6eebb2f90380271f562248fb15e18636764faf40f4dde4b28b1f960";
+  src = fetchFromGitHub {
+    owner = "cucumber";
+    repo = "tag-expressions";
+    tag = "v${version}";
+    hash = "sha256-m6CmRs/Fz2e9GTtHrE3FF8GPK2vs6i37xcI3BM64rlc=";
   };
 
-  checkInputs = [ pytest pytest-html ];
-  checkPhase = "pytest tests/*/*.py";
+  sourceRoot = "${src.name}/python";
+
+  build-system = [
+    setuptools
+    setuptools-scm
+  ];
+
+  nativeCheckInputs = [
+    pytestCheckHook
+    pytest-html
+    pyyaml
+  ];
 
   meta = with lib; {
-    homepage = "https://github.com/cucumber/tag-expressions-python";
+    homepage = "https://github.com/cucumber/tag-expressions";
     description = "Provides tag-expression parser for cucumber/behave";
     license = licenses.mit;
     maintainers = with maintainers; [ maxxk ];

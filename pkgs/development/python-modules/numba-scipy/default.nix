@@ -1,18 +1,23 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, scipy
-, numba
-, pytestCheckHook
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  scipy,
+  numba,
+  pytestCheckHook,
+  pythonOlder,
 }:
 
 buildPythonPackage rec {
   pname = "numba-scipy";
-  version = "0.3.0";
+  version = "0.4.0";
+  format = "setuptools";
+
+  disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-qJeoWiG1LdtFB9cME1d8xVaC0BXGDJEYjCOEdHvSkmQ=";
+    hash = "sha256-RDZF1mNcZnrcOzjQpjbZq8yXHnjeLAeAjYmvzXvFhEQ=";
   };
 
   propagatedBuildInputs = [
@@ -20,15 +25,15 @@ buildPythonPackage rec {
     numba
   ];
 
-  postPatch = ''
-    substituteInPlace setup.py --replace "scipy>=0.16,<=1.6.2" "scipy>=0.16,<=1.7.3"
-  '';
-
-  checkInputs = [
+  nativeCheckInputs = [
     pytestCheckHook
   ];
+  pythonRelaxDeps = [
+    "scipy"
+    "numba"
+  ];
 
-  pythonImportsCheck = [ "numba" ];
+  pythonImportsCheck = [ "numba_scipy" ];
 
   meta = with lib; {
     description = "Extends Numba to make it aware of SciPy";

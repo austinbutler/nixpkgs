@@ -1,27 +1,35 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, requests
-, requests_oauthlib
-, voluptuous
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  pythonOlder,
+  requests,
+  requests-oauthlib,
+  voluptuous,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "pybotvac";
-  version = "0.0.23";
+  version = "0.0.28";
+  pyproject = true;
+
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "54b4fe565c10000c54d5644d081e2de1f850daefbac39cea74cea649b47bfb12";
+    hash = "sha256-XIGG8HmjI3dSq42co2e05xHIYjIM39qVanMJLDqWFCg=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
     requests
-    requests_oauthlib
+    requests-oauthlib
     voluptuous
   ];
 
-  # no tests
+  # Module no tests
   doCheck = false;
 
   pythonImportsCheck = [ "pybotvac" ];
@@ -29,7 +37,8 @@ buildPythonPackage rec {
   meta = with lib; {
     description = "Python module for interacting with Neato Botvac Connected vacuum robots";
     homepage = "https://github.com/stianaske/pybotvac";
+    changelog = "https://github.com/stianaske/pybotvac/releases/tag/v${version}";
     license = licenses.mit;
-    maintainers = with maintainers; [ elseym ];
+    maintainers = with maintainers; [ fab ];
   };
 }

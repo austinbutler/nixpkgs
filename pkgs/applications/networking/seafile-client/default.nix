@@ -1,24 +1,46 @@
-{ mkDerivation, lib, fetchFromGitHub, pkg-config, cmake, qtbase, qttools
-, seafile-shared, jansson, libsearpc
-, withShibboleth ? true, qtwebengine }:
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  pkg-config,
+  cmake,
+  qttools,
+  libuuid,
+  seafile-shared,
+  jansson,
+  libsearpc,
+  withShibboleth ? true,
+  qtwebengine,
+  wrapQtAppsHook,
+}:
 
-mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "seafile-client";
-  version = "8.0.6";
+  version = "9.0.12";
 
   src = fetchFromGitHub {
     owner = "haiwen";
     repo = "seafile-client";
     rev = "v${version}";
-    sha256 = "sha256-pImSrQ63AS1hi9CUvFAR91ZHgPCJB0ZOAA0fEZ24O8o=";
+    sha256 = "sha256-9ng8TsT211jAt2Vhv8fEIQGCtbQ6LQ6pCVFToVaK8LY=";
   };
 
-  nativeBuildInputs = [ pkg-config cmake ];
-  buildInputs = [ qtbase qttools seafile-shared jansson libsearpc ]
-    ++ lib.optional withShibboleth qtwebengine;
+  nativeBuildInputs = [
+    libuuid
+    pkg-config
+    cmake
+    wrapQtAppsHook
+    qttools
+  ];
 
-  cmakeFlags = [ "-DCMAKE_BUILD_TYPE=Release" ]
-    ++ lib.optional withShibboleth "-DBUILD_SHIBBOLETH_SUPPORT=ON";
+  buildInputs = [
+    seafile-shared
+    jansson
+    libsearpc
+  ]
+  ++ lib.optional withShibboleth qtwebengine;
+
+  cmakeFlags = lib.optional withShibboleth "-DBUILD_SHIBBOLETH_SUPPORT=ON";
 
   qtWrapperArgs = [
     "--suffix PATH : ${lib.makeBinPath [ seafile-shared ]}"
@@ -29,6 +51,9 @@ mkDerivation rec {
     description = "Desktop client for Seafile, the Next-generation Open Source Cloud Storage";
     license = licenses.asl20;
     platforms = platforms.linux;
-    maintainers = with maintainers; [ schmittlauch greizgh ];
+    maintainers = with maintainers; [
+      schmittlauch
+    ];
+    mainProgram = "seafile-applet";
   };
 }

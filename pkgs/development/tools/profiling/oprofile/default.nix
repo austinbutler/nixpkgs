@@ -1,36 +1,50 @@
-{ lib, stdenv, buildPackages
-, fetchurl, pkg-config
-, libbfd, popt, zlib, linuxHeaders, libiberty_static
-, withGUI ? false, qt4 ? null
+{
+  lib,
+  stdenv,
+  buildPackages,
+  fetchurl,
+  pkg-config,
+  libbfd,
+  popt,
+  zlib,
+  linuxHeaders,
+  libiberty_static,
 }:
 
-# libX11 is needed because the Qt build stuff automatically adds `-lX11'.
-assert withGUI -> qt4 != null;
-
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "oprofile";
   version = "1.4.0";
 
   src = fetchurl {
-    url = "mirror://sourceforge/oprofile/${pname}-${version}.tar.gz";
+    url = "mirror://sourceforge/oprofile/${finalAttrs.pname}-${finalAttrs.version}.tar.gz";
     sha256 = "04m46ni0ryk4sqmzd6mahwzp7iwhwqzfbmfi42fki261sycnz83v";
   };
 
+  patches = [
+    # fix configurePhase with gcc14:
+    # https://sourceforge.net/p/oprofile/oprofile/ci/b0acf9f0c0aac93bf6f3e196d7a52c9632ff4475/
+    ./fix-autoconf-detection-of-perf_events.patch
+  ];
+
   postPatch = ''
     substituteInPlace opjitconv/opjitconv.c \
-      --replace "/bin/rm" "${buildPackages.coreutils}/bin/rm" \
-      --replace "/bin/cp" "${buildPackages.coreutils}/bin/cp"
+      --replace-fail "/bin/rm" "${buildPackages.coreutils}/bin/rm" \
+      --replace-fail "/bin/cp" "${buildPackages.coreutils}/bin/cp"
   '';
 
   nativeBuildInputs = [ pkg-config ];
-  buildInputs = [ libbfd zlib popt linuxHeaders libiberty_static ]
-    ++ lib.optionals withGUI [ qt4 ];
+  buildInputs = [
+    libbfd
+    zlib
+    popt
+    linuxHeaders
+    libiberty_static
+  ];
 
   configureFlags = [
-      "--with-kernel=${linuxHeaders}"
-      "--disable-shared"   # needed because only the static libbfd is available
-    ]
-    ++ lib.optional withGUI "--with-qt-dir=${qt4} --enable-gui=qt4";
+    "--with-kernel=${linuxHeaders}"
+    "--disable-shared" # needed because only the static libbfd is available
+  ];
 
   meta = {
     description = "System-wide profiler for Linux";
@@ -52,4 +66,4 @@ stdenv.mkDerivation rec {
     platforms = lib.platforms.linux;
     maintainers = [ ];
   };
-}
+})

@@ -1,47 +1,61 @@
-{ lib
-, python3
-, fetchFromGitHub
-, wrapQtAppsHook
+{
+  lib,
+  stdenv,
+  python3,
+  fetchFromGitHub,
+  qt6,
+  writeShellScriptBin,
 }:
-
 let
-  python = python3.override {
-    packageOverrides = self: super: {
-      scipy = super.scipy.overridePythonAttrs (oldAttrs: rec {
-        version = "1.4.1";
-        src = oldAttrs.src.override {
-          inherit version;
-          sha256 = "0ndw7zyxd2dj37775mc75zm4fcyiipnqxclc45mkpxy8lvrvpqfy";
-        };
-        doCheck = false;
-      });
-    };
-  };
-in python.pkgs.buildPythonApplication rec {
+  # Matches the pyside6-uic and pyside6-rcc implementations
+  # https://code.qt.io/cgit/pyside/pyside-setup.git/tree/sources/pyside-tools/pyside_tool.py?id=9b310d4c0654a244147766e382834b5e8bdeb762#n90
+  pyside-tools-uic = writeShellScriptBin "pyside6-uic" ''
+    exec ${qt6.qtbase}/libexec/uic -g python "$@"
+  '';
+  pyside-tools-rcc = writeShellScriptBin "pyside6-rcc" ''
+    exec ${qt6.qtbase}/libexec/rcc -g python "$@"
+  '';
+in
+python3.pkgs.buildPythonApplication rec {
   pname = "nanovna-saver";
-  version = "0.3.8";
+  version = "0.7.3";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "NanoVNA-Saver";
     repo = pname;
-    rev = "v${version}";
-    sha256 = "0z83rwpnbbs1n74mx8dgh1d1crp90mannj9vfy161dmy4wzc5kpv";
+    tag = "v${version}";
+    sha256 = "sha256-Asx4drb9W2NobdgOlbgdm1aAzB69hnIWvOM915F7sgA=";
   };
 
-  nativeBuildInputs = [ wrapQtAppsHook ];
+  nativeBuildInputs = [
+    qt6.wrapQtAppsHook
+    qt6.qtbase
+  ];
 
-  propagatedBuildInputs = with python.pkgs; [
+  buildInputs = lib.optional stdenv.hostPlatform.isLinux qt6.qtwayland;
+
+  propagatedBuildInputs = with python3.pkgs; [
     cython
     scipy
-    pyqt5
+    pyqt6
     pyserial
+    pyside6
     numpy
+    setuptools
+    setuptools-scm
   ];
 
   doCheck = false;
 
   dontWrapGApps = true;
   dontWrapQtApps = true;
+
+  postPatch = ''
+    substituteInPlace src/tools/ui_compile.py \
+      --replace-fail "pyside6-uic" "${pyside-tools-uic}/bin/pyside6-uic" \
+      --replace-fail "pyside6-rcc" "${pyside-tools-rcc}/bin/pyside6-rcc"
+  '';
 
   preFixup = ''
     makeWrapperArgs+=(
@@ -52,14 +66,17 @@ in python.pkgs.buildPythonApplication rec {
 
   meta = with lib; {
     homepage = "https://github.com/NanoVNA-Saver/nanovna-saver";
-    description =
-      "A tool for reading, displaying and saving data from the NanoVNA";
+    description = "Tool for reading, displaying and saving data from the NanoVNA";
+    mainProgram = "NanoVNASaver";
     longDescription = ''
       A multiplatform tool to save Touchstone files from the NanoVNA, sweep
       frequency spans in segments to gain more than 101 data points, and
       generally display and analyze the resulting data.
     '';
     license = licenses.gpl3Only;
-    maintainers = with maintainers; [ zaninime ];
+    maintainers = with maintainers; [
+      zaninime
+      tmarkus
+    ];
   };
 }

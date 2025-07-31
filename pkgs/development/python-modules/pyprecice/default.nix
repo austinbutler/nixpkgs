@@ -1,26 +1,65 @@
-{ lib, buildPythonPackage, fetchFromGitHub, precice, numpy, mpi4py, cython }:
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  cython,
+  pip,
+  pkgconfig,
+  setuptools,
+
+  # dependencies
+  mpi4py,
+  numpy,
+  precice,
+}:
 
 buildPythonPackage rec {
   pname = "pyprecice";
-  version = "2.3.0.1";
+  version = "3.1.2";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "precice";
     repo = "python-bindings";
-    rev = "v${version}";
-    sha256 = "1yz96pif63ms797bzxbfrjba4mgz7cz5dqrqghn5sg0g1b9qxnn5";
+    tag = "v${version}";
+    hash = "sha256-/atuMJVgvY4kgvrB+LuQZmJuSK4O8TJdguC7NCiRS2Y=";
   };
 
-  nativeBuildInputs = [ cython ];
-  propagatedBuildInputs = [ numpy mpi4py precice ];
+  postPatch = ''
+    substituteInPlace pyproject.toml \
+      --replace-fail "setuptools>=61,<72" "setuptools" \
+      --replace-fail "numpy<2" "numpy"
+  '';
 
-  doCheck = false; # Disable Test because everything depends on open mpi which requires network.
-  pythonImportChecks = [ "precice" ];
+  build-system = [
+    cython
+    pip
+    pkgconfig
+    setuptools
+  ];
 
-  meta = with lib; {
+  pythonRelaxDeps = [
+    "numpy"
+  ];
+
+  dependencies = [
+    numpy
+    mpi4py
+    precice
+  ];
+
+  # Disable Test because everything depends on open mpi which requires network
+  doCheck = false;
+
+  # Do not use pythonImportsCheck because this will also initialize mpi which requires a network interface
+
+  meta = {
     description = "Python language bindings for preCICE";
     homepage = "https://github.com/precice/python-bindings";
-    license = licenses.lgpl3Only;
-    maintainers = with maintainers; [ Scriptkiddi ];
+    changelog = "https://github.com/precice/python-bindings/blob/v${version}/CHANGELOG.md";
+    license = lib.licenses.lgpl3Only;
+    maintainers = with lib.maintainers; [ Scriptkiddi ];
   };
 }

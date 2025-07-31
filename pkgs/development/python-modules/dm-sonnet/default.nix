@@ -1,91 +1,91 @@
-{ lib
-, fetchFromGitHub
-, bazel_0_26
-, buildBazelPackage
-, buildPythonPackage
-, git
-, python
-, six
-, absl-py
-, semantic-version
-, contextlib2
-, wrapt
-, tensorflow
-, tensorflow-probability
-, tensorflow-estimator
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
+  # dependencies
+  dm-tree,
+  etils,
+  numpy,
+  tabulate,
+  wrapt,
+
+  # tests
+  click,
+  docutils,
+  keras,
+  pytestCheckHook,
+  tensorflow,
+  tensorflow-datasets,
+  tf-keras,
 }:
 
-let
-  version = "1.33";
+buildPythonPackage rec {
+  pname = "dm-sonnet";
+  version = "2.0.2";
+  pyproject = true;
 
-  # first build all binaries and generate setup.py using bazel
-  bazel-build = buildBazelPackage {
-    bazel = bazel_0_26;
-
-    name = "dm-sonnet-bazel-${version}";
-
-    src = fetchFromGitHub {
-      owner = "deepmind";
-      repo = "sonnet";
-      rev = "v${version}";
-      sha256 = "1nqsja1s8jrkq6v1whgh7smk17313mjr9vs3k5c1m8px4yblzhqc";
-    };
-
-    nativeBuildInputs = [
-      git # needed to fetch the bazel deps (protobuf in particular)
-    ];
-
-    # see https://github.com/deepmind/sonnet/blob/master/docs/INSTALL.md
-    bazelTarget = ":install";
-
-    fetchAttrs = {
-      sha256 = "09dzxs2v5wpiaxrz7qj257q1fbx0gxwbk0jyx58n81m5kys7yj9k";
-    };
-
-    buildAttrs = {
-      preBuild = ''
-        patchShebangs .
-      '';
-
-      installPhase = ''
-        # do not generate a wheel, instead just copy the generated files to $out to be installed by buildPythonPackage
-        sed -i 's,.*bdist_wheel.*,cp -rL . "$out"; exit 0,' bazel-bin/install
-
-        # the target directory "dist" does not actually matter since we're not generating a wheel
-        bazel-bin/install dist
-      '';
-    };
+  src = fetchFromGitHub {
+    owner = "deepmind";
+    repo = "sonnet";
+    tag = "v${version}";
+    hash = "sha256-WkloUbqSyPG3cbLG8ktsjdluACkCbUZ7t6rYWst8rs8=";
   };
 
-# now use pip to install the package prepared by bazel
-in buildPythonPackage {
-  pname = "dm-sonnet";
-  inherit version;
-
-  src = bazel-build;
-
-  propagatedBuildInputs = [
-    six
-    absl-py
-    semantic-version
-    contextlib2
-    wrapt
-    tensorflow
-    tensorflow-probability
-    tensorflow-estimator
+  build-system = [
+    setuptools
   ];
 
-  # not sure how to properly run the real test suite -- through bazel?
-  checkPhase = ''
-    ${python.interpreter} -c "import sonnet"
+  dependencies = [
+    dm-tree
+    etils
+    numpy
+    tabulate
+    wrapt
+  ]
+  ++ etils.optional-dependencies.epath;
+
+  optional-dependencies = {
+    tensorflow = [ tensorflow ];
+  };
+
+  nativeCheckInputs = [
+    click
+    docutils
+    keras
+    pytestCheckHook
+    tensorflow
+    tensorflow-datasets
+    tf-keras
+  ];
+
+  # ImportError: `keras.optimizers.legacy` is not supported in Keras 3
+  preCheck = ''
+    export TF_USE_LEGACY_KERAS=True
   '';
 
-  meta = with lib; {
-    description = "TensorFlow-based neural network library";
-    homepage = "https://sonnet.dev";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ timokau ];
-    platforms = platforms.linux;
-    broken = true; # depends on older TensorFlow version than is currently packaged
+  disabledTests = [
+    # AssertionError: 2 != 0 : 2 doctests failed
+    "test_doctest_sonnet.functional"
+
+    # AssertionError: Not equal to tolerance
+    "testComputationAgainstNumPy1"
+
+    # tensorflow.python.framework.errors_impl.InvalidArgumentError: cannot compute MatMul as input #1(zero-based) was expected to be a float tensor but is a half tensor [Op:MatMul]
+    "testComputationAgainstNumPy0"
+    "testComputationAgainstNumPy1"
+  ];
+
+  pythonImportsCheck = [ "sonnet" ];
+
+  meta = {
+    description = "Library for building neural networks in TensorFlow";
+    homepage = "https://github.com/deepmind/sonnet";
+    changelog = "https://github.com/google-deepmind/sonnet/releases/tag/v${version}";
+    license = lib.licenses.asl20;
+    maintainers = with lib.maintainers; [ onny ];
   };
 }

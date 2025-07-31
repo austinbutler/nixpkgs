@@ -1,78 +1,110 @@
-{ stdenv
-, lib
-, fetchFromGitHub
-, rustPlatform
-, openssl
-, zlib
-, zstd
-, pkg-config
-, python3
-, xorg
-, libiconv
-, AppKit
-, Security
-, nghttp2
-, libgit2
-, withExtraFeatures ? true
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  rustPlatform,
+  openssl,
+  zlib,
+  zstd,
+  pkg-config,
+  python3,
+  xorg,
+  nghttp2,
+  libgit2,
+  withDefaultFeatures ? true,
+  additionalFeatures ? (p: p),
+  testers,
+  nushell,
+  nix-update-script,
+  curlMinimal,
 }:
 
-rustPlatform.buildRustPackage rec {
+let
+  # NOTE: when updating this to a new non-patch version, please also try to
+  # update the plugins. Plugins only work if they are compiled for the same
+  # major/minor version.
+  version = "0.106.1";
+in
+rustPlatform.buildRustPackage {
   pname = "nushell";
-  version = "0.44.0";
+  inherit version;
 
   src = fetchFromGitHub {
-    owner = pname;
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-LMG72XfDHA9dKiBbaB09v0rDdUKRy/Czu/lsYw6jUog=";
+    owner = "nushell";
+    repo = "nushell";
+    tag = version;
+    hash = "sha256-VrGsdO7RiTlf8JK3MBMcgj0z4cWUklDwikMN5Pu6JQI=";
   };
 
-  cargoSha256 = "sha256-wgaRTf+ZQ7alibCdeCjSQhhR9MC77qM1n0jakDgr114=";
+  cargoHash = "sha256-GSpR54QGiY9Yrs/A8neoKK6hMvSr3ORtNnwoz4GGprY=";
 
-  nativeBuildInputs = [ pkg-config ]
-    ++ lib.optionals (withExtraFeatures && stdenv.isLinux) [ python3 ];
+  nativeBuildInputs = [
+    pkg-config
+  ]
+  ++ lib.optionals (withDefaultFeatures && stdenv.hostPlatform.isLinux) [ python3 ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [ rustPlatform.bindgenHook ];
 
-  buildInputs = [ openssl zstd ]
-    ++ lib.optionals stdenv.isDarwin [ zlib libiconv Security ]
-    ++ lib.optionals (withExtraFeatures && stdenv.isLinux) [ xorg.libX11 ]
-    ++ lib.optionals (withExtraFeatures && stdenv.isDarwin) [ AppKit nghttp2 libgit2 ];
+  buildInputs = [
+    zstd
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [ zlib ]
+  ++ lib.optionals (withDefaultFeatures && stdenv.hostPlatform.isLinux) [ xorg.libX11 ]
+  ++ lib.optionals (withDefaultFeatures && stdenv.hostPlatform.isDarwin) [
+    nghttp2
+    libgit2
+  ];
 
-  buildFeatures = lib.optional withExtraFeatures "extra";
+  buildNoDefaultFeatures = !withDefaultFeatures;
+  buildFeatures = additionalFeatures [ ];
 
-  # Since 0.34, nu has an indirect dependency on `zstd-sys` (via `polars` and
-  # `parquet`, for dataframe support), which by default has an impure build
-  # (git submodule for the `zstd` C library). The `pkg-config` feature flag
-  # fixes this, but it's hard to invoke this in the right place, because of
-  # the indirect dependencies. So add a direct dependency on `zstd-sys` here
-  # at the top level, along with this feature flag, to ensure that when
-  # `zstd-sys` is transitively invoked, it triggers a pure build using the
-  # system `zstd` library provided above.
-  #
-  # (If this patch needs updating, in a nushell repo add the zstd-sys line to
-  # Cargo.toml, then `cargo update --package zstd-sys` to update Cargo.lock.)
-  cargoPatches = [ ./use-system-zstd-lib.diff ];
-
-  # TODO investigate why tests are broken on darwin
-  # failures show that tests try to write to paths
-  # outside of TMPDIR
-  doCheck = ! stdenv.isDarwin;
+  preCheck = ''
+    export NU_TEST_LOCALE_OVERRIDE="en_US.UTF-8"
+  '';
 
   checkPhase = ''
     runHook preCheck
-    echo "Running cargo test"
-    HOME=$TMPDIR cargo test
+    (
+      # The skipped tests all fail in the sandbox because in the nushell test playground,
+      # the tmp $HOME is not set, so nu falls back to looking up the passwd dir of the build
+      # user (/var/empty). The assertions however do respect the set $HOME.
+      set -x
+      HOME=$(mktemp -d) cargo test -j $NIX_BUILD_CORES --offline -- \
+        --test-threads=$NIX_BUILD_CORES \
+        --skip=repl::test_config_path::test_default_config_path \
+        --skip=repl::test_config_path::test_xdg_config_bad \
+        --skip=repl::test_config_path::test_xdg_config_empty ${lib.optionalString stdenv.hostPlatform.isDarwin ''
+          \
+                  --skip=plugins::config::some \
+                  --skip=plugins::stress_internals::test_exit_early_local_socket \
+                  --skip=plugins::stress_internals::test_failing_local_socket_fallback \
+                  --skip=plugins::stress_internals::test_local_socket
+        ''}
+    )
     runHook postCheck
   '';
 
-  meta = with lib; {
-    description = "A modern shell written in Rust";
-    homepage = "https://www.nushell.sh/";
-    license = licenses.mit;
-    maintainers = with maintainers; [ Br1ght0ne johntitor marsam ];
-    mainProgram = "nu";
-  };
+  checkInputs =
+    lib.optionals stdenv.hostPlatform.isDarwin [ curlMinimal ]
+    ++ lib.optionals stdenv.hostPlatform.isLinux [ openssl ];
 
   passthru = {
     shellPath = "/bin/nu";
+    tests.version = testers.testVersion {
+      package = nushell;
+    };
+    updateScript = nix-update-script { };
+  };
+
+  meta = with lib; {
+    description = "Modern shell written in Rust";
+    homepage = "https://www.nushell.sh/";
+    license = licenses.mit;
+    maintainers = with maintainers; [
+      Br1ght0ne
+      johntitor
+      joaquintrinanes
+      ryan4yin
+    ];
+    mainProgram = "nu";
   };
 }

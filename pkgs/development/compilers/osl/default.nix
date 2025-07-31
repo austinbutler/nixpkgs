@@ -1,47 +1,94 @@
-{ clangStdenv, lib, fetchFromGitHub, cmake, zlib, openexr,
-openimageio, llvm, boost165, flex, bison, partio, pugixml,
-util-linux, python3
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  cmake,
+  clang,
+  libclang,
+  libxml2,
+  zlib,
+  openexr,
+  openimageio,
+  llvm,
+  boost,
+  flex,
+  bison,
+  partio,
+  pugixml,
+  robin-map,
+  util-linux,
+  python3,
 }:
 
-let boost_static = boost165.override { enableStatic = true; };
-in clangStdenv.mkDerivation rec {
-  # In theory this could use GCC + Clang rather than just Clang,
-  # but https://github.com/NixOS/nixpkgs/issues/29877 stops this
-  name = "openshadinglanguage-${version}";
-  version = "1.10.9";
+let
+  boost_static = boost.override { enableStatic = true; };
+in
+stdenv.mkDerivation (finalAttrs: {
+  pname = "openshadinglanguage";
+  version = "1.14.5.1";
 
   src = fetchFromGitHub {
-    owner = "imageworks";
+    owner = "AcademySoftwareFoundation";
     repo = "OpenShadingLanguage";
-    rev = "Release-1.10.9";
-    sha256 = "1dwf10f2fpxc55pymwkapql20nc462mq61hv21c527994c2qp1ll";
+    rev = "v${finalAttrs.version}";
+    hash = "sha256-dmGVCx4m2bkeKhAJbU1mrzEDAmnL++7GA5okb9wwk/Y=";
   };
 
   cmakeFlags = [
+    "-DBoost_ROOT=${boost}"
     "-DUSE_BOOST_WAVE=ON"
-    "-DENABLERTTI=ON"
+    "-DENABLE_RTTI=ON"
 
     # Build system implies llvm-config and llvm-as are in the same directory.
     # Override defaults.
     "-DLLVM_DIRECTORY=${llvm}"
     "-DLLVM_CONFIG=${llvm.dev}/bin/llvm-config"
+    "-DLLVM_BC_GENERATOR=${clang}/bin/clang++"
   ];
 
-  preConfigure = "patchShebangs src/liboslexec/serialize-bc.bash ";
+  prePatch = ''
+    substituteInPlace src/cmake/modules/FindLLVM.cmake \
+      --replace-fail "NO_DEFAULT_PATH" ""
+  '';
 
-  nativeBuildInputs = [ cmake boost_static flex bison];
+  preConfigure = ''
+    patchShebangs src/liboslexec/serialize-bc.bash
+  '';
+
+  nativeBuildInputs = [
+    bison
+    clang
+    cmake
+    flex
+  ];
+
   buildInputs = [
-     zlib openexr openimageio llvm
-     partio pugixml
-     util-linux # needed just for hexdump
-     python3 # CMake doesn't check this?
+    boost_static
+    libclang
+    llvm
+    openexr
+    openimageio
+    partio
+    pugixml
+    python3.pkgs.pybind11
+    robin-map
+    util-linux # needed just for hexdump
+    zlib
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    libxml2
   ];
-  # TODO: How important is partio? CMake doesn't seem to find it
-  meta = with lib; {
+
+  postFixup = ''
+    substituteInPlace "$out"/lib/pkgconfig/*.pc \
+      --replace '=''${exec_prefix}//' '=/'
+  '';
+
+  meta = {
     description = "Advanced shading language for production GI renderers";
-    homepage = "http://opensource.imageworks.com/?p=osl";
-    maintainers = with maintainers; [ hodapp ];
-    license = licenses.bsd3;
-    platforms = platforms.linux;
+    homepage = "https://opensource.imageworks.com/osl.html";
+    maintainers = with lib.maintainers; [ hodapp ];
+    license = lib.licenses.bsd3;
+    platforms = lib.platforms.unix;
   };
-}
+})

@@ -1,27 +1,40 @@
-{ lib, stdenv, fetchurl, pkg-config, postgresql, msgpack, groonga }:
+{
+  fetchFromGitHub,
+  groonga,
+  lib,
+  msgpack-c,
+  pkg-config,
+  postgresql,
+  postgresqlBuildExtension,
+  xxHash,
+}:
 
-stdenv.mkDerivation rec {
+postgresqlBuildExtension (finalAttrs: {
   pname = "pgroonga";
-  version = "2.3.4";
+  version = "4.0.1";
 
-  src = fetchurl {
-    url = "https://packages.groonga.org/source/${pname}/${pname}-${version}.tar.gz";
-    sha256 = "sha256-XE669KfHEyY5TghMUC0GcIqdPTsdAs04pA/t84k+i2E=";
+  src = fetchFromGitHub {
+    owner = "pgroonga";
+    repo = "pgroonga";
+    tag = "${finalAttrs.version}";
+    hash = "sha256-a5nNtlUiFBuuqWAjIN0gU/FaoV3VpJh+/fab8R/77dw=";
   };
 
   nativeBuildInputs = [ pkg-config ];
-  buildInputs = [ postgresql msgpack groonga ];
+  buildInputs = [
+    msgpack-c
+    groonga
+    xxHash
+  ];
 
-  makeFlags = [ "HAVE_MSGPACK=1" ];
+  makeFlags = [
+    "HAVE_XXHASH=1"
+    "HAVE_MSGPACK=1"
+    "MSGPACK_PACKAGE_NAME=msgpack-c"
+  ];
 
-  installPhase = ''
-    install -D pgroonga.so -t $out/lib/
-    install -D pgroonga.control -t $out/share/postgresql/extension
-    install -D data/pgroonga-*.sql -t $out/share/postgresql/extension
-  '';
-
-  meta = with lib; {
-    description = "A PostgreSQL extension to use Groonga as the index";
+  meta = {
+    description = "PostgreSQL extension to use Groonga as the index";
     longDescription = ''
       PGroonga is a PostgreSQL extension to use Groonga as the index.
       PostgreSQL supports full text search against languages that use only alphabet and digit.
@@ -29,8 +42,9 @@ stdenv.mkDerivation rec {
       You can use super fast full text search feature against all languages by installing PGroonga into your PostgreSQL.
     '';
     homepage = "https://pgroonga.github.io/";
-    license = licenses.postgresql;
+    changelog = "https://github.com/pgroonga/pgroonga/releases/tag/${finalAttrs.version}";
+    license = lib.licenses.postgresql;
     platforms = postgresql.meta.platforms;
-    maintainers = with maintainers; [ DerTim1 ];
+    maintainers = with lib.maintainers; [ DerTim1 ];
   };
-}
+})

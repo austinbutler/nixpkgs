@@ -1,14 +1,15 @@
-{ lib
-, stdenv
-, fetchurl
-, buildPackages
-, gawk
-, gmp
-, libtool
-, makeWrapper
-, pkg-config
-, pkgsBuildBuild
-, readline
+{
+  lib,
+  stdenv,
+  fetchurl,
+  buildPackages,
+  gawk,
+  gmp,
+  libtool,
+  makeWrapper,
+  pkg-config,
+  pkgsBuildBuild,
+  readline,
 }:
 
 stdenv.mkDerivation rec {
@@ -20,7 +21,11 @@ stdenv.mkDerivation rec {
     sha256 = "0l200a0v7h8bh0cwz6v7hc13ds39cgqsmfrks55b1rbj5vniyiy3";
   };
 
-  outputs = [ "out" "dev" "info" ];
+  outputs = [
+    "out"
+    "dev"
+    "info"
+  ];
   setOutputFlags = false; # $dev gets into the library otherwise
 
   # GCC 4.6 raises a number of set-but-unused warnings.
@@ -29,16 +34,13 @@ stdenv.mkDerivation rec {
   ]
   # Guile needs patching to preset results for the configure tests about
   # pthreads, which work only in native builds.
-  ++ lib.optional (stdenv.hostPlatform != stdenv.buildPlatform)
-    "--with-threads=no";
+  ++ lib.optional (stdenv.hostPlatform != stdenv.buildPlatform) "--with-threads=no";
 
   depsBuildBuild = [
     buildPackages.stdenv.cc
   ]
-  ++ lib.optional (stdenv.hostPlatform != stdenv.buildPlatform)
-    pkgsBuildBuild.guile_1_8;
+  ++ lib.optional (stdenv.hostPlatform != stdenv.buildPlatform) pkgsBuildBuild.guile_1_8;
   nativeBuildInputs = [
-    gawk
     makeWrapper
     pkg-config
   ];
@@ -86,6 +88,12 @@ stdenv.mkDerivation rec {
   doInstallCheck = doCheck;
 
   setupHook = ./setup-hook-1.8.sh;
+
+  passthru = {
+    effectiveVersion = lib.versions.majorMinor version;
+    siteCcacheDir = "lib/guile/site-ccache";
+    siteDir = "share/guile/site";
+  };
 
   meta = with lib; {
     homepage = "https://www.gnu.org/software/guile/";

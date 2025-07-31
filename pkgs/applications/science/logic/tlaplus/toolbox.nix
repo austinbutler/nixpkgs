@@ -1,13 +1,14 @@
-{ lib
-, fetchzip
-, makeWrapper
-, makeDesktopItem
-, stdenv
-, gtk3
-, libXtst
-, glib
-, zlib
-, wrapGAppsHook
+{
+  lib,
+  fetchzip,
+  makeShellWrapper,
+  makeDesktopItem,
+  stdenv,
+  gtk3,
+  libXtst,
+  glib,
+  zlib,
+  wrapGAppsHook3,
 }:
 
 let
@@ -22,7 +23,6 @@ let
     startupWMClass = "TLA+ Toolbox";
   };
 
-
 in
 stdenv.mkDerivation rec {
   pname = "tla-toolbox";
@@ -34,7 +34,10 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ gtk3 ];
 
-  nativeBuildInputs = [ makeWrapper wrapGAppsHook ];
+  nativeBuildInputs = [
+    makeShellWrapper
+    wrapGAppsHook3
+  ];
 
   dontWrapGApps = true;
 
@@ -61,10 +64,17 @@ stdenv.mkDerivation rec {
       --set-interpreter $(cat $NIX_CC/nix-support/dynamic-linker) \
       "$(find "$out/toolbox" -name jspawnhelper)"
 
-    makeWrapper $out/toolbox/toolbox $out/bin/tla-toolbox \
-      --run "set -x; cd $out/toolbox" \
+    makeShellWrapper $out/toolbox/toolbox $out/bin/tla-toolbox \
+      --chdir "$out/toolbox" \
       --add-flags "-data ~/.tla-toolbox" \
-      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ gtk3 libXtst glib zlib ]}"  \
+      --prefix LD_LIBRARY_PATH : "${
+        lib.makeLibraryPath [
+          gtk3
+          libXtst
+          glib
+          zlib
+        ]
+      }"  \
       "''${gappsWrapperArgs[@]}"
 
     echo -e "\nCreating TLA Toolbox icons..."
@@ -87,6 +97,7 @@ stdenv.mkDerivation rec {
   meta = {
     homepage = "http://research.microsoft.com/en-us/um/people/lamport/tla/toolbox.html";
     description = "IDE for the TLA+ tools";
+    mainProgram = "tla-toolbox";
     longDescription = ''
       Integrated development environment for the TLA+ tools, based on Eclipse. You can use it
       to create and edit your specs, run the PlusCal translator, view the pretty-printed
@@ -94,6 +105,7 @@ stdenv.mkDerivation rec {
     '';
     # http://lamport.azurewebsites.net/tla/license.html
     license = with lib.licenses; [ mit ];
+    sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
     platforms = [ "x86_64-linux" ];
     maintainers = [ ];
   };

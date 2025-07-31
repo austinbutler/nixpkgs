@@ -1,15 +1,22 @@
-{ mkDerivation
-, lib, stdenv
-, fetchurl
-, ncurses
-, libuuid
-, pkg-config
-, libjpeg
-, zlib
-, libewf
-, enableNtfs ? !stdenv.isDarwin, ntfs3g ? null
-, enableExtFs ? !stdenv.isDarwin, e2fsprogs ? null
-, enableQt ? false, qtbase ? null, qttools ? null, qwt ? null
+{
+  mkDerivation,
+  lib,
+  stdenv,
+  fetchurl,
+  ncurses,
+  libuuid,
+  pkg-config,
+  libjpeg,
+  zlib,
+  libewf,
+  enableNtfs ? !stdenv.hostPlatform.isDarwin,
+  ntfs3g ? null,
+  enableExtFs ? !stdenv.hostPlatform.isDarwin,
+  e2fsprogs ? null,
+  enableQt ? false,
+  qtbase ? null,
+  qttools ? null,
+  qwt ? null,
 }:
 
 assert enableNtfs -> ntfs3g != null;
@@ -26,6 +33,15 @@ assert enableQt -> qwt != null;
     sha256 = "1zlh44w67py416hkvw6nrfmjickc2d43v51vcli5p374d5sw84ql";
   };
 
+  patches = [
+    ./gcc-14-fixes.diff
+  ];
+
+  postPatch = ''
+    substituteInPlace linux/qphotorec.desktop \
+      --replace "/usr" "$out"
+  '';
+
   enableParallelBuilding = true;
 
   buildInputs = [
@@ -37,11 +53,15 @@ assert enableQt -> qwt != null;
   ]
   ++ lib.optional enableNtfs ntfs3g
   ++ lib.optional enableExtFs e2fsprogs
-  ++ lib.optionals enableQt [ qtbase qttools qwt ];
+  ++ lib.optionals enableQt [
+    qtbase
+    qttools
+    qwt
+  ];
 
   nativeBuildInputs = [ pkg-config ];
 
-  NIX_CFLAGS_COMPILE="-Wno-unused";
+  env.NIX_CFLAGS_COMPILE = "-Wno-unused";
 
   meta = with lib; {
     homepage = "https://www.cgsecurity.org/wiki/Main_Page";
@@ -63,6 +83,6 @@ assert enableQt -> qwt != null;
     '';
     license = lib.licenses.gpl2Plus;
     platforms = lib.platforms.all;
-    maintainers = with maintainers; [ fgaz eelco ];
+    maintainers = with maintainers; [ fgaz ];
   };
 }

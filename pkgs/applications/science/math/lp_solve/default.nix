@@ -1,7 +1,16 @@
-{ lib, stdenv, fetchurl, cctools, fixDarwinDylibNames }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+  cctools,
+  fixDarwinDylibNames,
+  autoSignDarwinBinariesHook,
+  replaceVars,
+  buildPackages,
+  binutils,
+}:
 
 stdenv.mkDerivation rec {
-
   pname = "lp_solve";
   version = "5.5.2.11";
 
@@ -10,23 +19,44 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-bUq/9cxqqpM66ObBeiJt8PwLZxxDj2lxXUHQn+gfkC8=";
   };
 
-  nativeBuildInputs = lib.optionals stdenv.isDarwin [
+  nativeBuildInputs = [
+    binutils
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
     cctools
     fixDarwinDylibNames
+  ]
+  ++ lib.optionals (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64) [
+    autoSignDarwinBinariesHook
   ];
+
+  env = {
+    NIX_CFLAGS_COMPILE = "-Wno-error=implicit-int";
+  }
+  // lib.optionalAttrs (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isx86_64) {
+    NIX_LDFLAGS = "-headerpad_max_install_names";
+  };
 
   dontConfigure = true;
 
-  buildPhase = let
-    ccc = if stdenv.isDarwin then "ccc.osx" else "ccc";
-  in ''
-    runHook preBuild
+  patches = [
+    (replaceVars ./0001-fix-cross-compilation.patch {
+      emulator = "${stdenv.hostPlatform.emulator buildPackages}";
+    })
+  ];
 
-    (cd lpsolve55 && bash -x -e ${ccc})
-    (cd lp_solve  && bash -x -e ${ccc})
+  buildPhase =
+    let
+      ccc = if stdenv.hostPlatform.isDarwin then "ccc.osx" else "ccc";
+    in
+    ''
+      runHook preBuild
 
-    runHook postBuild
-  '';
+      (cd lpsolve55 && bash -x -e ${ccc})
+      (cd lp_solve  && bash -x -e ${ccc})
+
+      runHook postBuild
+    '';
 
   installPhase = ''
     runHook preInstall
@@ -43,10 +73,11 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with lib; {
-    description = "A Mixed Integer Linear Programming (MILP) solver";
-    homepage    = "http://lpsolve.sourceforge.net";
-    license     = licenses.gpl2Plus;
+    description = "Mixed Integer Linear Programming (MILP) solver";
+    mainProgram = "lp_solve";
+    homepage = "https://lpsolve.sourceforge.net";
+    license = licenses.gpl2Plus;
     maintainers = with maintainers; [ smironov ];
-    platforms   = platforms.unix;
+    platforms = platforms.unix;
   };
 }

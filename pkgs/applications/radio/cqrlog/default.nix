@@ -1,22 +1,23 @@
-{ lib
-, stdenv
-, fetchFromGitHub
-, fpc
-, lazarus
-, atk
-, cairo
-, gdk-pixbuf
-, glib
-, gtk2-x11
-, libX11
-, pango
-, hamlib
-, mysql57
-, tqsl
-, xdg-utils
-, xplanet
-, autoPatchelfHook
-, wrapGAppsHook
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  fpc,
+  lazarus,
+  atk,
+  cairo,
+  gdk-pixbuf,
+  glib,
+  gtk2-x11,
+  libX11,
+  pango,
+  hamlib,
+  mariadb,
+  tqsl,
+  xdg-utils,
+  xplanet,
+  autoPatchelfHook,
+  wrapGAppsHook3,
 }:
 
 stdenv.mkDerivation rec {
@@ -30,7 +31,7 @@ stdenv.mkDerivation rec {
     sha256 = "0zzcg0bl6mq4wfifj998x9x09w8sigbh46synpqx034fpr0swyhb";
   };
 
-  # Adds the possiblity to change the lazarus directory,
+  # Adds the possibility to change the lazarus directory,
   # otherwise, we would get error : "directory lcl not found"
   patches = [ ./fix-makefile-lazarusdir.patch ];
 
@@ -55,14 +56,19 @@ stdenv.mkDerivation rec {
       --replace "/usr/bin/rigctld" "${hamlib}/bin/rigctld"
     # Order is important
     substituteInPlace src/dData.pas \
-      --replace "/usr/bin/mysqld_safe" "${mysql57}/bin/mysqld_safe" \
-      --replace "/usr/bin/mysqld" "${mysql57}/bin/mysqld"
+      --replace "/usr/bin/mysqld_safe" "${mariadb}/bin/mysqld_safe" \
+      --replace "/usr/bin/mysqld" "${mariadb}/bin/mysqld"
 
     # To be fail when I need to patch a new hardcoded binary
     ! grep -C src -RC0 "/usr"
   '';
 
-  nativeBuildInputs = [ lazarus fpc autoPatchelfHook wrapGAppsHook ];
+  nativeBuildInputs = [
+    lazarus
+    fpc
+    autoPatchelfHook
+    wrapGAppsHook3
+  ];
   buildInputs = [
     atk
     cairo
@@ -74,7 +80,7 @@ stdenv.mkDerivation rec {
   ];
   propagatedBuildInputs = [
     hamlib
-    mysql57
+    mariadb
     tqsl
     xdg-utils
     xplanet
@@ -87,12 +93,15 @@ stdenv.mkDerivation rec {
   ];
 
   postFixup = ''
-    libmysqlclient=$(find "${mysql57}/lib" -name "libmysqlclient.so.*" | tail -n1)
-    patchelf --add-needed "$libmysqlclient" "$out/bin/.cqrlog-wrapped"
+    libmysqlclient=$(find "${mariadb.client}/lib" -name "libmysqlclient.so" | tail -n1)
+    patchelf --add-needed "libmysqlclient.so" \
+             --add-rpath "$(dirname "$libmysqlclient")" \
+             "$out/bin/.cqrlog-wrapped"
   '';
 
   meta = with lib; {
     description = "Linux logging program for amateur radio operators";
+    mainProgram = "cqrlog";
     homepage = "https://www.cqrlog.com/";
     license = licenses.gpl2Plus;
     maintainers = with maintainers; [ shamilton ];

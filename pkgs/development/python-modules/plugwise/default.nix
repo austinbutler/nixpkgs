@@ -1,54 +1,51 @@
-{ lib
-, aiohttp
-, async-timeout
-, buildPythonPackage
-, crcmod
-, defusedxml
-, fetchFromGitHub
-, jsonpickle
-, munch
-, mypy
-, pyserial
-, pytest-aiohttp
-, pytest-asyncio
-, pytestCheckHook
-, python-dateutil
-, pytz
-, semver
+{
+  lib,
+  aiohttp,
+  buildPythonPackage,
+  defusedxml,
+  fetchFromGitHub,
+  freezegun,
+  jsonpickle,
+  munch,
+  pytest-aiohttp,
+  pytest-asyncio,
+  pytestCheckHook,
+  python-dateutil,
+  pythonOlder,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "plugwise";
-  version = "0.16.6";
-  format = "setuptools";
+  version = "1.7.6";
+  pyproject = true;
+
+  disabled = pythonOlder "3.12";
 
   src = fetchFromGitHub {
-    owner = pname;
+    owner = "plugwise";
     repo = "python-plugwise";
-    rev = "v${version}";
-    sha256 = "sha256-hAYbYsLpiiJYdg9Rx5BjqNA9JTtKGu3DE0SpwOxlTWw=";
+    tag = "v${version}";
+    hash = "sha256-x3UiEO2dduMHpDkMZAdpUBNR9VStM7qInEXxZeHqeTM=";
   };
 
   postPatch = ''
-    substituteInPlace setup.py \
-      --replace "aiohttp==3.8.0" "aiohttp>=3.8.0"
+    # setuptools and wheel
+    sed -i -e "s/~=[0-9.]*//g" pyproject.toml
   '';
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
     aiohttp
-    async-timeout
-    crcmod
     defusedxml
     munch
-    pyserial
     python-dateutil
-    pytz
-    semver
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
+    freezegun
     jsonpickle
-    mypy
     pytest-aiohttp
     pytest-asyncio
     pytestCheckHook
@@ -60,11 +57,8 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Python module for Plugwise Smiles, Stretch and USB stick";
-    longDescription = ''
-      XKNX is an asynchronous Python library for reading and writing KNX/IP
-      packets. It provides support for KNX/IP routing and tunneling devices.
-    '';
     homepage = "https://github.com/plugwise/python-plugwise";
+    changelog = "https://github.com/plugwise/python-plugwise/releases/tag/${src.tag}";
     license = with licenses; [ mit ];
     maintainers = with maintainers; [ fab ];
   };

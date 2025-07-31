@@ -1,57 +1,60 @@
-{ lib
-, mkDerivation
-, fetchFromGitHub
-, cmake
-, lxqt-build-tools
-, qtbase
-, qttools
-, qtx11extras
-, qtsvg
-, kwindowsystem
-, solid
-, kidletime
-, liblxqt
-, libqtxdg
-, lxqt-globalkeys
-, lxqtUpdateScript
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  cmake,
+  kidletime,
+  kwindowsystem,
+  liblxqt,
+  libqtxdg,
+  lxqt-build-tools,
+  lxqt-globalkeys,
+  qtbase,
+  qtsvg,
+  qttools,
+  qtwayland,
+  solid,
+  wrapQtAppsHook,
+  gitUpdater,
 }:
 
-mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "lxqt-powermanagement";
-  version = "1.0.0";
+  version = "2.2.1";
 
   src = fetchFromGitHub {
     owner = "lxqt";
     repo = pname;
     rev = version;
-    sha256 = "0dwz8z3463dz49d5k5bh7splb1zdi617xc4xzlqxxrxbf3n8x4ix";
+    hash = "sha256-Awk/NlYd8HldmEL0G/LUgj101Y1BTQBrDJfG56Y/aX4=";
   };
 
   nativeBuildInputs = [
     cmake
     lxqt-build-tools
+    qttools
+    wrapQtAppsHook
   ];
 
   buildInputs = [
-    qtbase
-    qttools
-    qtx11extras
-    qtsvg
-    kwindowsystem
-    solid
     kidletime
+    kwindowsystem
     liblxqt
     libqtxdg
     lxqt-globalkeys
+    qtbase
+    qtsvg
+    qtwayland
+    solid
   ];
 
-  passthru.updateScript = lxqtUpdateScript { inherit pname version src; };
+  passthru.updateScript = gitUpdater { };
 
   meta = with lib; {
     homepage = "https://github.com/lxqt/lxqt-powermanagement";
     description = "Power management module for LXQt";
     license = licenses.lgpl21Plus;
     platforms = platforms.linux;
-    maintainers = with maintainers; [ romildo ];
+    teams = [ teams.lxqt ];
   };
 }

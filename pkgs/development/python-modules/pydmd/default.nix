@@ -1,54 +1,70 @@
-{ lib
-, stdenv
-, buildPythonPackage
-, fetchFromGitHub
-, future
-, matplotlib
-, numpy
-, pytestCheckHook
-, pythonOlder
-, scipy
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+  setuptools-git-versioning,
+
+  # dependencies
+  ezyrb,
+  future,
+  h5netcdf,
+  matplotlib,
+  numpy,
+  scipy,
+  xarray,
+
+  # tests
+  pytest-mock,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "pydmd";
-  version = "0.4";
-  format = "setuptools";
-
-  disabled = pythonOlder "3.6";
+  version = "2025.06.01";
+  pyproject = true;
 
   src = fetchFromGitHub {
-    owner = "mathLab";
+    owner = "PyDMD";
     repo = "PyDMD";
-    rev = "v${version}";
-    sha256 = "1qwa3dyrrm20x0pzr7rklcw7433fd822n4m8bbbdd7z83xh6xm8g";
+    tag = version;
+    hash = "sha256-u8dW90FZSZaVbPNeILeZyOwAU0WOAeTAMCHpe7n4Bi4=";
   };
 
-  propagatedBuildInputs = [
+  postPatch = ''
+    substituteInPlace pyproject.toml \
+      --replace-fail "setuptools-git-versioning>=2.0,<3" "setuptools-git-versioning"
+  '';
+
+  build-system = [
+    setuptools
+    setuptools-git-versioning
+  ];
+
+  dependencies = [
+    ezyrb
     future
+    h5netcdf
     matplotlib
     numpy
     scipy
+    xarray
   ];
 
-  checkInputs = [
+  pythonImportsCheck = [ "pydmd" ];
+
+  nativeCheckInputs = [
+    pytest-mock
     pytestCheckHook
   ];
 
-  disabledTestPaths = [
-    # Those tests take over 1.5 h on hydra. Also, an error and two failures
-    "tests/test_spdmd.py"
-  ];
-
-  pythonImportsCheck = [
-    "pydmd"
-  ];
-
-  meta = with lib; {
+  meta = {
     description = "Python Dynamic Mode Decomposition";
-    homepage = "https://mathlab.github.io/PyDMD/";
-    license = licenses.mit;
-    maintainers = with maintainers; [ yl3dy ];
-    broken = stdenv.hostPlatform.isAarch64;
+    homepage = "https://pydmd.github.io/PyDMD/";
+    changelog = "https://github.com/PyDMD/PyDMD/releases/tag/${src.tag}";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ yl3dy ];
   };
 }

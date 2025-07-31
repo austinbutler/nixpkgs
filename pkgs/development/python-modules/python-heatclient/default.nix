@@ -1,69 +1,90 @@
-{ lib
-, buildPythonApplication
-, fetchPypi
-, pbr
-, Babel
-, cliff
-, iso8601
-, osc-lib
-, prettytable
-, oslo-i18n
-, oslo-serialization
-, oslo-utils
-, keystoneauth1
-, python-swiftclient
-, pyyaml
-, requests
-, six
-, stestr
-, testscenarios
-, requests-mock
+{
+  lib,
+  buildPythonPackage,
+  cliff,
+  fetchPypi,
+  iso8601,
+  keystoneauth1,
+  openstackdocstheme,
+  osc-lib,
+  oslo-i18n,
+  oslo-serialization,
+  oslo-utils,
+  pbr,
+  prettytable,
+  python-openstackclient,
+  python-swiftclient,
+  pythonOlder,
+  pyyaml,
+  requests-mock,
+  requests,
+  setuptools,
+  sphinxHook,
+  stestr,
+  testscenarios,
 }:
 
-buildPythonApplication rec {
+buildPythonPackage rec {
   pname = "python-heatclient";
-  version = "2.5.0";
+  version = "4.3.0";
+  pyproject = true;
+
+  disabled = pythonOlder "3.10";
 
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "b610748eb3f18f6bd762e0808accdf872308289a77c3b19ed2d8b9f306393a42";
+    pname = "python_heatclient";
+    inherit version;
+    hash = "sha256-itp863fyXw2+OuLjMoowRhrblP+/NrDCqrwszkg7dfA=";
   };
 
-  propagatedBuildInputs = [
-    pbr
-    Babel
+  build-system = [
+    openstackdocstheme
+    python-openstackclient
+    setuptools
+    sphinxHook
+  ];
+
+  sphinxBuilders = [ "man" ];
+
+  dependencies = [
     cliff
     iso8601
+    keystoneauth1
     osc-lib
-    prettytable
     oslo-i18n
     oslo-serialization
     oslo-utils
-    keystoneauth1
+    pbr
+    prettytable
     python-swiftclient
     pyyaml
     requests
-    six
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     stestr
     testscenarios
     requests-mock
   ];
 
   checkPhase = ''
+    runHook preCheck
+
     stestr run -e <(echo "
       heatclient.tests.unit.test_common_http.HttpClientTest.test_get_system_ca_file
+      heatclient.tests.unit.test_deployment_utils.TempURLSignalTest.test_create_temp_url
     ")
+
+    runHook postCheck
   '';
 
   pythonImportsCheck = [ "heatclient" ];
 
   meta = with lib; {
-    description = "A client library for Heat built on the Heat orchestration API";
+    description = "Library for Heat built on the Heat orchestration API";
+    mainProgram = "heat";
     homepage = "https://github.com/openstack/python-heatclient";
     license = licenses.asl20;
-    maintainers = teams.openstack.members;
+    teams = [ teams.openstack ];
   };
 }

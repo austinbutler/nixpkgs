@@ -1,22 +1,27 @@
-{ lib
-, stdenv
-, fetchurl
-, pkg-config
-, glib
-, libsoup
-, libxml2
-, gobject-introspection
-, gtk-doc
-, docbook-xsl-nons
-, docbook_xml_dtd_412
-, gnome
+{
+  lib,
+  stdenv,
+  fetchurl,
+  pkg-config,
+  glib,
+  libsoup_2_4,
+  libxml2,
+  gobject-introspection,
+  gtk-doc,
+  docbook-xsl-nons,
+  docbook_xml_dtd_412,
+  gnome,
 }:
 
 stdenv.mkDerivation rec {
   pname = "rest";
   version = "0.8.1";
 
-  outputs = [ "out" "dev" "devdoc" ];
+  outputs = [
+    "out"
+    "dev"
+    "devdoc"
+  ];
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
@@ -26,6 +31,8 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [
     pkg-config
     gobject-introspection
+  ]
+  ++ lib.optionals (stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
     gtk-doc
     docbook-xsl-nons
     docbook_xml_dtd_412
@@ -33,29 +40,38 @@ stdenv.mkDerivation rec {
 
   propagatedBuildInputs = [
     glib
-    libsoup
+    libsoup_2_4
     libxml2
   ];
 
+  strictDeps = true;
+
   configureFlags = [
-    "--enable-gtk-doc"
+    (lib.enableFeature (stdenv.buildPlatform.canExecute stdenv.hostPlatform) "gtk-doc")
     # Remove when https://gitlab.gnome.org/GNOME/librest/merge_requests/2 is merged.
     "--with-ca-certificates=/etc/ssl/certs/ca-certificates.crt"
   ];
+
+  postPatch = ''
+    # pkg-config doesn't look in $PATH if strictDeps is on
+    substituteInPlace ./configure \
+      --replace-fail 'have_gtk_doc=no' "echo gtk-doc is present"
+  '';
 
   passthru = {
     updateScript = gnome.updateScript {
       packageName = pname;
       attrPath = "librest";
       versionPolicy = "odd-unstable";
+      freeze = true;
     };
   };
 
   meta = with lib; {
     description = "Helper library for RESTful services";
-    homepage = "https://wiki.gnome.org/Projects/Librest";
+    homepage = "https://gitlab.gnome.org/GNOME/librest";
     license = licenses.lgpl21Only;
     platforms = platforms.unix;
-    maintainers = teams.gnome.members;
+    teams = [ teams.gnome ];
   };
 }

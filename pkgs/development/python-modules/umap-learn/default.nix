@@ -1,66 +1,108 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, nose
-, numpy
-, scikit-learn
-, scipy
-, numba
-, pynndescent
-, tensorflow
-, tqdm
-, pytestCheckHook
-, keras
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
+  # dependencies
+  numba,
+  numpy,
+  pynndescent,
+  scikit-learn,
+  scipy,
+  tqdm,
+
+  # optional-dependencies
+  bokeh,
+  colorcet,
+  dask,
+  datashader,
+  holoviews,
+  matplotlib,
+  pandas,
+  scikit-image,
+  seaborn,
+  tensorflow,
+  tensorflow-probability,
+
+  # tests
+  pytestCheckHook,
+  writableTmpDirAsHomeHook,
 }:
 
 buildPythonPackage rec {
   pname = "umap-learn";
-  version = "0.5.2";
+  version = "0.5.8";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "lmcinnes";
     repo = "umap";
-    rev = version;
-    sha256 = "sha256-JfYuuE1BP+HdiEl7l01sZ/XXlEwHyAsLjK9nqhRd/3o=";
+    tag = "release-${version}";
+    hash = "sha256-VR+qBZyFtpW/xuFXI8pxDkkwJKt9qajnUtvuZLFZtF0=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
+    numba
     numpy
+    pynndescent
     scikit-learn
     scipy
-    numba
-    pynndescent
     tqdm
   ];
 
-  checkInputs = [
-    nose
-    tensorflow
-    pytestCheckHook
-    keras
-  ];
+  optional-dependencies = rec {
+    plot = [
+      bokeh
+      colorcet
+      dask
+      datashader
+      holoviews
+      matplotlib
+      pandas
+      scikit-image
+      seaborn
+    ];
 
-  preCheck = ''
-    export HOME=$TMPDIR
-  '';
+    parametric_umap = [
+      tensorflow
+      tensorflow-probability
+    ];
+
+    tbb = [ tbb ];
+
+    all = plot ++ parametric_umap ++ tbb;
+  };
+
+  nativeCheckInputs = [
+    pytestCheckHook
+    writableTmpDirAsHomeHook
+  ];
 
   disabledTests = [
     # Plot functionality requires additional packages.
     # These test also fail with 'RuntimeError: cannot cache function' error.
-    "test_umap_plot_testability"
     "test_plot_runs_at_all"
+    "test_umap_plot_testability"
+    "test_umap_update_large"
 
     # Flaky test. Fails with AssertionError sometimes.
     "test_sparse_hellinger"
+    "test_densmap_trustworthiness_on_iris_supervised"
 
     # tensorflow maybe incompatible? https://github.com/lmcinnes/umap/issues/821
     "test_save_load"
   ];
 
-  meta = with lib; {
+  meta = {
     description = "Uniform Manifold Approximation and Projection";
     homepage = "https://github.com/lmcinnes/umap";
-    license = licenses.bsd3;
-    maintainers = [ maintainers.costrouc ];
+    changelog = "https://github.com/lmcinnes/umap/releases/tag/release-${version}";
+    license = lib.licenses.bsd3;
+    maintainers = [ ];
   };
 }

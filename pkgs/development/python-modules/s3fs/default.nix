@@ -1,40 +1,73 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, docutils
-, aiobotocore
-, fsspec
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
+  # dependencies
+  aiobotocore,
+  aiohttp,
+  fsspec,
+
+  # tests
+  flask,
+  flask-cors,
+  moto,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "s3fs";
-  version = "2022.1.0";
+  version = "2025.2.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "6bafc1f6b4e935ea59512c0f38d5cb9c299dbbfe738e40c3d1de8f67b4ee1fd4";
+  src = fetchFromGitHub {
+    owner = "fsspec";
+    repo = "s3fs";
+    tag = version;
+    hash = "sha256-nnfvccORDspj54sRxL3d0hn4MpzKYGKE2Kl0v/wLaNw=";
   };
 
-  buildInputs = [
-    docutils
+  build-system = [
+    setuptools
   ];
 
-  propagatedBuildInputs = [
+  pythonRelaxDeps = [ "fsspec" ];
+
+  dependencies = [
     aiobotocore
     fsspec
+    aiohttp
   ];
 
-  # Depends on `moto` which has a long dependency chain with exact
-  # version requirements that can't be made to work with current
-  # pythonPackages.
-  doCheck = false;
+  optional-dependencies = {
+    awscli = aiobotocore.optional-dependencies.awscli;
+    boto3 = aiobotocore.optional-dependencies.boto3;
+  };
 
   pythonImportsCheck = [ "s3fs" ];
 
-  meta = with lib; {
-    homepage = "https://github.com/dask/s3fs/";
-    description = "A Pythonic file interface for S3";
-    license = licenses.bsd3;
-    maintainers = with maintainers; [ teh ];
+  nativeCheckInputs = [
+    flask
+    flask-cors
+    moto
+    pytestCheckHook
+  ];
+
+  disabledTests = [
+    # require network access
+    "test_async_close"
+  ];
+
+  __darwinAllowLocalNetworking = true;
+
+  meta = {
+    description = "Pythonic file interface for S3";
+    homepage = "https://github.com/fsspec/s3fs";
+    changelog = "https://github.com/fsspec/s3fs/blob/${version}/docs/source/changelog.rst";
+    license = lib.licenses.bsd3;
+    maintainers = with lib.maintainers; [ teh ];
   };
 }

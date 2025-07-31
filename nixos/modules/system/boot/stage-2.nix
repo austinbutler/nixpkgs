@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -6,34 +11,44 @@ let
 
   useHostResolvConf = config.networking.resolvconf.enable && config.networking.useHostResolvConf;
 
-  bootStage2 = pkgs.substituteAll {
+  bootStage2 = pkgs.replaceVarsWith {
     src = ./stage-2-init.sh;
-    shellDebug = "${pkgs.bashInteractive}/bin/bash";
-    shell = "${pkgs.bash}/bin/bash";
-    inherit (config.boot) systemdExecutable extraSystemdUnitPaths;
     isExecutable = true;
-    inherit (config.nix) readOnlyStore;
-    inherit useHostResolvConf;
-    inherit (config.system.build) earlyMountScript;
-    path = lib.makeBinPath ([
-      pkgs.coreutils
-      pkgs.util-linux
-    ] ++ lib.optional useHostResolvConf pkgs.openresolv);
-    fsPackagesPath = lib.makeBinPath config.system.fsPackages;
-    systemdUnitPathEnvVar = lib.optionalString (config.boot.extraSystemdUnitPaths != [])
-      ("SYSTEMD_UNIT_PATH="
-      + builtins.concatStringsSep ":" config.boot.extraSystemdUnitPaths
-      + ":"); # If SYSTEMD_UNIT_PATH ends with an empty component (":"), the usual unit load path will be appended to the contents of the variable
-    postBootCommands = pkgs.writeText "local-cmds"
-      ''
+    replacements = {
+      shell = "${pkgs.bash}/bin/bash";
+      systemConfig = null; # replaced in ../activation/top-level.nix
+      inherit (config.boot) systemdExecutable;
+      nixStoreMountOpts = lib.concatStringsSep " " (map lib.escapeShellArg config.boot.nixStoreMountOpts);
+      inherit (config.system.nixos) distroName;
+      inherit useHostResolvConf;
+      inherit (config.system.build) earlyMountScript;
+      path = lib.makeBinPath (
+        [
+          pkgs.coreutils
+          pkgs.util-linux
+        ]
+        ++ lib.optional useHostResolvConf pkgs.openresolv
+      );
+      postBootCommands = pkgs.writeText "local-cmds" ''
         ${config.boot.postBootCommands}
         ${config.powerManagement.powerUpCommands}
       '';
+    };
   };
 
 in
 
 {
+  imports = [
+    (lib.mkRemovedOptionModule
+      [
+        "boot"
+        "readOnlyNixStore"
+      ]
+      "Please use the `boot.nixStoreMountOpts' option to define mount options for the Nix store, including 'ro'"
+    )
+  ];
+
   options = {
 
     boot = {
@@ -47,48 +62,33 @@ in
         '';
       };
 
-      devSize = mkOption {
-        default = "5%";
-        example = "32m";
-        type = types.str;
+      nixStoreMountOpts = mkOption {
+        type = types.listOf types.nonEmptyStr;
+        default = [
+          "ro"
+          "nodev"
+          "nosuid"
+        ];
         description = ''
-          Size limit for the /dev tmpfs. Look at mount(8), tmpfs size option,
-          for the accepted syntax.
-        '';
-      };
+          Defines the mount options used on a bind mount for the {file}`/nix/store`.
+          This affects the whole system except the nix store daemon, which will undo the bind mount.
 
-      devShmSize = mkOption {
-        default = "50%";
-        example = "256m";
-        type = types.str;
-        description = ''
-          Size limit for the /dev/shm tmpfs. Look at mount(8), tmpfs size option,
-          for the accepted syntax.
-        '';
-      };
-
-      runSize = mkOption {
-        default = "25%";
-        example = "256m";
-        type = types.str;
-        description = ''
-          Size limit for the /run tmpfs. Look at mount(8), tmpfs size option,
-          for the accepted syntax.
+          `ro` enforces immutability of the Nix store.
+          The store daemon should already not put device mappers or suid binaries in the store,
+          meaning `nosuid` and `nodev` enforce what should already be the case.
         '';
       };
 
       systemdExecutable = mkOption {
-        default = "systemd";
+        default = "/run/current-system/systemd/lib/systemd/systemd";
         type = types.str;
         description = ''
-          The program to execute to start systemd. Typically
-          <literal>systemd</literal>, which will find systemd in the
-          PATH.
+          The program to execute to start systemd.
         '';
       };
 
       extraSystemdUnitPaths = mkOption {
-        default = [];
+        default = [ ];
         type = types.listOf types.str;
         description = ''
           Additional paths that get appended to the SYSTEMD_UNIT_PATH environment variable
@@ -99,10 +99,8 @@ in
 
   };
 
-
   config = {
 
     system.build.bootStage2 = bootStage2;
-
   };
 }

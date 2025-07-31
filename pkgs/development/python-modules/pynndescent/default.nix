@@ -1,28 +1,37 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, joblib
-, llvmlite
-, numba
-, scikit-learn
-, scipy
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
+  # dependencies
+  joblib,
+  llvmlite,
+  numba,
+  scikit-learn,
+  scipy,
+
+  # tests
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "pynndescent";
-  version = "0.5.6";
-  format = "setuptools";
+  version = "0.5.13";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
-
-  src = fetchPypi {
-    inherit pname version;
-    hash = "sha256-YfsxiFuqxGnWeTPix8k1tu3rsG7kmOLw+d/JfFnTclw=";
+  src = fetchFromGitHub {
+    owner = "lmcinnes";
+    repo = "pynndescent";
+    tag = "release-${version}";
+    hash = "sha256-oE/oy5doHduESHlRPuPHruiw1yUZmuUTe6PrgQlT6O8=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
     joblib
     llvmlite
     numba
@@ -30,18 +39,20 @@ buildPythonPackage rec {
     scipy
   ];
 
-  checkInputs = [
-    pytestCheckHook
-  ];
+  nativeCheckInputs = [ pytestCheckHook ];
 
-  pythonImportsCheck = [
-    "pynndescent"
-  ];
+  pythonImportsCheck = [ "pynndescent" ];
 
-  meta = with lib; {
+  meta = {
     description = "Nearest Neighbor Descent";
     homepage = "https://github.com/lmcinnes/pynndescent";
-    license = licenses.bsd2;
-    maintainers = with maintainers; [ mic92 ];
+    changelog = "https://github.com/lmcinnes/pynndescent/releases/tag/release-${version}";
+    license = lib.licenses.bsd2;
+    maintainers = with lib.maintainers; [ mic92 ];
+    badPlatforms = [
+      # The majority of tests are crashing:
+      # Fatal Python error: Segmentation fault
+      "aarch64-linux"
+    ];
   };
 }

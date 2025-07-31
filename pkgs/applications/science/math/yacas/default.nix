@@ -1,21 +1,22 @@
-{ lib
-, stdenv
-, fetchFromGitHub
-, fetchpatch
-, cmake
-, perl
-, enableGui ? false
-, qtbase
-, wrapQtAppsHook
-, qtwebengine
-, enableJupyter ? true
-, boost
-, jsoncpp
-, openssl
-, zmqpp
-, enableJava ? false
-, openjdk
-, gtest
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  fetchpatch,
+  cmake,
+  perl,
+  enableGui ? false,
+  qtbase,
+  wrapQtAppsHook,
+  qtwebengine,
+  enableJupyter ? true,
+  boost,
+  jsoncpp,
+  openssl,
+  zmqpp,
+  enableJava ? false,
+  openjdk,
+  gtest,
 }:
 
 stdenv.mkDerivation rec {
@@ -52,7 +53,7 @@ stdenv.mkDerivation rec {
   preCheck = ''
     patchShebangs ../tests/test-yacas
   '';
-  checkInputs = [
+  nativeCheckInputs = [
     gtest
   ];
   doCheck = true;
@@ -61,15 +62,18 @@ stdenv.mkDerivation rec {
     cmake
     # Perl is only for the documentation
     perl
-  ] ++ lib.optionals enableJava [
+  ]
+  ++ lib.optionals enableJava [
     openjdk
   ];
   buildInputs = [
-  ] ++ lib.optionals enableGui [
+  ]
+  ++ lib.optionals enableGui [
     qtbase
     wrapQtAppsHook
     qtwebengine
-  ] ++ lib.optionals enableJupyter [
+  ]
+  ++ lib.optionals enableJupyter [
     boost
     jsoncpp
     openssl
@@ -80,7 +84,7 @@ stdenv.mkDerivation rec {
     description = "Easy to use, general purpose Computer Algebra System${lib.optionalString enableGui ", built with GUI."}";
     homepage = "http://www.yacas.org/";
     license = lib.licenses.gpl2Plus;
-    maintainers = with lib.maintainers; [ viric ];
+    maintainers = [ ];
     platforms = with lib.platforms; linux;
   };
 }

@@ -1,60 +1,101 @@
-{ lib
-, attrs
-, buildPythonPackage
-, fetchPypi
-, importlib-metadata
-, importlib-resources
-, pyperf
-, pyrsistent
-, pytestCheckHook
-, pythonOlder
-, setuptools-scm
-, twisted
-, typing-extensions
+{
+  lib,
+  attrs,
+  buildPythonPackage,
+  fetchPypi,
+  hatch-fancy-pypi-readme,
+  hatch-vcs,
+  hatchling,
+  importlib-resources,
+  jsonschema-specifications,
+  pkgutil-resolve-name,
+  pip,
+  pytestCheckHook,
+  pythonOlder,
+  referencing,
+  rpds-py,
+
+  # optionals
+  fqdn,
+  idna,
+  isoduration,
+  jsonpointer,
+  rfc3339-validator,
+  rfc3986-validator,
+  rfc3987,
+  uri-template,
+  webcolors,
 }:
 
 buildPythonPackage rec {
   pname = "jsonschema";
-  version = "4.4.0";
-  format = "pyproject";
+  version = "4.23.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.7";
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "636694eb41b3535ed608fe04129f26542b59ed99808b4f688aa32dcf55317a83";
+    hash = "sha256-1xSX/vJjUaMyZTN/p3/+uCQj8+ohKDzZRnuwOZkma8Q=";
   };
 
-  SETUPTOOLS_SCM_PRETEND_VERSION = version;
+  postPatch = ''
+    patchShebangs json/bin/jsonschema_suite
+  '';
 
-  nativeBuildInputs = [
-    setuptools-scm
+  build-system = [
+    hatch-fancy-pypi-readme
+    hatch-vcs
+    hatchling
   ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     attrs
-    pyrsistent
-  ] ++ lib.optionals (pythonOlder "3.8") [
-    importlib-metadata
-    typing-extensions
-  ] ++ lib.optionals (pythonOlder "3.9") [
+    jsonschema-specifications
+    referencing
+    rpds-py
+  ]
+  ++ lib.optionals (pythonOlder "3.9") [
     importlib-resources
+    pkgutil-resolve-name
   ];
 
-  checkInputs = [
-    pyperf
+  optional-dependencies = {
+    format = [
+      fqdn
+      idna
+      isoduration
+      jsonpointer
+      rfc3339-validator
+      rfc3987
+      uri-template
+      webcolors
+    ];
+    format-nongpl = [
+      fqdn
+      idna
+      isoduration
+      jsonpointer
+      rfc3339-validator
+      rfc3986-validator
+      uri-template
+      webcolors
+    ];
+  };
+
+  nativeCheckInputs = [
+    pip
     pytestCheckHook
-    twisted
   ];
 
-  pythonImportsCheck = [
-    "jsonschema"
-  ];
+  pythonImportsCheck = [ "jsonschema" ];
 
   meta = with lib; {
-    description = "An implementation of JSON Schema validation for Python";
-    homepage = "https://github.com/Julian/jsonschema";
+    description = "Implementation of JSON Schema validation";
+    homepage = "https://github.com/python-jsonschema/jsonschema";
+    changelog = "https://github.com/python-jsonschema/jsonschema/blob/v${version}/CHANGELOG.rst";
     license = licenses.mit;
-    maintainers = with maintainers; [ domenkozar ];
+    maintainers = with maintainers; [ ];
+    mainProgram = "jsonschema";
   };
 }

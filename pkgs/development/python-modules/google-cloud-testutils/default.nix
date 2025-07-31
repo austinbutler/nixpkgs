@@ -1,25 +1,46 @@
-{ lib, buildPythonPackage, fetchPypi, click, google-auth, six }:
+{
+  lib,
+  buildPythonPackage,
+  click,
+  fetchFromGitHub,
+  google-auth,
+  packaging,
+  pytestCheckHook,
+  setuptools,
+}:
 
 buildPythonPackage rec {
   pname = "google-cloud-testutils";
-  version = "1.3.1";
+  version = "1.6.4";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-X85NRgGZt7+OpL4poOyS+UWec4fuABiTxEYyFpkUpqs=";
+  src = fetchFromGitHub {
+    owner = "googleapis";
+    repo = "python-test-utils";
+    tag = "v${version}";
+    hash = "sha256-VTu/ElWZrSUrUBrfLPTBV4PMSQCRAyF9Ka7jKEqVzLk=";
   };
 
-  propagatedBuildInputs = [ click google-auth six ];
+  build-system = [ setuptools ];
 
-  # does not contain tests
-  doCheck = false;
+  dependencies = [
+    click
+    google-auth
+    packaging
+  ];
+
+  nativeCheckInputs = [
+    pytestCheckHook
+  ];
 
   pythonImportsCheck = [ "test_utils" ];
 
-  meta = with lib; {
+  meta = {
     description = "System test utilities for google-cloud-python";
+    mainProgram = "lower-bound-checker";
     homepage = "https://github.com/googleapis/python-test-utils";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ SuperSandro2000 ];
+    changelog = "https://github.com/googleapis/python-test-utils/blob/${src.tag}/CHANGELOG.md";
+    license = lib.licenses.asl20;
+    maintainers = [ lib.maintainers.sarahec ];
   };
 }

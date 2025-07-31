@@ -1,39 +1,43 @@
-{ lib
-, wrapGAppsHook
-, glib
-, stdenv
-, xorg
-, wingpanel
-, wingpanelIndicators
-, switchboard-with-plugs
-, indicators ? null
+{
+  lib,
+  wrapGAppsHook3,
+  glib,
+  stdenv,
+  xorg,
+  wingpanel,
+  wingpanelIndicators,
+  switchboard-with-plugs,
+  indicators ? null,
   # Only useful to disable for development testing.
-, useDefaultIndicators ? true
+  useDefaultIndicators ? true,
 }:
 
 let
   selectedIndicators =
-    if indicators == null then wingpanelIndicators
-    else indicators ++ (lib.optionals useDefaultIndicators wingpanelIndicators);
+    if indicators == null then
+      wingpanelIndicators
+    else
+      indicators ++ (lib.optionals useDefaultIndicators wingpanelIndicators);
 in
-stdenv.mkDerivation rec {
-  name = "${wingpanel.name}-with-indicators";
+stdenv.mkDerivation {
+  pname = "${wingpanel.pname}-with-indicators";
+  inherit (wingpanel) version;
 
   src = null;
 
   paths = [
     wingpanel
-  ] ++ selectedIndicators;
+  ]
+  ++ selectedIndicators;
 
   passAsFile = [ "paths" ];
 
   nativeBuildInputs = [
     glib
-    wrapGAppsHook
+    wrapGAppsHook3
   ];
 
-  buildInputs = lib.forEach selectedIndicators (x: x.buildInputs)
-    ++ selectedIndicators;
+  buildInputs = lib.forEach selectedIndicators (x: x.buildInputs) ++ selectedIndicators;
 
   dontUnpack = true;
   dontConfigure = true;
@@ -52,7 +56,7 @@ stdenv.mkDerivation rec {
   preFixup = ''
     gappsWrapperArgs+=(
       --set WINGPANEL_INDICATORS_PATH "$out/lib/wingpanel"
-      --set SWITCHBOARD_PLUGS_PATH "${switchboard-with-plugs}/lib/switchboard"
+      --set SWITCHBOARD_PLUGS_PATH "${switchboard-with-plugs}/lib/switchboard-3"
     )
   '';
 

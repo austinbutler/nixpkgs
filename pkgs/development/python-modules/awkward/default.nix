@@ -1,37 +1,75 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, cmake
-, numba
-, numpy
-, pytestCheckHook
-, pyyaml
-, rapidjson
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  hatch-fancy-pypi-readme,
+  hatchling,
+
+  # dependencies
+  awkward-cpp,
+  fsspec,
+  numpy,
+  packaging,
+
+  # tests
+  numba,
+  numexpr,
+  pandas,
+  pyarrow,
+  pytest-xdist,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "awkward";
-  version = "1.7.0";
+  version = "2.8.5";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "e4e642dfe496d2acb245c90e37dc18028e25d5e936421e7371ea6ba0fde6435a";
+  src = fetchFromGitHub {
+    owner = "scikit-hep";
+    repo = "awkward";
+    tag = "v${version}";
+    hash = "sha256-vcVJ9dLiZ3wfZU989slefSJoD2hKlRCwxRALvRGLZPA=";
   };
 
-  nativeBuildInputs = [ cmake ];
-  buildInputs = [ pyyaml rapidjson ];
-  propagatedBuildInputs = [ numpy ];
+  build-system = [
+    hatch-fancy-pypi-readme
+    hatchling
+  ];
+
+  dependencies = [
+    awkward-cpp
+    fsspec
+    numpy
+    packaging
+  ];
 
   dontUseCmakeConfigure = true;
 
-  checkInputs = [ pytestCheckHook numba ];
-  dontUseSetuptoolsCheck = true;
-  disabledTestPaths = [ "tests-cuda" ];
+  pythonImportsCheck = [ "awkward" ];
 
-  meta = with lib; {
+  nativeCheckInputs = [
+    fsspec
+    numba
+    numexpr
+    pandas
+    pyarrow
+    pytest-xdist
+    pytestCheckHook
+  ];
+
+  disabledTestPaths = [
+    # Need to be run on a GPU platform.
+    "tests-cuda"
+  ];
+
+  meta = {
     description = "Manipulate JSON-like data with NumPy-like idioms";
-    homepage = "https://github.com/scikit-hep/awkward-1.0";
-    license = licenses.bsd3;
-    maintainers = with maintainers; [ veprbl ];
+    homepage = "https://github.com/scikit-hep/awkward";
+    changelog = "https://github.com/scikit-hep/awkward/releases/tag/${src.tag}";
+    license = lib.licenses.bsd3;
+    maintainers = with lib.maintainers; [ veprbl ];
   };
 }

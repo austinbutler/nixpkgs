@@ -1,29 +1,67 @@
-{ lib, fetchFromGitHub, buildPythonPackage, isPy27, click, redis }:
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  buildPythonPackage,
+
+  # build-system
+  hatchling,
+
+  # dependencies
+  click,
+  redis,
+
+  # tests
+  addBinToPathHook,
+  psutil,
+  pytestCheckHook,
+  redisTestHook,
+  versionCheckHook,
+}:
 
 buildPythonPackage rec {
   pname = "rq";
-  version = "1.10.1";
-  disabled = isPy27;
+  version = "2.4";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "rq";
     repo = "rq";
-    rev = "v${version}";
-    sha256 = "1f4fi1rvn97d2b524q45k6s10b007pr23k0mf44q7hy8q4vnjmh5";
+    tag = "v${version}";
+    hash = "sha256-7aq9JeyM+IjlRPgh4gs1DmkF0hU5EasgTuUPPlf8960=";
   };
 
-  # test require a running redis rerver, which is something we can't do yet
-  doCheck = false;
+  build-system = [ hatchling ];
+
+  dependencies = [
+    click
+    redis
+  ];
+
+  nativeCheckInputs = [
+    addBinToPathHook
+    psutil
+    pytestCheckHook
+    redisTestHook
+    versionCheckHook
+  ];
+  versionCheckProgramArg = "--version";
+
+  __darwinAllowLocalNetworking = true;
+
+  disabledTests = lib.optionals stdenv.hostPlatform.isDarwin [
+    # PermissionError: [Errno 13] Permission denied: '/tmp/rq-tests.txt'
+    "test_deleted_jobs_arent_executed"
+    "test_suspend_worker_execution"
+  ];
 
   pythonImportsCheck = [ "rq" ];
 
-  propagatedBuildInputs = [ click redis ];
-
-  meta = with lib; {
-    description = "A simple, lightweight library for creating background jobs, and processing them";
+  meta = {
+    description = "Library for creating background jobs and processing them";
     homepage = "https://github.com/nvie/rq/";
-    maintainers = with maintainers; [ mrmebelman ];
-    license = licenses.bsd2;
+    changelog = "https://github.com/rq/rq/releases/tag/${src.tag}";
+    license = lib.licenses.bsd2;
+    maintainers = with lib.maintainers; [ mrmebelman ];
   };
 }
-

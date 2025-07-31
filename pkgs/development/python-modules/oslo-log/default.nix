@@ -1,40 +1,59 @@
-{ lib
-, stdenv
-, buildPythonPackage
-, fetchPypi
-, oslo-config
-, oslo-context
-, oslo-serialization
-, oslo-utils
-, oslotest
-, pbr
-, pyinotify
-, python-dateutil
-, pytestCheckHook
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
+  # dependencies
+  debtcollector,
+  oslo-config,
+  oslo-context,
+  oslo-serialization,
+  oslo-utils,
+  pbr,
+  python-dateutil,
+  pyinotify,
+
+  # tests
+  eventlet,
+  oslotest,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "oslo-log";
-  version = "4.6.1";
+  version = "7.2.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    pname = "oslo.log";
-    inherit version;
-    sha256 = "0dlnxjci9mpwhgfv19fy1z7xrdp8m95skrj5dr60all3pr7n22f6";
+  src = fetchFromGitHub {
+    owner = "openstack";
+    repo = "oslo.log";
+    tag = version;
+    hash = "sha256-d5U3zvymIoGYfXfHFp7+gQuDOLHy/q4c+NOlUoCmikU=";
   };
 
-  propagatedBuildInputs = [
+  # Manually set version because prb wants to get it from the git upstream repository (and we are
+  # installing from tarball instead)
+  PBR_VERSION = version;
+
+  build-system = [ setuptools ];
+
+  dependencies = [
+    debtcollector
     oslo-config
     oslo-context
     oslo-serialization
     oslo-utils
     pbr
     python-dateutil
-  ] ++ lib.optionals stdenv.isLinux [
-    pyinotify
-  ];
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [ pyinotify ];
 
-  checkInputs = [
+  nativeCheckInputs = [
+    eventlet
     oslotest
     pytestCheckHook
   ];
@@ -42,14 +61,20 @@ buildPythonPackage rec {
   disabledTests = [
     # not compatible with sandbox
     "test_logging_handle_error"
+    # Incompatible Exception Representation, displaying natively
+    "test_rate_limit"
+    "test_rate_limit_except_level"
   ];
 
   pythonImportsCheck = [ "oslo_log" ];
 
-  meta = with lib; {
+  __darwinAllowLocalNetworking = true;
+
+  meta = {
     description = "oslo.log library";
+    mainProgram = "convert-json";
     homepage = "https://github.com/openstack/oslo.log";
-    license = licenses.asl20;
-    maintainers = teams.openstack.members;
+    license = lib.licenses.asl20;
+    teams = [ lib.teams.openstack ];
   };
 }

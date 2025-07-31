@@ -1,7 +1,13 @@
-{ lib, fetchFromGitHub, pythonPackages }:
+{
+  lib,
+  fetchFromGitHub,
+  pythonPackages,
+  installShellFiles,
+}:
 
 pythonPackages.buildPythonApplication rec {
   version = "1.4";
+  format = "setuptools";
   pname = "wikicurses";
 
   src = fetchFromGitHub {
@@ -11,20 +17,30 @@ pythonPackages.buildPythonApplication rec {
     sha256 = "0f14s4qx3q5pr5vn460c34b5mbz2xs62d8ljs3kic8gmdn8x2knm";
   };
 
-  outputs = [ "out" "man" ];
+  outputs = [
+    "out"
+    "man"
+  ];
 
-  propagatedBuildInputs = with pythonPackages; [ urwid beautifulsoup4 lxml ];
+  nativeBuildInputs = [
+    installShellFiles
+  ];
+
+  propagatedBuildInputs = with pythonPackages; [
+    urwid
+    beautifulsoup4
+    lxml
+  ];
 
   postInstall = ''
-    mkdir -p $man/share/man/man{1,5}
-    cp wikicurses.1 $man/share/man/man1/
-    cp wikicurses.conf.5 $man/share/man/man5/
+    installManPage wikicurses.1 wikicurses.conf.5
   '';
 
   doCheck = false;
 
   meta = {
-    description = "A simple curses interface for MediaWiki sites such as Wikipedia";
+    description = "Simple curses interface for MediaWiki sites such as Wikipedia";
+    mainProgram = "wikicurses";
     homepage = "https://github.com/ids1024/wikicurses/";
     license = lib.licenses.mit;
     platforms = lib.platforms.unix;
@@ -32,4 +48,3 @@ pythonPackages.buildPythonApplication rec {
   };
 
 }
-

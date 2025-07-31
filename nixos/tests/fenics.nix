@@ -1,4 +1,4 @@
-import ./make-test-python.nix ({ pkgs, ... }:
+{ pkgs, ... }:
 
 let
   fenicsScript = pkgs.writeScript "poisson.py" ''
@@ -29,21 +29,23 @@ in
 {
   name = "fenics";
   meta = {
-    maintainers = with pkgs.lib.maintainers; [ knedlsepp ];
+    maintainers = with pkgs.lib.maintainers; [ ];
   };
 
   nodes = {
-    fenicsnode = { pkgs, ... }: {
-      environment.systemPackages = with pkgs; [
-        gcc
-        (python3.withPackages (ps: with ps; [ fenics ]))
-      ];
-    };
+    fenicsnode =
+      { pkgs, ... }:
+      {
+        environment.systemPackages = with pkgs; [
+          gcc
+          (python3.withPackages (ps: with ps; [ fenics ]))
+        ];
+      };
   };
   testScript =
     { nodes, ... }:
     ''
       start_all()
-      node1.succeed("${fenicsScript}")
+      fenicsnode.succeed("${fenicsScript}")
     '';
-})
+}

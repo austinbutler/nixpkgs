@@ -1,21 +1,37 @@
-{ buildPythonPackage
-, lib
-, fetchPypi
-, psutil
-, py-cpuinfo
-, pydantic
-, pyyaml
-, qcelemental
-, pytestCheckHook
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  ipykernel,
+  msgpack,
+  networkx,
+  nglview,
+  numpy,
+  psutil,
+  py-cpuinfo,
+  pydantic,
+  pytestCheckHook,
+  pyyaml,
+  qcelemental,
+  scipy,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "qcengine";
-  version = "0.22.0";
+  version = "0.32.0";
+  pyproject = true;
 
-  checkInputs = [ pytestCheckHook ];
+  src = fetchPypi {
+    inherit pname version;
+    hash = "sha256-HvvWak7a2djF6wDJaHsBltaG1dTGbKH7wjsngO+fh2U=";
+  };
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
+    msgpack
+    numpy
     psutil
     py-cpuinfo
     pydantic
@@ -23,18 +39,26 @@ buildPythonPackage rec {
     qcelemental
   ];
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "685a08247b561ed1c7a7b42e68293f90b412e83556626304a3f826a15be51308";
+  optional-dependencies = {
+    align = [
+      networkx
+      scipy
+    ];
+    viz = [
+      ipykernel
+      nglview
+    ];
   };
 
-  doCheck = true;
+  nativeCheckInputs = [ pytestCheckHook ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+
+  pythonImportsCheck = [ "qcengine" ];
 
   meta = with lib; {
     description = "Quantum chemistry program executor and IO standardizer (QCSchema) for quantum chemistry";
-    homepage = "http://docs.qcarchive.molssi.org/projects/qcelemental/en/latest/";
+    homepage = "https://molssi.github.io/QCElemental/";
     license = licenses.bsd3;
-    platforms = [ "x86_64-linux" ];
-    maintainers = [ maintainers.sheepforce ];
+    maintainers = with maintainers; [ sheepforce ];
+    mainProgram = "qcengine";
   };
 }

@@ -1,84 +1,128 @@
-{ branch ? "stable", pkgs, lib, stdenv }:
+{
+  branch ? "stable",
+  callPackage,
+  fetchurl,
+  lib,
+  stdenv,
+}:
 let
-  inherit (pkgs) callPackage fetchurl;
-  versions = if stdenv.isLinux then {
-    stable = "0.0.17";
-    ptb = "0.0.29";
-    canary = "0.0.134";
-  } else {
-    stable = "0.0.264";
-    ptb = "0.0.59";
-    canary = "0.0.283";
-  };
+  versions =
+    if stdenv.hostPlatform.isLinux then
+      {
+        stable = "0.0.102";
+        ptb = "0.0.152";
+        canary = "0.0.723";
+        development = "0.0.84";
+      }
+    else
+      {
+        stable = "0.0.354";
+        ptb = "0.0.182";
+        canary = "0.0.829";
+        development = "0.0.97";
+      };
   version = versions.${branch};
-  srcs = let
-    darwin-ptb = fetchurl {
-      url = "https://dl-ptb.discordapp.net/apps/osx/${version}/DiscordPTB.dmg";
-      sha256 = "sha256-LS7KExVXkOv8O/GrisPMbBxg/pwoDXIOo1dK9wk1yB8=";
-    };
-  in {
+  srcs = rec {
     x86_64-linux = {
       stable = fetchurl {
-        url =
-          "https://dl.discordapp.net/apps/linux/${version}/discord-${version}.tar.gz";
-        sha256 = "058k0cmbm4y572jqw83bayb2zzl2fw2aaz0zj1gvg6sxblp76qil";
+        url = "https://stable.dl2.discordapp.net/apps/linux/${version}/discord-${version}.tar.gz";
+        hash = "sha256-xnl67Ty9uuAjOV5eWnR7xG+PR5J4M7nYc1hjRBjbaOI=";
       };
       ptb = fetchurl {
-        url =
-          "https://dl-ptb.discordapp.net/apps/linux/${version}/discord-ptb-${version}.tar.gz";
-        sha256 = "d78NnQZ3MkLje8mHrI6noH2iD2oEvSJ3cDnsmzQsUYc=";
+        url = "https://ptb.dl2.discordapp.net/apps/linux/${version}/discord-ptb-${version}.tar.gz";
+        hash = "sha256-GbLEAu6gchwkkupU6k6i7bpdMVnCqB74HDYxyTt3J/w=";
       };
       canary = fetchurl {
-        url =
-          "https://dl-canary.discordapp.net/apps/linux/${version}/discord-canary-${version}.tar.gz";
-        sha256 = "sha256-HyJa6lGcKMPKWffO/pnNcn8fDTJj6O4J8Y5RA23a1kM=";
+        url = "https://canary.dl2.discordapp.net/apps/linux/${version}/discord-canary-${version}.tar.gz";
+        hash = "sha256-k1ClTRaYsb5rPV8AFtVg3iEZ44z5gmcBnOJgsQq9O1Y=";
+      };
+      development = fetchurl {
+        url = "https://development.dl2.discordapp.net/apps/linux/${version}/discord-development-${version}.tar.gz";
+        hash = "sha256-0SmCBi/fl77m5PzI5O38CpAoIzyQc+eRUKLyKVMQ6Dc=";
       };
     };
     x86_64-darwin = {
       stable = fetchurl {
-        url = "https://dl.discordapp.net/apps/osx/${version}/Discord.dmg";
-        sha256 = "1jvlxmbfqhslsr16prsgbki77kq7i3ipbkbn67pnwlnis40y9s7p";
+        url = "https://stable.dl2.discordapp.net/apps/osx/${version}/Discord.dmg";
+        hash = "sha256-JucQ4EPWSMKAKvZhovij8YGWLhZ3IhnXoskce3RG0Do=";
       };
-      ptb = darwin-ptb;
+      ptb = fetchurl {
+        url = "https://ptb.dl2.discordapp.net/apps/osx/${version}/DiscordPTB.dmg";
+        hash = "sha256-yL3NSjY3W1w1gfw7w7zdCgVcov18PtrT8RmcwgQLA6U=";
+      };
       canary = fetchurl {
-        url =
-          "https://dl-canary.discordapp.net/apps/osx/${version}/DiscordCanary.dmg";
-        sha256 = "0mqpk1szp46mih95x42ld32rrspc6jx1j7qdaxf01whzb3d4pi9l";
+        url = "https://canary.dl2.discordapp.net/apps/osx/${version}/DiscordCanary.dmg";
+        hash = "sha256-pa7nJMJU6jPNcusIJ93aAH8AFQl93z1FX/sv6+M4WME=";
+      };
+      development = fetchurl {
+        url = "https://development.dl2.discordapp.net/apps/osx/${version}/DiscordDevelopment.dmg";
+        hash = "sha256-BVTQPr3Oox/mTNE7LTJfYuKhI8PlkJlznKiOffqpECs=";
       };
     };
-    # Only PTB bundles a MachO Universal binary with ARM support.
-    aarch64-darwin = { ptb = darwin-ptb; };
+    aarch64-darwin = x86_64-darwin;
   };
-  src = srcs.${stdenv.hostPlatform.system}.${branch};
+  src =
+    srcs.${stdenv.hostPlatform.system}.${branch}
+      or (throw "${stdenv.hostPlatform.system} not supported on ${branch}");
 
-  meta = with lib; {
+  meta = {
     description = "All-in-one cross-platform voice and text chat for gamers";
-    homepage = "https://discordapp.com/";
     downloadPage = "https://discordapp.com/download";
-    license = licenses.unfree;
-    maintainers = with maintainers; [ ldesgoui MP2E devins2518 ];
-    platforms = [ "x86_64-linux" "x86_64-darwin" ]
-      ++ lib.optionals (branch == "ptb") [ "aarch64-darwin" ];
+    homepage = "https://discordapp.com/";
+    license = lib.licenses.unfree;
+    mainProgram = "discord";
+    maintainers = with lib.maintainers; [
+      artturin
+      donteatoreo
+      infinidoge
+      jopejoe1
+      Scrumplex
+    ];
+    platforms = [
+      "x86_64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
+    sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
   };
-  package = if stdenv.isLinux then ./linux.nix else ./darwin.nix;
-  packages = (builtins.mapAttrs
-    (_: value: callPackage package (value // { inherit src version; meta = meta // { mainProgram = value.binaryName; }; }))
-    {
-      stable = rec {
-        pname = "discord";
-        binaryName = "Discord";
-        desktopName = "Discord";
-      };
-      ptb = rec {
-        pname = "discord-ptb";
-        binaryName = "DiscordPTB";
-        desktopName = "Discord PTB";
-      };
-      canary = rec {
-        pname = "discord-canary";
-        binaryName = "DiscordCanary";
-        desktopName = "Discord Canary";
-      };
-    }
+  package = if stdenv.hostPlatform.isLinux then ./linux.nix else ./darwin.nix;
+
+  packages = (
+    builtins.mapAttrs
+      (
+        _: value:
+        callPackage package (
+          value
+          // {
+            inherit src version branch;
+            meta = meta // {
+              mainProgram = value.binaryName;
+            };
+          }
+        )
+      )
+      {
+        stable = {
+          pname = "discord";
+          binaryName = "Discord";
+          desktopName = "Discord";
+        };
+        ptb = rec {
+          pname = "discord-ptb";
+          binaryName = if stdenv.hostPlatform.isLinux then "DiscordPTB" else desktopName;
+          desktopName = "Discord PTB";
+        };
+        canary = rec {
+          pname = "discord-canary";
+          binaryName = if stdenv.hostPlatform.isLinux then "DiscordCanary" else desktopName;
+          desktopName = "Discord Canary";
+        };
+        development = rec {
+          pname = "discord-development";
+          binaryName = if stdenv.hostPlatform.isLinux then "DiscordDevelopment" else desktopName;
+          desktopName = "Discord Development";
+        };
+      }
   );
-in packages.${branch}
+in
+packages.${branch}

@@ -1,26 +1,31 @@
-{ mkDerivation
-, stdenv
-, lib
-, fetchFromGitHub
-, nix-update-script
-, cmake
-, ninja
-, qtbase
-, qt5
-, xorg
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  nix-update-script,
+  cmake,
+  ninja,
+  qtbase,
+  qtwayland,
+  qt5,
+  xorg,
+  useQt6 ? false,
 }:
 
-mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "adwaita-qt";
-  version = "1.4.1";
+  version = "1.4.2";
 
-  outputs = [ "out" "dev" ];
+  outputs = [
+    "out"
+    "dev"
+  ];
 
   src = fetchFromGitHub {
     owner = "FedoraQt";
     repo = pname;
     rev = version;
-    sha256 = "sha256-t9vv1KcMUg8Qe7lhVMN4GO+VPoT7QzeoQ6hV4fesA8U=";
+    sha256 = "sha256-K/+SL52C+M2OC4NL+mhBnm/9BwH0KNNTGIDmPwuUwkM=";
   };
 
   nativeBuildInputs = [
@@ -30,9 +35,22 @@ mkDerivation rec {
 
   buildInputs = [
     qtbase
-    qt5.qtx11extras
-  ] ++ lib.optionals stdenv.isLinux [
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
     xorg.libxcb
+  ]
+  ++ lib.optionals (!useQt6) [
+    qt5.qtx11extras
+  ]
+  ++ lib.optionals useQt6 [
+    qtwayland
+  ];
+
+  # Qt setup hook complains about missing `wrapQtAppsHook` otherwise.
+  dontWrapQtApps = true;
+
+  cmakeFlags = lib.optionals useQt6 [
+    "-DUSE_QT6=true"
   ];
 
   postPatch = ''
@@ -42,16 +60,14 @@ mkDerivation rec {
   '';
 
   passthru = {
-    updateScript = nix-update-script {
-      attrPath = pname;
-    };
+    updateScript = nix-update-script { };
   };
 
   meta = with lib; {
-    description = "A style to bend Qt applications to look like they belong into GNOME Shell";
+    description = "Style to bend Qt applications to look like they belong into GNOME Shell";
     homepage = "https://github.com/FedoraQt/adwaita-qt";
     license = licenses.gpl2Plus;
-    maintainers = teams.gnome.members ++ (with maintainers; [ ]);
+    maintainers = [ ];
     platforms = platforms.all;
   };
 }

@@ -1,22 +1,39 @@
-{ lib
-, buildPythonPackage
-, fetchurl
+{
+  lib,
+  pythonOlder,
+  pytestCheckHook,
+  pytest-cov-stub,
+  hatchling,
+  fetchFromGitHub,
+  buildPythonPackage,
 }:
 
 buildPythonPackage rec {
   pname = "entry-points-txt";
-  version = "0.1.0";
-  format = "wheel";
+  version = "0.2.1";
+  pyproject = true;
 
-  src = fetchurl {
-    url = "https://github.com/jwodder/entry-points-txt/releases/download/v0.1.0/entry_points_txt-0.1.0-py3-none-any.whl";
-    sha256 = "29773bed3d9d337766a394e19d6f7ab0be3ed7d6f3ebb753ff0f7f48f056aa8e";
+  src = fetchFromGitHub {
+    owner = "jwodder";
+    repo = "entry-points-txt";
+    tag = "v${version}";
+    hash = "sha256-hIUXxBJ0XSB4FrNZJdofJ1gTTncILNq9Xh+iAV1CD0s=";
   };
 
+  nativeBuildInputs = [ hatchling ];
+
+  nativeCheckInputs = [
+    pytestCheckHook
+    pytest-cov-stub
+  ];
+
+  pythonImportsCheck = [ "entry_points_txt" ];
+
   meta = with lib; {
-    homepage = "https://github.com/jwodder/entry-points-txt";
     description = "Read & write entry_points.txt files";
-    license = with licenses; [ mit ];
-    maintainers = with lib.maintainers; [ ayazhafiz ];
+    homepage = "https://github.com/jwodder/entry-points-txt";
+    changelog = "https://github.com/wheelodex/entry-points-txt/releases/tag/${src.tag}";
+    license = licenses.mit;
+    maintainers = with maintainers; [ ayazhafiz ];
   };
 }

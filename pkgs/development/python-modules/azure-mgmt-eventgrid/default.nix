@@ -1,40 +1,48 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, msrest
-, msrestazure
-, azure-common
-, azure-mgmt-core
-, azure-mgmt-nspkg
-, isPy3k
+{
+  lib,
+  azure-common,
+  azure-mgmt-core,
+  buildPythonPackage,
+  fetchPypi,
+  isodate,
+  msrest,
+  pythonOlder,
+  setuptools,
+  typing-extensions,
 }:
 
 buildPythonPackage rec {
   pname = "azure-mgmt-eventgrid";
-  version = "10.1.0";
+  version = "10.4.0";
+  pyproject = true;
+
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
-    inherit pname version;
-    extension = "zip";
-    sha256 = "4da3bf142d31bc25d80ee26641b95b7f52eb1baf4f326b9954e9f0613944ef3c";
+    pname = "azure_mgmt_eventgrid";
+    inherit version;
+    hash = "sha256-MD5eJ89LteyDO6Tlqe9wtbxBDhkEEuxHzeWdguQT+34=";
   };
 
-  propagatedBuildInputs = [
-    msrest
-    msrestazure
-    azure-mgmt-core
+  build-system = [ setuptools ];
+
+  dependencies = [
     azure-common
-  ] ++ lib.optionals (!isPy3k) [
-    azure-mgmt-nspkg
+    azure-mgmt-core
+    isodate
+    msrest
+    typing-extensions
   ];
 
   # has no tests
   doCheck = false;
+
   pythonImportsCheck = [ "azure.mgmt.eventgrid" ];
 
   meta = with lib; {
     description = "This is the Microsoft Azure EventGrid Management Client Library";
-    homepage = "https://github.com/Azure/azure-sdk-for-python";
+    homepage = "https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/eventgrid/azure-mgmt-eventgrid";
+    changelog = "https://github.com/Azure/azure-sdk-for-python/blob/azure-mgmt-eventgrid_${version}/sdk/eventgrid/azure-mgmt-eventgrid/CHANGELOG.md";
     license = licenses.mit;
     maintainers = with maintainers; [ maxwilson ];
   };

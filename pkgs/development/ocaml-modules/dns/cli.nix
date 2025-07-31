@@ -1,25 +1,48 @@
-{ buildDunePackage, dns, dns-tsig, dns-client, dns-server, dns-certify
-, rresult, bos, cmdliner, fpath, x509, mirage-crypto, mirage-crypto-pk
-, mirage-crypto-rng, hex, ptime, mtime, logs, fmt, ipaddr, lwt
-, randomconv, alcotest
+{
+  buildDunePackage,
+  dns,
+  dns-tsig,
+  dns-client-lwt,
+  dns-server,
+  dns-certify,
+  dns-resolver,
+  dnssec,
+  bos,
+  cmdliner,
+  fpath,
+  x509,
+  mirage-crypto,
+  mirage-crypto-pk,
+  mirage-crypto-rng,
+  mirage-mtime,
+  ohex,
+  ptime,
+  mtime,
+  logs,
+  fmt,
+  ipaddr,
+  lwt,
+  randomconv,
+  alcotest,
 }:
 
 buildDunePackage {
   pname = "dns-cli";
 
-  minimumOCamlVersion = "4.08";
+  minimalOCamlVersion = "4.08";
 
-  inherit (dns) version src useDune2;
+  inherit (dns) version src;
 
   # no need to propagate as this is primarily
   # an executable package
   buildInputs = [
     dns
     dns-tsig
-    dns-client
+    dns-client-lwt
     dns-server
     dns-certify
-    rresult
+    dns-resolver
+    dnssec
     bos
     cmdliner
     fpath
@@ -27,7 +50,8 @@ buildDunePackage {
     mirage-crypto
     mirage-crypto-pk
     mirage-crypto-rng
-    hex
+    mirage-mtime
+    ohex
     ptime
     mtime
     logs
@@ -44,5 +68,6 @@ buildDunePackage {
 
   meta = dns.meta // {
     description = "Unix command line utilities using uDNS";
+    mainProgram = "odns";
   };
 }

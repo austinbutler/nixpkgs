@@ -1,24 +1,43 @@
-{ lib, fetchPypi, buildPythonPackage, numpy, python-dateutil }:
+{
+  lib,
+  fetchPypi,
+  buildPythonPackage,
+  setuptools,
+  numpy,
+  python-dateutil,
+}:
 
 buildPythonPackage rec {
   pname = "pycollada";
-  version = "0.7.2";
+  version = "0.9.2";
+  pyproject = true;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "70a2630ed499bdab718c0e61a3e6ae3698130d7e4654e89cdecde51bfdaea56f";
+    hash = "sha256-fKEiZ74KK5PkldYDbmsnQCOpRX3tZBlU6wxHDv4VPW4=";
   };
 
-  propagatedBuildInputs = [ numpy python-dateutil ];
+  build-system = [
+    setuptools
+  ];
+
+  dependencies = [
+    numpy
+    python-dateutil
+  ];
 
   # Some tests fail because they refer to test data files that don't exist
   # (upstream packaging issue)
   doCheck = false;
 
+  pythonImportsCheck = [
+    "collada"
+  ];
+
   meta = with lib; {
     description = "Python library for reading and writing collada documents";
     homepage = "http://pycollada.github.io/";
-    license = "BSD"; # they don't specify which BSD variant
+    license = licenses.bsd3;
     platforms = with platforms; linux ++ darwin;
     maintainers = with maintainers; [ bjornfor ];
   };

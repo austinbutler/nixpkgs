@@ -1,49 +1,78 @@
-{ lib
-, aiohttp
-, buildPythonPackage
-, fetchFromGitHub
-, oauthlib
-, requests
-, pythonOlder
-, vcrpy
-, pytestCheckHook
-, requests_oauthlib
+{
+  lib,
+  aiohttp,
+  async-lru,
+  buildPythonPackage,
+  fetchFromGitHub,
+  flit-core,
+  oauthlib,
+  pytestCheckHook,
+  requests-oauthlib,
+  requests,
+  vcrpy,
 }:
 
 buildPythonPackage rec {
   pname = "tweepy";
-  version = "4.5.0";
-  format = "setuptools";
-
-  disabled = pythonOlder "3.6";
+  version = "4.16.0";
+  pyproject = true;
 
   src = fetchFromGitHub {
-    owner = pname;
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-mRpYPuj2B/kEaaeZlNYYnViGxWiK1xtWfDObHNduIK8=";
+    owner = "tweepy";
+    repo = "tweepy";
+    tag = "v${version}";
+    hash = "sha256-9rJrZb9X3twVtfnQTFjWLH/TttfUNm4KA3/6AIHDKc0=";
   };
 
-  propagatedBuildInputs = [
-    aiohttp
+  build-system = [ flit-core ];
+
+  dependencies = [
     oauthlib
     requests
-    requests_oauthlib
+    requests-oauthlib
   ];
 
-  checkInputs = [
+  optional-dependencies = {
+    async = [
+      aiohttp
+      async-lru
+    ];
+  };
+
+  nativeCheckInputs = [
     pytestCheckHook
     vcrpy
-  ];
+  ]
+  ++ lib.flatten (builtins.attrValues optional-dependencies);
 
-  pythonImportsCheck = [
-    "tweepy"
+  pythonImportsCheck = [ "tweepy" ];
+
+  # The checks with streaming fail due to (seemingly) not decoding (or unexpectedly sending response in) GZIP
+  # Same issue impacted mastodon-py, see https://github.com/halcy/Mastodon.py/commit/cd86887d88bbc07de462d1e00a8fbc3d956c0151 (who just disabled these)
+  disabledTestPaths = [ "tests/test_client.py" ];
+
+  disabledTests = [
+    "test_indicate_direct_message_typing"
+    "testcachedifferentqueryparameters"
+    "testcachedresult"
+    "testcreatedestroyblock"
+    "testcreatedestroyfriendship"
+    "testcreateupdatedestroylist"
+    "testgetfollowerids"
+    "testgetfollowers"
+    "testgetfriendids"
+    "testgetfriends"
+    "testgetuser"
+    "testcursorcursoritems"
+    "testcursorcursorpages"
+    "testcursornext"
   ];
 
   meta = with lib; {
-    homepage = "https://github.com/tweepy/tweepy";
     description = "Twitter library for Python";
+    homepage = "https://github.com/tweepy/tweepy";
+    changelog = "https://github.com/tweepy/tweepy/releases/tag/v${version}";
     license = licenses.mit;
-    maintainers = with maintainers; [ ];
+    maintainers = with maintainers; [ marius851000 ];
   };
 }

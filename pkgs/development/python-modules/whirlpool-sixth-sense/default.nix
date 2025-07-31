@@ -1,36 +1,44 @@
-{ lib
-, aioconsole
-, aiohttp
-, buildPythonPackage
-, fetchFromGitHub
-, pytest-asyncio
-, pytest-mock
-, pytestCheckHook
-, pythonOlder
-, websockets
+{
+  lib,
+  aioconsole,
+  aiohttp,
+  aioresponses,
+  async-timeout,
+  buildPythonPackage,
+  fetchFromGitHub,
+  pytest-asyncio,
+  pytest-mock,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
+  websockets,
 }:
 
 buildPythonPackage rec {
   pname = "whirlpool-sixth-sense";
-  version = "unstable-2021-08-22";
-  format = "setuptools";
+  version = "0.20.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.11";
 
   src = fetchFromGitHub {
     owner = "abmantis";
-    repo = pname;
-    rev = "ca336173d3b5d9a13e7e4b0fa7ca998a9b71d729";
-    sha256 = "0b7bqg4h9q9rk3hv2im903xn7jgfyf36kcv31v96ap75yrvip6wa";
+    repo = "whirlpool-sixth-sense";
+    tag = version;
+    hash = "sha256-Sl8Y1sVZolk8KLS3bKGQNFXTVntcPusrf2A0zdixq8A=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
     aioconsole
     aiohttp
+    async-timeout
     websockets
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
+    aioresponses
     pytest-asyncio
     pytest-mock
     pytestCheckHook

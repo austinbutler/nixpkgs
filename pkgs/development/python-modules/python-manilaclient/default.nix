@@ -1,42 +1,46 @@
-{ lib
-, buildPythonApplication
-, fetchPypi
-, installShellFiles
-, pbr
-, openstackdocstheme
-, oslo-config
-, oslo-log
-, oslo-serialization
-, oslo-utils
-, prettytable
-, requests
-, simplejson
-, sphinx
-, sphinxcontrib-programoutput
-, Babel
-, osc-lib
-, python-keystoneclient
-, debtcollector
-, callPackage
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  pbr,
+  openstackdocstheme,
+  oslo-config,
+  oslo-log,
+  oslo-serialization,
+  oslo-utils,
+  prettytable,
+  requests,
+  setuptools,
+  sphinxHook,
+  sphinxcontrib-programoutput,
+  babel,
+  osc-lib,
+  python-keystoneclient,
+  debtcollector,
+  callPackage,
 }:
 
-buildPythonApplication rec {
+buildPythonPackage rec {
   pname = "python-manilaclient";
-  version = "3.2.0";
+  version = "5.5.0";
+  pyproject = true;
 
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-6iAed0mtEYHguYq4Rlh4YWT8E5hNqBYPcnG9/8RMspo=";
+    pname = "python_manilaclient";
+    inherit version;
+    hash = "sha256-wPYVZ0+a9g+IP3l3eH9gMWXfe5VGUzem7qWEOWZ+vlo=";
   };
 
-  nativeBuildInputs = [
-    installShellFiles
+  build-system = [
     openstackdocstheme
-    sphinx
+    setuptools
+    sphinxHook
     sphinxcontrib-programoutput
   ];
 
-  propagatedBuildInputs = [
+  sphinxBuilders = [ "man" ];
+
+  dependencies = [
     pbr
     oslo-config
     oslo-log
@@ -44,18 +48,11 @@ buildPythonApplication rec {
     oslo-utils
     prettytable
     requests
-    simplejson
-    Babel
+    babel
     osc-lib
     python-keystoneclient
     debtcollector
   ];
-
-  postInstall = ''
-    export PATH=$out/bin:$PATH
-    sphinx-build -a -E -d doc/build/doctrees -b man doc/source doc/build/man
-    installManPage doc/build/man/python-manilaclient.1
-  '';
 
   # Checks moved to 'passthru.tests' to workaround infinite recursion
   doCheck = false;
@@ -68,8 +65,9 @@ buildPythonApplication rec {
 
   meta = with lib; {
     description = "Client library for OpenStack Manila API";
+    mainProgram = "manila";
     homepage = "https://github.com/openstack/python-manilaclient";
     license = licenses.asl20;
-    maintainers = teams.openstack.members;
+    teams = [ teams.openstack ];
   };
 }

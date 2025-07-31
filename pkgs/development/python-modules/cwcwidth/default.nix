@@ -1,39 +1,56 @@
-{ lib, buildPythonPackage, fetchPypi, cython, pytestCheckHook }:
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchFromGitHub,
+  cython,
+  setuptools,
+  pytestCheckHook,
+}:
 
 buildPythonPackage rec {
   pname = "cwcwidth";
-  version = "0.1.6";
-  format = "pyproject";
+  version = "0.1.10";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "1b31da599c9f0cf41f39ed10c1ceaa01d6024e31c6cd9aea2885b1f2a6d15fba";
+  src = fetchFromGitHub {
+    owner = "sebastinas";
+    repo = "cwcwidth";
+    tag = "v${version}";
+    hash = "sha256-JrzItV+nCpQCz9MM1pcq5FtGZOsWNbgAra6i5WT4Mcg=";
   };
 
-  nativeBuildInputs = [ cython ];
+  build-system = [
+    cython
+    setuptools
+  ];
 
-  checkInputs = [ pytestCheckHook ];
+  nativeCheckInputs = [
+    pytestCheckHook
+  ];
+
   preCheck = ''
-    # Hack needed to make pytest + cython work
-    # https://github.com/NixOS/nixpkgs/pull/82410#issuecomment-827186298
-    export HOME=$(mktemp -d)
-    cp -r $TMP/$sourceRoot/tests $HOME
-    pushd $HOME
+    # prevent import shadow
+    rm -rf cwcwidth
 
-    # locale settings used by upstream, has the effect of skipping
-    # otherwise-failing tests on darwin
+    # locale settings used by upstream, has the effect of skipping otherwise-failing tests on darwin
     export LC_ALL='C.UTF-8'
     export LANG='C.UTF-8'
   '';
-  postCheck = "popd";
+
+  disabledTests = lib.optionals stdenv.hostPlatform.isDarwin [
+    # Despite setting the locales above, this test fails with:
+    # AssertionError: Tuples differ: (1, 1, 1, 1) != (1, 1, 1, 0)
+    "test_combining_spacing"
+  ];
 
   pythonImportsCheck = [ "cwcwidth" ];
 
-  meta = with lib; {
+  meta = {
     description = "Python bindings for wc(s)width";
     homepage = "https://github.com/sebastinas/cwcwidth";
-    changelog = "https://github.com/sebastinas/cwcwidth/blob/main/CHANGELOG.md";
-    license = licenses.mit;
-    maintainers = with maintainers; [ ];
+    changelog = "https://github.com/sebastinas/cwcwidth/blob/v${version}/CHANGELOG.md";
+    license = lib.licenses.mit;
+    maintainers = [ ];
   };
 }

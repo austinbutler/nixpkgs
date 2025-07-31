@@ -1,81 +1,62 @@
-{ lib
-, stdenv
-, nix-update-script
-, appstream
-, appstream-glib
-, dbus
-, desktop-file-utils
-, elementary-icon-theme
-, fetchFromGitHub
-, fetchpatch
-, flatpak
-, gettext
-, glib
-, granite
-, gtk3
-, json-glib
-, libgee
-, libhandy
-, libsoup
-, libxml2
-, meson
-, ninja
-, packagekit
-, pkg-config
-, python3
-, vala
-, polkit
-, wrapGAppsHook
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  meson,
+  ninja,
+  pkg-config,
+  sassc,
+  vala,
+  wrapGAppsHook4,
+  appstream,
+  dbus,
+  flatpak,
+  glib,
+  granite7,
+  gtk4,
+  json-glib,
+  libadwaita,
+  libgee,
+  libportal-gtk4,
+  libsoup_3,
+  libxml2,
+  polkit,
+  nix-update-script,
 }:
 
 stdenv.mkDerivation rec {
   pname = "appcenter";
-  version = "3.9.1";
+  version = "8.2.0";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = pname;
     rev = version;
-    sha256 = "sha256-xktIHQHmz5gh72NEz9UQ9fMvBlj1BihWxHgxsHmTIB0=";
+    hash = "sha256-dginzwQrzcgnVdRO54cGPVh6+yVx0zLsFeeAVhxWFnE=";
   };
 
-  patches = [
-    # Fix AppStream.PoolFlags being renamed
-    # Though the API break has been fixed in latest appstream,
-    # let's use the non-deprecated version anyway.
-    # https://github.com/elementary/appcenter/pull/1794
-    (fetchpatch {
-      url = "https://github.com/elementary/appcenter/commit/84bc6400713484aa9365f0ba73f59c495da3f08b.patch";
-      sha256 = "sha256-HNRCJ/5mRbEVjCq9nrXtdQOOk1Jj5jalApkghD8ecpk=";
-    })
-  ];
-
   nativeBuildInputs = [
-    appstream-glib
-    dbus # for pkg-config
-    desktop-file-utils
-    gettext
     meson
     ninja
     pkg-config
-    python3
+    sassc
     vala
-    wrapGAppsHook
+    wrapGAppsHook4
   ];
 
   buildInputs = [
     appstream
-    elementary-icon-theme
+    dbus
     flatpak
     glib
-    granite
-    gtk3
+    granite7
+    gtk4
     json-glib
+    libadwaita
     libgee
-    libhandy
-    libsoup
+    libportal-gtk4
+    libsoup_3
     libxml2
-    packagekit
     polkit
   ];
 
@@ -85,22 +66,23 @@ stdenv.mkDerivation rec {
   ];
 
   postPatch = ''
-    chmod +x meson/post_install.py
-    patchShebangs meson/post_install.py
+    # Since we do not build libxml2 with legacy support,
+    # we cannot use compressed appstream metadata.
+    # https://gitlab.gnome.org/GNOME/libxml2/-/commit/f7f14537727bf6845d0eea08cd1fdc30accc2a53
+    substituteInPlace src/Core/FlatpakBackend.vala \
+      --replace-fail ".xml.gz" ".xml"
   '';
 
   passthru = {
-    updateScript = nix-update-script {
-      attrPath = "pantheon.${pname}";
-    };
+    updateScript = nix-update-script { };
   };
 
   meta = with lib; {
     homepage = "https://github.com/elementary/appcenter";
-    description = "An open, pay-what-you-want app store for indie developers, designed for elementary OS";
+    description = "Open, pay-what-you-want app store for indie developers, designed for elementary OS";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
-    maintainers = teams.pantheon.members;
+    teams = [ teams.pantheon ];
     mainProgram = "io.elementary.appcenter";
   };
 }

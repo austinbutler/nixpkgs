@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -36,14 +41,21 @@ in
       type = types.str;
       default = "";
       example = ''
+        import cachelib
+
         BIND_ADDRESS = '127.0.0.1'
         PORT = 8000
         SQLALCHEMY_DATABASE_URI = 'postgresql://powerdnsadmin@/powerdnsadmin?host=/run/postgresql'
+        SESSION_TYPE = 'cachelib'
+        SESSION_CACHELIB = cachelib.simple.SimpleCache()
       '';
       description = ''
         Configuration python file.
-        See <link xlink:href="https://github.com/ngoduykhanh/PowerDNS-Admin/blob/v${pkgs.powerdns-admin.version}/configs/development.py">the example configuration</link>
+        See [the example configuration](https://github.com/ngoduykhanh/PowerDNS-Admin/blob/v${pkgs.powerdns-admin.version}/configs/development.py)
         for options.
+        Also see [Flask Session configuration](https://flask-session.readthedocs.io/en/latest/config.html#SESSION_TYPE)
+        as the version shipped with NixOS is more recent than the one PowerDNS-Admin expects
+        and it requires explicit configuration.
       '';
     };
 
@@ -78,6 +90,7 @@ in
       environment.PYTHONPATH = pkgs.powerdns-admin.pythonPath;
       serviceConfig = {
         ExecStart = "${pkgs.powerdns-admin}/bin/powerdns-admin --pid /run/powerdns-admin/pid ${escapeShellArgs cfg.extraArgs}";
+        # Set environment variables only for starting flask database upgrade
         ExecStartPre = "${pkgs.coreutils}/bin/env FLASK_APP=${pkgs.powerdns-admin}/share/powerdnsadmin/__init__.py ${pkgs.python3Packages.flask}/bin/flask db upgrade -d ${pkgs.powerdns-admin}/share/migrations";
         ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
         ExecStop = "${pkgs.coreutils}/bin/kill -TERM $MAINPID";
@@ -86,7 +99,6 @@ in
         User = "powerdnsadmin";
         Group = "powerdnsadmin";
 
-        AmbientCapabilities = "CAP_NET_BIND_SERVICE";
         BindReadOnlyPaths = [
           "/nix/store"
           "-/etc/resolv.conf"
@@ -96,7 +108,6 @@ in
         ]
         ++ (optional (cfg.secretKeyFile != null) cfg.secretKeyFile)
         ++ (optional (cfg.saltFile != null) cfg.saltFile);
-        CapabilityBoundingSet = "CAP_NET_BIND_SERVICE";
         # ProtectClock= adds DeviceAllow=char-rtc r
         DeviceAllow = "";
         # Implies ProtectSystem=strict, which re-mounts all paths
@@ -121,7 +132,11 @@ in
         ProtectKernelModules = true;
         ProtectKernelTunables = true;
         ProtectProc = "invisible";
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
         RestrictNamespaces = true;
         RestrictRealtime = true;
         RestrictSUIDSGID = true;

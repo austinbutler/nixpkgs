@@ -1,27 +1,45 @@
-{ lib
-, fetchFromGitHub
-, buildPythonPackage
-, pkgconfig
-, gmp
-, pari
-, mpfr
-, fplll
-, cython
-, cysignals
-, numpy
-, pytest
+{
+  lib,
+  fetchFromGitHub,
+  buildPythonPackage,
+
+  # build-system
+  cysignals,
+  cython,
+  pkgconfig,
+  setuptools,
+
+  gmp,
+  pari,
+  mpfr,
+  fplll,
+  numpy,
+
+  # Reverse dependency
+  sage,
+
+  # tests
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "fpylll";
-  version = "0.5.6";
+  version = "0.6.4";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "fplll";
     repo = "fpylll";
-    rev = version;
-    sha256 = "sha256-Bxcc0941+pl2Uzam48qe+PFlcBWsJ0rDYZxrxIYQpEA=";
+    tag = version;
+    hash = "sha256-vks4rTXk6fh8183PCxJzfTXQyo3scBH4afjbQAkT6Gw=";
   };
+
+  nativeBuildInputs = [
+    cython
+    cysignals
+    pkgconfig
+    setuptools
+  ];
 
   buildInputs = [
     gmp
@@ -31,32 +49,29 @@ buildPythonPackage rec {
   ];
 
   propagatedBuildInputs = [
-    cython
-    cysignals
     numpy
+    cysignals
   ];
 
-  nativeBuildInputs = [
-    pkgconfig
-  ];
+  nativeCheckInputs = [ pytestCheckHook ];
 
-  checkInputs = [
-    pytest
-  ];
-
-  checkPhase = ''
+  preCheck = ''
     # Since upstream introduced --doctest-modules in
     # https://github.com/fplll/fpylll/commit/9732fdb40cf1bd43ad1f60762ec0a8401743fc79,
     # it is necessary to ignore import mismatches. Not sure why, but the files
     # should be identical anyway.
-    PY_IGNORE_IMPORTMISMATCH=1 pytest
+    export PY_IGNORE_IMPORTMISMATCH=1
   '';
 
+  passthru.tests = {
+    inherit sage;
+  };
+
   meta = with lib; {
-    description = "A Python interface for fplll";
-    changelog = "https://github.com/fplll/fpylll/releases/tag/${version}";
+    description = "Python interface for fplll";
+    changelog = "https://github.com/fplll/fpylll/releases/tag/${src.tag}";
     homepage = "https://github.com/fplll/fpylll";
-    maintainers = teams.sage.members;
+    teams = [ teams.sage ];
     license = licenses.gpl2Plus;
   };
 }

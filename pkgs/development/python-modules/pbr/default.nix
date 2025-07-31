@@ -1,20 +1,30 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, setuptools
-, callPackage
+{
+  lib,
+  buildPythonPackage,
+  callPackage,
+  distutils,
+  fetchPypi,
+  setuptools,
+  six,
 }:
 
 buildPythonPackage rec {
   pname = "pbr";
-  version = "5.8.0";
+  version = "6.1.1";
+  pyproject = true;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "672d8ebee84921862110f23fcec2acea191ef58543d34dfe9ef3d9f13c31cddf";
+    hash = "sha256-k+pyzmmJ6y7tmdD3VyFHT2mtiBKK/e9aw3freXxL92s=";
   };
 
-  propagatedBuildInputs = [ setuptools ];
+  build-system = [ setuptools ];
+
+  dependencies = [
+    distutils # for distutils.command in pbr/packaging.py
+    setuptools # for pkg_resources
+    six
+  ];
 
   # check in passthru.tests.pytest to escape infinite recursion with fixtures
   doCheck = false;
@@ -27,8 +37,9 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Python Build Reasonableness";
+    mainProgram = "pbr";
     homepage = "https://github.com/openstack/pbr";
     license = licenses.asl20;
-    maintainers = teams.openstack.members;
+    teams = [ teams.openstack ];
   };
 }

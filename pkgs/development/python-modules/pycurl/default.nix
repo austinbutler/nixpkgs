@@ -1,48 +1,59 @@
-{ lib
-, buildPythonPackage
-, isPyPy
-, fetchPypi
-, pythonOlder
-, curl
-, openssl
-, bottle
-, pytestCheckHook
-, nose
-, flaky
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  isPyPy,
+  fetchFromGitHub,
+  curl,
+  openssl,
+  bottle,
+  pytestCheckHook,
+  flaky,
+  flask,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "pycurl";
-  version = "7.44.1";
-  disabled = isPyPy || (pythonOlder "3.5"); # https://github.com/pycurl/pycurl/issues/208
+  version = "7.45.6";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "5bcef4d988b74b99653602101e17d8401338d596b9234d263c728a0c3df003e8";
+  disabled = isPyPy; # https://github.com/pycurl/pycurl/issues/208
+
+  src = fetchFromGitHub {
+    owner = "pycurl";
+    repo = "pycurl";
+    tag = "REL_${lib.replaceStrings [ "." ] [ "_" ] version}";
+    hash = "sha256-M4rO0CaI2SmjdJVS7hWnJZrL72WvayB4aKn707KoNiQ=";
   };
 
   preConfigure = ''
-    substituteInPlace setup.py --replace '--static-libs' '--libs'
+    substituteInPlace setup.py \
+      --replace-fail '--static-libs' '--libs'
     export PYCURL_SSL_LIBRARY=openssl
   '';
 
+  build-system = [ setuptools ];
+
+  nativeBuildInputs = [ curl ];
+
   buildInputs = [
     curl
-    openssl.out
+    openssl
   ];
 
-  nativeBuildInputs = [
-    curl
-  ];
+  pythonImportsCheck = [ "pycurl" ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     bottle
-    pytestCheckHook
-    nose
     flaky
+    flask
+    pytestCheckHook
   ];
 
-  pytestFlagsArray = [
+  __darwinAllowLocalNetworking = true;
+
+  enabledTestPaths = [
     # don't pick up the tests directory below examples/
     "tests"
   ];
@@ -52,16 +63,6 @@ buildPythonPackage rec {
   '';
 
   disabledTests = [
-    # libcurl stopped passing the reason phrase from the HTTP status line
-    # https://github.com/pycurl/pycurl/issues/679
-    "test_failonerror"
-    "test_failonerror_status_line_invalid_utf8_python3"
-    # bottle>=0.12.17 escapes utf8 properly, so these test don't work anymore
-    # https://github.com/pycurl/pycurl/issues/669
-    "test_getinfo_content_type_invalid_utf8_python3"
-    "test_getinfo_cookie_invalid_utf8_python3"
-    "test_getinfo_raw_content_type_invalid_utf8"
-    "test_getinfo_raw_cookie_invalid_utf8"
     # tests that require network access
     "test_keyfunction"
     "test_keyfunction_bogus_return"
@@ -73,12 +74,35 @@ buildPythonPackage rec {
     "test_libcurl_ssl_gnutls"
     # AssertionError: assert 'crypto' in ['curl']
     "test_ssl_in_static_libs"
+    # https://github.com/pycurl/pycurl/issues/819
+    "test_multi_socket_select"
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    # https://github.com/pycurl/pycurl/issues/729
+    "test_easy_pause_unpause"
+    "test_multi_socket_action"
+  ]
+  ++ lib.optionals (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64) [
+    # Fatal Python error: Segmentation fault
+    "cadata_test"
+  ];
+
+  disabledTestPaths = [
+    # https://github.com/pycurl/pycurl/issues/856
+    "tests/multi_test.py"
   ];
 
   meta = with lib; {
-    homepage = "http://pycurl.sourceforge.net/";
-    description = "Python wrapper for libcurl";
-    license = licenses.lgpl2Only;
-    maintainers = with maintainers; [];
+    description = "Python Interface To The cURL library";
+    homepage = "http://pycurl.io/";
+    changelog =
+      "https://github.com/pycurl/pycurl/blob/REL_"
+      + replaceStrings [ "." ] [ "_" ] version
+      + "/ChangeLog";
+    license = with licenses; [
+      lgpl2Only
+      mit
+    ];
+    maintainers = [ ];
   };
 }

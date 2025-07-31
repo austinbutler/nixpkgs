@@ -1,64 +1,65 @@
-{ lib
-, asyncio-dgram
-, buildPythonPackage
-, click
-, dnspython
-, fetchFromGitHub
-, mock
-, poetry-core
-, pytest-asyncio
-, pytestCheckHook
-, pythonOlder
-, six
+{
+  lib,
+  asyncio-dgram,
+  buildPythonPackage,
+  dnspython,
+  fetchFromGitHub,
+  hatchling,
+  pytest-asyncio,
+  pytest-cov-stub,
+  pytest-rerunfailures,
+  pytestCheckHook,
+  typing-extensions,
 }:
 
 buildPythonPackage rec {
   pname = "mcstatus";
-  version = "8.0.0";
-  format = "pyproject";
-
-  disabled = pythonOlder "3.6";
+  version = "12.0.2";
+  pyproject = true;
 
   src = fetchFromGitHub {
-    owner = "Dinnerbone";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-19VO5L5abVGm5zEMt88o67ArLjBCnGO2DxfAD+u1hF4=";
+    owner = "py-mine";
+    repo = "mcstatus";
+    tag = "v${version}";
+    hash = "sha256-DWIpN7oBbb/F5aER0v0qhcQsDoa/EfizjHgy/BE2P6E=";
   };
 
-  nativeBuildInputs = [
-    poetry-core
-  ];
+  build-system = [ hatchling ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     asyncio-dgram
-    click
     dnspython
-    six
   ];
 
-  checkInputs = [
-    mock
+  __darwinAllowLocalNetworking = true;
+
+  nativeCheckInputs = [
     pytest-asyncio
+    pytest-cov-stub
+    pytest-rerunfailures
+    pytest-cov-stub
     pytestCheckHook
+    typing-extensions
   ];
 
-  postPatch = ''
-    substituteInPlace pyproject.toml \
-      --replace 'asyncio-dgram = "1.2.0"' 'asyncio-dgram = ">=1.2.0"' \
-      --replace 'dnspython = "2.1.0"' 'dnspython = "^2.1.0"' \
-      --replace 'six = "1.14.0"' 'six = ">=1.14.0"' \
-      --replace 'click = "7.1.2"' 'click = ">=7.1.2"'
-  '';
+  pythonImportsCheck = [ "mcstatus" ];
 
-  pythonImportsCheck = [
-    "mcstatus"
+  disabledTests = [
+    # DNS features are limited in the sandbox
+    "test_resolve_localhost"
+    "test_async_resolve_localhost"
+    "test_java_server_with_query_port"
   ];
 
-  meta = with lib; {
+  meta = {
     description = "Python library for checking the status of Minecraft servers";
-    homepage = "https://github.com/Dinnerbone/mcstatus";
-    license = with licenses; [ asl20 ];
-    maintainers = with maintainers; [ fab ];
+    mainProgram = "mcstatus";
+    homepage = "https://github.com/py-mine/mcstatus";
+    changelog = "https://github.com/py-mine/mcstatus/releases/tag/${src.tag}";
+    license = with lib.licenses; [ asl20 ];
+    maintainers = with lib.maintainers; [
+      fab
+      perchun
+    ];
   };
 }

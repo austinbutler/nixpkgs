@@ -1,64 +1,64 @@
-{ lib
-, brotli
-, brotlicffi
-, buildPythonPackage
-, certifi
-, chardet
-, charset-normalizer
-, fetchPypi
-, idna
-, isPy27
-, isPy3k
-, pysocks
-, pytest-mock
-, pytest-xdist
-, pytestCheckHook
-, trustme
-, urllib3
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  certifi,
+  chardet,
+  charset-normalizer,
+  fetchFromGitHub,
+  idna,
+  pysocks,
+  pytest-mock,
+  pytest-xdist,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
+  urllib3,
 }:
 
 buildPythonPackage rec {
   pname = "requests";
-  version = "2.27.1";
+  version = "2.32.4";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    hash = "sha256-aNfFb9WomZiHco7zBKbRLtx7508c+kdxT8i0FFJcmmE=";
+  disabled = pythonOlder "3.8";
+
+  __darwinAllowLocalNetworking = true;
+
+  src = fetchFromGitHub {
+    owner = "psf";
+    repo = "requests";
+    tag = "v${version}";
+    hash = "sha256-sD9GLCAa3y9L1J+fcd+ZXBtW4jNL40hOesKXORhcjGQ=";
   };
 
   patches = [
-    # Use the default NixOS CA bundle from the certifi package
-    ./0001-Prefer-NixOS-Nix-default-CA-bundles-over-certifi.patch
+    # https://github.com/psf/requests/issues/6730
+    # https://github.com/psf/requests/pull/6731
+    ./ca-load-regression.patch
   ];
 
-  postPatch = ''
-    # Use latest idna
-    substituteInPlace setup.py \
-      --replace ",<3" ""
-  '';
+  build-system = [ setuptools ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     certifi
+    charset-normalizer
     idna
     urllib3
-    chardet
-  ] ++ lib.optionals (isPy3k) [
-    brotlicffi
-    charset-normalizer
-  ] ++ lib.optionals (isPy27) [
-    brotli
   ];
 
-  checkInputs = [
-    pysocks
+  optional-dependencies = {
+    security = [ ];
+    socks = [ pysocks ];
+    use_chardet_on_py3 = [ chardet ];
+  };
+
+  nativeCheckInputs = [
     pytest-mock
     pytest-xdist
     pytestCheckHook
-    trustme
-  ];
-
-  # AttributeError: 'KeywordMapping' object has no attribute 'get'
-  doCheck = !isPy27;
+  ]
+  ++ optional-dependencies.socks;
 
   disabledTests = [
     # Disable tests that require network access and use httpbin
@@ -74,15 +74,24 @@ buildPythonPackage rec {
     "test_use_proxy_from_environment"
     "TestRequests"
     "TestTimeout"
+  ]
+  ++ lib.optionals (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64) [
+    # Fatal Python error: Aborted
+    "test_basic_response"
+    "test_text_response"
   ];
 
-  pythonImportsCheck = [
-    "requests"
+  disabledTestPaths = lib.optionals (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64) [
+    # Fatal Python error: Aborted
+    "tests/test_lowlevel.py"
   ];
+
+  pythonImportsCheck = [ "requests" ];
 
   meta = with lib; {
     description = "HTTP library for Python";
     homepage = "http://docs.python-requests.org/";
+    changelog = "https://github.com/psf/requests/blob/v${version}/HISTORY.md";
     license = licenses.asl20;
     maintainers = with maintainers; [ fab ];
   };

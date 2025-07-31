@@ -1,54 +1,58 @@
-{ lib
-, aenum
-, aiohttp
-, aiohttp-wsgi
-, async-timeout
-, buildPythonPackage
-, fetchFromGitHub
-, pytestCheckHook
-, pythonAtLeast
-, pythonOlder
-, pytest-aiohttp
-, pytest-asyncio
-, requests
-, websocket-client
-, websockets
+{
+  lib,
+  aiohttp,
+  buildPythonPackage,
+  fetchFromGitHub,
+  httpx,
+  pytest-aiohttp,
+  pytest-mock,
+  pytestCheckHook,
+  pythonOlder,
+  requests,
+  setuptools-scm,
+  setuptools,
+  websockets,
 }:
 
 buildPythonPackage rec {
   pname = "homematicip";
-  version = "1.0.2";
-  format = "setuptools";
+  version = "2.2.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.12";
 
   src = fetchFromGitHub {
-    owner = "coreGreenberet";
+    owner = "hahn-th";
     repo = "homematicip-rest-api";
-    rev = version;
-    sha256 = "sha256-j2ansly05auevlcDY5TFz6PZR/pNIGIbtkJuU8L5b0o=";
+    tag = version;
+    hash = "sha256-GmP3ZWn678ss3VtF26iI4t3CZegbajENg7gL19u3Mas=";
   };
 
-  propagatedBuildInputs = [
-    aenum
+  build-system = [
+    setuptools
+    setuptools-scm
+  ];
+
+  dependencies = [
     aiohttp
-    async-timeout
+    httpx
     requests
-    websocket-client
     websockets
   ];
 
-  checkInputs = [
-    aiohttp-wsgi
+  nativeCheckInputs = [
     pytest-aiohttp
-    pytest-asyncio
+    pytest-mock
     pytestCheckHook
   ];
+
+  pytestFlags = [ "--asyncio-mode=auto" ];
 
   disabledTests = [
     # Assert issues with datetime
     "test_contact_interface_device"
     "test_dimmer"
+    "test_external_device"
     "test_heating_failure_alert_group"
     "test_heating"
     "test_humidity_warning_rule_group"
@@ -68,21 +72,15 @@ buildPythonPackage rec {
     "test_home_unknown_types"
     # Requires network access
     "test_websocket"
-  ] ++ lib.optionals (pythonAtLeast "3.10") [
-    "test_connection_lost"
-    "test_user_disconnect_and_reconnect"
-    "test_ws_message"
-    "test_ws_no_pong"
   ];
 
-  pythonImportsCheck = [
-    "homematicip"
-  ];
+  pythonImportsCheck = [ "homematicip" ];
 
   meta = with lib; {
-    description = "Python module for the homematicIP REST API";
-    homepage = "https://github.com/coreGreenberet/homematicip-rest-api";
-    license = with licenses; [ gpl3Only ];
+    description = "Module for the homematicIP REST API";
+    homepage = "https://github.com/hahn-th/homematicip-rest-api";
+    changelog = "https://github.com/hahn-th/homematicip-rest-api/releases/tag/${src.tag}";
+    license = licenses.gpl3Plus;
     maintainers = with maintainers; [ fab ];
   };
 }

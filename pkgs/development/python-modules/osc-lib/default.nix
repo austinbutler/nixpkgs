@@ -1,38 +1,51 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, cliff
-, oslo-i18n
-, oslo-utils
-, openstacksdk
-, pbr
-, requests-mock
-, simplejson
-, stestr
+{
+  lib,
+  buildPythonPackage,
+  cliff,
+  fetchFromGitHub,
+  keystoneauth1,
+  openstacksdk,
+  oslo-i18n,
+  oslo-utils,
+  pbr,
+  requests,
+  requests-mock,
+  setuptools,
+  stestr,
+  stevedore,
 }:
 
 buildPythonPackage rec {
   pname = "osc-lib";
-  version = "2.5.0";
+  version = "3.2.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-2PikUPqyoSlOCu+M3JolWhvMW1jhsvYJjjXm2x4T6dE=";
+  src = fetchFromGitHub {
+    owner = "openstack";
+    repo = "osc-lib";
+    rev = version;
+    hash = "sha256-P1f0wwtOo0LKbc3ay0Vh8GGi/2nRXcTr9JOByc2nlZY=";
   };
 
-  nativeBuildInputs = [
+  # fake version to make pbr.packaging happy and not reject it...
+  PBR_VERSION = version;
+
+  build-system = [
     pbr
+    setuptools
   ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     cliff
+    keystoneauth1
     openstacksdk
     oslo-i18n
     oslo-utils
-    simplejson
+    requests
+    stevedore
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     requests-mock
     stestr
   ];
@@ -47,6 +60,6 @@ buildPythonPackage rec {
     description = "OpenStackClient Library";
     homepage = "https://github.com/openstack/osc-lib";
     license = licenses.asl20;
-    maintainers = teams.openstack.members;
+    teams = [ teams.openstack ];
   };
 }

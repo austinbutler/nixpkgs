@@ -1,21 +1,25 @@
-import ./make-test-python.nix ({ lib, ... }: {
+{ lib, ... }:
+{
   name = "plikd";
   meta = with lib.maintainers; {
     maintainers = [ freezeboy ];
   };
 
-  machine = { pkgs, ... }: let
-  in {
-    services.plikd.enable = true;
-    environment.systemPackages = [ pkgs.plik ];
-  };
+  nodes.machine =
+    { pkgs, ... }:
+    let
+    in
+    {
+      services.plikd.enable = true;
+      environment.systemPackages = [ pkgs.plik ];
+    };
 
   testScript = ''
     # Service basic test
     machine.wait_for_unit("plikd")
 
     # Network test
-    machine.wait_for_open_port("8080")
+    machine.wait_for_open_port(8080)
     machine.succeed("curl --fail -v http://localhost:8080")
 
     # Application test
@@ -24,4 +28,4 @@ import ./make-test-python.nix ({ lib, ... }: {
 
     machine.succeed("diff data.txt /tmp/data.txt")
   '';
-})
+}

@@ -1,66 +1,70 @@
-{ lib, stdenv
-, fetchurl
-, meson
-, ninja
-, pkg-config
-, SDL2
-, alsa-lib
-, bullet
-, check
-, curl
-, dbus
-, doxygen
-, expat
-, fontconfig
-, freetype
-, fribidi
-, ghostscript
-, giflib
-, glib
-, gst_all_1
-, gtk3
-, harfbuzz
-, hicolor-icon-theme
-, ibus
-, jbig2dec
-, libGL
-, libdrm
-, libinput
-, libjpeg
-, libpng
-, libpulseaudio
-, libraw
-, librsvg
-, libsndfile
-, libspectre
-, libtiff
-, libwebp
-, libxkbcommon
-, luajit
-, lz4
-, mesa
-, mint-x-icons
-, openjpeg
-, openssl
-, poppler
-, python3Packages
-, systemd
-, udev
-, util-linux
-, wayland
-, wayland-protocols
-, writeText
-, xorg
-, zlib
+{
+  lib,
+  stdenv,
+  fetchurl,
+  meson,
+  ninja,
+  pkg-config,
+  SDL2,
+  alsa-lib,
+  bullet,
+  check,
+  curl,
+  dbus,
+  doxygen,
+  expat,
+  fontconfig,
+  freetype,
+  fribidi,
+  ghostscript,
+  giflib,
+  glib,
+  gst_all_1,
+  gtk3,
+  harfbuzz,
+  hicolor-icon-theme,
+  ibus,
+  jbig2dec,
+  libGL,
+  libdrm,
+  libgbm,
+  libinput,
+  libjpeg,
+  libpng,
+  libpulseaudio,
+  libraw,
+  librsvg,
+  libsndfile,
+  libspectre,
+  libtiff,
+  libwebp,
+  libxkbcommon,
+  lua,
+  lz4,
+  mesa-gl-headers,
+  mint-x-icons,
+  openjpeg,
+  openssl,
+  poppler,
+  systemd,
+  udev,
+  util-linux,
+  wayland,
+  wayland-protocols,
+  wayland-scanner,
+  writeText,
+  xorg,
+  zlib,
+  directoryListingUpdater,
 }:
 
 stdenv.mkDerivation rec {
   pname = "efl";
-  version = "1.26.2";
+  version = "1.28.1";
 
   src = fetchurl {
     url = "http://download.enlightenment.org/rel/libs/${pname}/${pname}-${version}.tar.xz";
-    sha256 = "071h0pscbd8g341yy5rz9mk1xn8yhryldhl6mmr1y6lafaycyy99";
+    sha256 = "sha256-hM9hRfnMgr//aQAFviQ5LI88UvjgD/BNjuo3FCnAlCQ=";
   };
 
   nativeBuildInputs = [
@@ -69,6 +73,7 @@ stdenv.mkDerivation rec {
     gtk3
     pkg-config
     check
+    wayland-scanner
   ];
 
   buildInputs = [
@@ -87,7 +92,7 @@ stdenv.mkDerivation rec {
     libsndfile
     libtiff
     lz4
-    mesa
+    mesa-gl-headers
     openssl
     systemd
     udev
@@ -114,6 +119,7 @@ stdenv.mkDerivation rec {
     hicolor-icon-theme # for the icon theme
     jbig2dec
     libdrm
+    libgbm
     libinput
     libjpeg
     libraw
@@ -121,7 +127,7 @@ stdenv.mkDerivation rec {
     libspectre
     libwebp
     libxkbcommon
-    luajit
+    lua
     mint-x-icons # Mint-X is a parent icon theme of Enlightenment-X
     openjpeg
     poppler
@@ -145,7 +151,7 @@ stdenv.mkDerivation rec {
   mesonFlags = [
     "--buildtype=release"
     "-D build-tests=false" # disable build tests, which are not working
-    "-D ecore-imf-loaders-disabler=ibus,scim" # ibus is disabled by default, scim is not availabe in nixpkgs
+    "-D ecore-imf-loaders-disabler=ibus,scim" # ibus is disabled by default, scim is not available in nixpkgs
     "-D embedded-lz4=false"
     "-D fb=true"
     "-D network-backend=connman"
@@ -203,11 +209,21 @@ stdenv.mkDerivation rec {
     patchelf --add-needed ${libsndfile.out}/lib/libsndfile.so $out/lib/libecore_audio.so
   '';
 
+  passthru.updateScript = directoryListingUpdater { };
+
   meta = with lib; {
     description = "Enlightenment foundation libraries";
     homepage = "https://enlightenment.org/";
-    license = with licenses; [ bsd2 lgpl2Only licenses.zlib ];
+    license = with licenses; [
+      bsd2
+      lgpl2Only
+      licenses.zlib
+    ];
     platforms = platforms.linux;
-    maintainers = with maintainers; [ matejc tstrobel ftrvxmtrx romildo ];
+    maintainers = with maintainers; [
+      matejc
+      ftrvxmtrx
+    ];
+    teams = [ teams.enlightenment ];
   };
 }

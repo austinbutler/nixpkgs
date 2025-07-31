@@ -1,37 +1,33 @@
-{ lib, stdenvNoCC, fetchFromGitHub, youtube-dl }:
+{
+  lib,
+  buildLua,
+  fetchFromGitHub,
+  unstableGitUpdater,
+  yt-dlp,
+}:
 
-stdenvNoCC.mkDerivation rec {
+buildLua {
   pname = "mpv-playlistmanager";
-  version = "unstable-2021-09-27";
+  version = "0-unstable-2025-03-16";
 
   src = fetchFromGitHub {
     owner = "jonniek";
     repo = "mpv-playlistmanager";
-    rev = "9a759b300c92b55e82be5824fe058e263975741a";
-    sha256 = "qMzDJlouBptwyNdw2ag4VKEtmkQNUlos0USPerBAV/s=";
+    rev = "a2755132c18c050269e5fea6093672f0a36ed7db";
+    hash = "sha256-v+zQiRXPtFXSq3Em3sA37zltUGPhGCpONJ25F2Jxe4w=";
   };
+  passthru.updateScript = unstableGitUpdater { };
 
   postPatch = ''
     substituteInPlace playlistmanager.lua \
-    --replace "'youtube-dl'" "'${youtube-dl}/bin/youtube-dl'" \
+      --replace-fail 'youtube_dl_executable = "yt-dlp",' \
+      'youtube_dl_executable = "${lib.getExe yt-dlp}"',
   '';
-
-  dontBuild = true;
-
-  installPhase = ''
-    runHook preInstall
-    mkdir -p $out/share/mpv/scripts
-    cp playlistmanager.lua $out/share/mpv/scripts
-    runHook postInstall
-  '';
-
-  passthru.scriptName = "playlistmanager.lua";
 
   meta = with lib; {
     description = "Mpv lua script to create and manage playlists";
     homepage = "https://github.com/jonniek/mpv-playlistmanager";
     license = licenses.unlicense;
-    platforms = platforms.all;
     maintainers = with maintainers; [ lunik1 ];
   };
 }

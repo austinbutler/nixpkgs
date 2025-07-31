@@ -1,44 +1,92 @@
-{ buildPythonPackage
-, fetchFromGitHub
-, jaxlib
-, keras
-, lib
-, matplotlib
-, msgpack
-, numpy
-, optax
-, pytestCheckHook
-, tensorflow
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+  setuptools-scm,
+
+  # dependencies
+  jax,
+  msgpack,
+  numpy,
+  optax,
+  orbax-checkpoint,
+  pyyaml,
+  rich,
+  tensorstore,
+  typing-extensions,
+
+  # optional-dependencies
+  matplotlib,
+
+  # tests
+  cloudpickle,
+  keras,
+  einops,
+  flaxlib,
+  pytestCheckHook,
+  pytest-xdist,
+  sphinx,
+  tensorflow,
+  treescope,
+
+  writeScript,
+  tomlq,
 }:
 
 buildPythonPackage rec {
   pname = "flax";
-  version = "0.4.0";
+  version = "0.10.7";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "google";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "0rvdaxyf68qmm5d77gbizpcibyz2ic2pb2x7rgf7p8qwijyc39ws";
+    repo = "flax";
+    tag = "v${version}";
+    hash = "sha256-T/KhlvliesBW40kyToxOkyX8PLl0acMQO+FnOKqfQJo=";
   };
 
-  buildInputs = [ jaxlib ];
+  build-system = [
+    setuptools
+    setuptools-scm
+  ];
 
-  propagatedBuildInputs = [
-    matplotlib
+  dependencies = [
+    flaxlib
+    jax
     msgpack
     numpy
     optax
+    orbax-checkpoint
+    pyyaml
+    rich
+    tensorstore
+    treescope
+    typing-extensions
   ];
 
-  pythonImportsCheck = [
-    "flax"
-  ];
+  optional-dependencies = {
+    all = [ matplotlib ];
+  };
 
-  checkInputs = [
+  pythonImportsCheck = [ "flax" ];
+
+  nativeCheckInputs = [
+    cloudpickle
     keras
+    einops
     pytestCheckHook
+    pytest-xdist
+    sphinx
     tensorflow
+  ];
+
+  pytestFlags = [
+    # DeprecationWarning: Triggering of __jax_array__() during abstractification is deprecated.
+    # To avoid this error, either explicitly convert your object using jax.numpy.array(), or register your object as a pytree.
+    "-Wignore::DeprecationWarning"
   ];
 
   disabledTestPaths = [
@@ -54,10 +102,24 @@ buildPythonPackage rec {
     "examples/*"
   ];
 
-  meta = with lib; {
+  disabledTests = [
+    # AssertionError: [Chex] Function 'add' is traced > 1 times!
+    "PadShardUnpadTest"
+  ];
+
+  passthru = {
+    updateScript = writeScript "update.sh" ''
+      nix-update flax # does not --build by default
+      nix-build . -A flax.src # src is essentially a passthru
+      nix-update flaxlib --version="$(${lib.getExe tomlq} <result/Cargo.toml .something.version)" --commit
+    '';
+  };
+
+  meta = {
     description = "Neural network library for JAX";
     homepage = "https://github.com/google/flax";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ ndl ];
+    changelog = "https://github.com/google/flax/releases/tag/v${version}";
+    license = lib.licenses.asl20;
+    maintainers = with lib.maintainers; [ ndl ];
   };
 }

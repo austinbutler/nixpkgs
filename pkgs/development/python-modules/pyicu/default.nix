@@ -1,23 +1,49 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pytestCheckHook
-, six
-, icu
+{
+  stdenv,
+  lib,
+  buildPythonPackage,
+  fetchFromGitLab,
+  pkg-config,
+  setuptools,
+  pytestCheckHook,
+  six,
+  icu,
 }:
 
 buildPythonPackage rec {
-  pname = "PyICU";
-  version = "2.8";
+  pname = "pyicu";
+  version = "2.15.2";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "3d80de47045a8163db5aebc947c42b4d429eeea4f0c32af4f40b33981fa872b9";
+  src = fetchFromGitLab {
+    domain = "gitlab.pyicu.org";
+    owner = "main";
+    repo = "pyicu";
+    tag = "v${version}";
+    hash = "sha256-Div3c4Lk9VTV1HrmvYKDn1a7moDNjG4OHA9Kv3+niKs=";
   };
 
-  nativeBuildInputs = [ icu ]; # for icu-config, but should be replaced with pkg-config
+  postPatch = ''
+    substituteInPlace setup.py --replace-fail "'pkg-config'" "'${stdenv.cc.targetPrefix}pkg-config'"
+  '';
+
+  build-system = [ setuptools ];
+
+  nativeBuildInputs = [ pkg-config ];
+
   buildInputs = [ icu ];
-  checkInputs = [ pytestCheckHook six ];
+
+  nativeCheckInputs = [
+    pytestCheckHook
+    six
+  ];
+
+  disabledTestPaths = [
+    # AssertionError: '$' != 'US Dollar'
+    "test/test_NumberFormatter.py::TestCurrencyUnit::testGetName"
+    # AssertionError: Lists differ: ['a', 'b', 'c', 'd'] != ['a', 'b', 'c', 'd', ...
+    "test/test_UnicodeSet.py::TestUnicodeSet::testIterators"
+  ];
 
   pythonImportsCheck = [ "icu" ];
 

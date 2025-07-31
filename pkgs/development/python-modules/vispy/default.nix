@@ -1,31 +1,38 @@
-{ lib
-, stdenv
-, buildPythonPackage
-, substituteAll
-, fetchPypi
-, cython
-, fontconfig
-, freetype-py
-, hsluv
-, kiwisolver
-, libGL
-, numpy
-, setuptools-scm
-, setuptools-scm-git-archive
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  replaceVars,
+  fetchPypi,
+  cython,
+  fontconfig,
+  freetype-py,
+  hsluv,
+  kiwisolver,
+  libGL,
+  numpy,
+  oldest-supported-numpy,
+  packaging,
+  pythonOlder,
+  setuptools,
+  setuptools-scm,
+  wheel,
 }:
 
 buildPythonPackage rec {
   pname = "vispy";
-  version = "0.9.6";
+  version = "0.15.2";
+  pyproject = true;
+
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-ISzVtQgkSZu84+LXQaray3nAt3GsVm+THGE1WXYCi8s=";
+    hash = "sha256-1S0QwGl/SJkFVc6iorrT+fWncjkYVv2jZOpLvGn9B1w=";
   };
 
-  patches = [
-    (substituteAll {
-      src = ./library-paths.patch;
+  patches = lib.optionals (!stdenv.hostPlatform.isDarwin) [
+    (replaceVars ./library-paths.patch {
       fontconfig = "${fontconfig.lib}/lib/libfontconfig${stdenv.hostPlatform.extensions.sharedLibrary}";
       gl = "${libGL.out}/lib/libGL${stdenv.hostPlatform.extensions.sharedLibrary}";
     })
@@ -33,23 +40,23 @@ buildPythonPackage rec {
 
   nativeBuildInputs = [
     cython
+    oldest-supported-numpy
+    setuptools
     setuptools-scm
-    setuptools-scm-git-archive
+    wheel
   ];
 
-  buildInputs = [
-    libGL
-  ];
+  buildInputs = [ libGL ];
 
   propagatedBuildInputs = [
-    fontconfig
     freetype-py
     hsluv
     kiwisolver
     numpy
+    packaging
   ];
 
-  doCheck = false;  # otherwise runs OSX code on linux.
+  doCheck = false; # otherwise runs OSX code on linux.
 
   pythonImportsCheck = [
     "vispy"
@@ -65,8 +72,9 @@ buildPythonPackage rec {
   ];
 
   meta = with lib; {
-    homepage = "https://vispy.org/index.html";
     description = "Interactive scientific visualization in Python";
+    homepage = "https://vispy.org/index.html";
+    changelog = "https://github.com/vispy/vispy/blob/v${version}/CHANGELOG.md";
     license = licenses.bsd3;
     maintainers = with maintainers; [ goertzenator ];
   };

@@ -1,45 +1,59 @@
-{ lib
-, async-timeout
-, buildPythonPackage
-, fetchPypi
-, pytest-asyncio
-, pytestCheckHook
-, pythonOlder
-, siosocks
-, trustme
+{
+  lib,
+  stdenv,
+  async-timeout,
+  buildPythonPackage,
+  fetchPypi,
+  pytest-asyncio,
+  pytest-cov-stub,
+  pytest-mock,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
+  siosocks,
+  trustme,
 }:
 
 buildPythonPackage rec {
   pname = "aioftp";
-  version = "0.20.0";
-  format = "setuptools";
+  version = "0.25.2";
+  pyproject = true;
 
-  disabled = pythonOlder "3.7";
+  disabled = pythonOlder "3.9";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-N8qiKsWPaFT/t5p1eSHS0BydoXv4AL6y8gP4z4P9fsE=";
+    hash = "sha256-hALv4NR4O5xNZ4dEbV4Cer55eWlR8ickG9LF2PPgnQs=";
   };
 
-  propagatedBuildInputs = [
-    siosocks
-  ];
+  build-system = [ setuptools ];
 
-  checkInputs = [
+  optional-dependencies = {
+    socks = [ siosocks ];
+  };
+
+  nativeCheckInputs = [
     async-timeout
     pytest-asyncio
+    pytest-cov-stub
+    pytest-mock
     pytestCheckHook
     trustme
+  ]
+  ++ lib.flatten (builtins.attrValues optional-dependencies);
+
+  disabledTests = lib.optionals stdenv.hostPlatform.isDarwin [
+    # uses 127.0.0.2, which macos doesn't like
+    "test_pasv_connection_pasv_forced_response_address"
   ];
 
-  pythonImportsCheck = [
-    "aioftp"
-  ];
+  pythonImportsCheck = [ "aioftp" ];
 
   meta = with lib; {
     description = "Python FTP client/server for asyncio";
-    homepage = "https://github.com/aio-libs/aioftp";
+    homepage = "https://aioftp.readthedocs.io/";
+    changelog = "https://github.com/aio-libs/aioftp/blob/${version}/history.rst";
     license = licenses.asl20;
-    maintainers = with maintainers; [ costrouc ];
+    maintainers = [ ];
   };
 }

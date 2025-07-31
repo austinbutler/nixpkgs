@@ -1,89 +1,110 @@
-{ lib
-, stdenv
-, buildPythonPackage
-, fetchPypi
-, pythonOlder
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchPypi,
+  pythonAtLeast,
+  pythonOlder,
 
-# Build dependencies
-, glibcLocales
+  # Build dependencies
+  setuptools,
 
-# Runtime dependencies
-, appnope
-, backcall
-, black
-, decorator
-, jedi
-, matplotlib-inline
-, pexpect
-, pickleshare
-, prompt-toolkit
-, pygments
-, stack-data
-, traitlets
+  # Runtime dependencies
+  decorator,
+  ipython-pygments-lexers,
+  jedi,
+  matplotlib-inline,
+  pexpect,
+  prompt-toolkit,
+  pygments,
+  stack-data,
+  traitlets,
+  typing-extensions,
 
-# Test dependencies
-, pytestCheckHook
-, testpath
+  # Optional dependencies
+  matplotlib,
+
+  # Reverse dependency
+  sage,
+
+  # Test dependencies
+  pickleshare,
+  pytest-asyncio,
+  pytestCheckHook,
+  testpath,
 }:
 
-buildPythonPackage (rec {
+buildPythonPackage rec {
   pname = "ipython";
-  version = "8.0.1";
-  format = "pyproject";
-  disabled = pythonOlder "3.8";
+  version = "9.3.0";
+  pyproject = true;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0x19sj4dlq7r4p1mqnpx9245r8dwvpjwd8n34snfm37a452lsmmb";
+    hash = "sha256-eeuJb58j9QrRbDvCBfaG9uAwrSRswwnGJ5okKxSv6dg=";
   };
 
-  buildInputs = [
-    glibcLocales
-  ];
+  build-system = [ setuptools ];
 
-  propagatedBuildInputs = [
-    backcall
-    black
+  dependencies = [
     decorator
+    ipython-pygments-lexers
     jedi
     matplotlib-inline
     pexpect
-    pickleshare
     prompt-toolkit
     pygments
     stack-data
     traitlets
-  ] ++ lib.optionals stdenv.isDarwin [
-    appnope
-  ];
+  ]
+  ++ lib.optionals (pythonOlder "3.12") [ typing-extensions ];
 
-  LC_ALL="en_US.UTF-8";
+  optional-dependencies = {
+    matplotlib = [ matplotlib ];
+  };
 
-  pythonImportsCheck = [
-    "IPython"
-  ];
+  pythonImportsCheck = [ "IPython" ];
 
   preCheck = ''
     export HOME=$TMPDIR
 
     # doctests try to fetch an image from the internet
-    substituteInPlace pytest.ini \
-      --replace "--ipdoctest-modules" "--ipdoctest-modules --ignore=IPython/core/display.py"
+    substituteInPlace pyproject.toml \
+      --replace-fail '"--ipdoctest-modules",' '"--ipdoctest-modules", "--ignore=IPython/core/display.py",'
   '';
 
-  checkInputs = [
+  nativeCheckInputs = [
+    pickleshare
+    pytest-asyncio
     pytestCheckHook
     testpath
   ];
 
-  meta = with lib; {
-    description = "IPython: Productive Interactive Computing";
-    homepage = "http://ipython.org/";
-    license = licenses.bsd3;
-    maintainers = with maintainers; [ bjornfor fridh ];
-  };
-} // lib.optionalAttrs stdenv.isDarwin {
   disabledTests = [
-    "test_clipboard_get" # uses pbpaste
+    # UnboundLocalError: local variable 'child' referenced before assignment
+    "test_system_interrupt"
+  ]
+  ++ lib.optionals (pythonAtLeast "3.13") [
+    # AttributeError: 'Pdb' object has no attribute 'curframe'. Did you mean: 'botframe'?
+    "test_run_debug_twice"
+    "test_run_debug_twice_with_breakpoint"
+  ]
+  ++ lib.optionals (stdenv.hostPlatform.isDarwin) [
+    # FileNotFoundError: [Errno 2] No such file or directory: 'pbpaste'
+    "test_clipboard_get"
   ];
-})
+
+  passthru.tests = {
+    inherit sage;
+  };
+
+  meta = {
+    description = "IPython: Productive Interactive Computing";
+    downloadPage = "https://github.com/ipython/ipython/";
+    homepage = "https://ipython.readthedocs.io/en/stable/";
+    changelog = "https://github.com/ipython/ipython/blob/${version}/docs/source/whatsnew/version${lib.versions.major version}.rst";
+    license = lib.licenses.bsd3;
+    maintainers = with lib.maintainers; [ bjornfor ];
+    teams = [ lib.teams.jupyter ];
+  };
+}

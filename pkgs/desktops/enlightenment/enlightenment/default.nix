@@ -1,31 +1,37 @@
-{ lib, stdenv
-, fetchurl
-, meson
-, ninja
-, pkg-config
-, gettext
-, alsa-lib
-, acpid
-, bc
-, ddcutil
-, efl
-, libexif
-, pam
-, xkeyboard_config
-, udisks2
-
-, waylandSupport ? false, wayland-protocols, xwayland
-, bluetoothSupport ? true, bluez5
-, pulseSupport ? !stdenv.isDarwin, libpulseaudio
+{
+  lib,
+  stdenv,
+  fetchurl,
+  meson,
+  ninja,
+  pkg-config,
+  gettext,
+  alsa-lib,
+  acpid,
+  bc,
+  ddcutil,
+  efl,
+  libexif,
+  pam,
+  xkeyboard_config,
+  udisks2,
+  waylandSupport ? false,
+  wayland-protocols,
+  xwayland,
+  bluetoothSupport ? true,
+  bluez5,
+  pulseSupport ? !stdenv.hostPlatform.isDarwin,
+  libpulseaudio,
+  directoryListingUpdater,
 }:
 
 stdenv.mkDerivation rec {
   pname = "enlightenment";
-  version = "0.25.3";
+  version = "0.27.1";
 
   src = fetchurl {
-    url = "http://download.enlightenment.org/rel/apps/${pname}/${pname}-${version}.tar.xz";
-    sha256 = "1xngwixp0cckfq3jhrdmmk6zj67125amr7g6xwc6l89pnpmlkz9p";
+    url = "https://download.enlightenment.org/rel/apps/${pname}/${pname}-${version}.tar.xz";
+    sha256 = "sha256-tB34dx9g47lqGXOuVm10JcU6gznxjlTjEjAhh4HaL6k=";
   };
 
   nativeBuildInputs = [
@@ -48,8 +54,10 @@ stdenv.mkDerivation rec {
   ]
   ++ lib.optional bluetoothSupport bluez5 # for bluetooth configuration and control
   ++ lib.optional pulseSupport libpulseaudio # for proper audio device control and redirection
-  ++ lib.optionals waylandSupport [ wayland-protocols xwayland ]
-  ;
+  ++ lib.optionals waylandSupport [
+    wayland-protocols
+    xwayland
+  ];
 
   patches = [
     # Executables cannot be made setuid in nix store. They should be
@@ -66,15 +74,22 @@ stdenv.mkDerivation rec {
 
   mesonFlags = [
     "-D systemdunitdir=lib/systemd/user"
-  ] ++ lib.optional waylandSupport "-Dwl=true";
+  ]
+  ++ lib.optional waylandSupport "-Dwl=true";
 
   passthru.providedSessions = [ "enlightenment" ];
 
+  passthru.updateScript = directoryListingUpdater { };
+
   meta = with lib; {
-    description = "The Compositing Window Manager and Desktop Shell";
+    description = "Compositing Window Manager and Desktop Shell";
     homepage = "https://www.enlightenment.org";
     license = licenses.bsd2;
     platforms = platforms.linux;
-    maintainers = with maintainers; [ matejc tstrobel ftrvxmtrx romildo ];
+    maintainers = with maintainers; [
+      matejc
+      ftrvxmtrx
+    ];
+    teams = [ teams.enlightenment ];
   };
 }

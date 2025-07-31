@@ -1,60 +1,62 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, responses
-, pytestCheckHook
-, python-dotenv
-, pytest-rerunfailures
-, tox
-, requests
-, python-dateutil
-, websocket-client
-, ibm-cloud-sdk-core
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  ibm-cloud-sdk-core,
+  pytest-rerunfailures,
+  pytestCheckHook,
+  python-dateutil,
+  python-dotenv,
+  pythonOlder,
+  requests,
+  setuptools,
+  responses,
+  websocket-client,
 }:
 
 buildPythonPackage rec {
   pname = "ibm-watson";
-  version = "5.3.1";
-  format = "setuptools";
+  version = "9.0.0";
+  pyproject = true;
 
   disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = "watson-developer-cloud";
     repo = "python-sdk";
-    rev = "v${version}";
-    sha256 = "1x6r8j0xyi81jb0q4pzr6l7aglykrwqz8nw45clv79v33i2sgdcs";
+    tag = "v${version}";
+    hash = "sha256-JZriBvdeDAZ+NOnWCsjI2m5JlLe/oLlbtFkdFeuL8TI=";
   };
 
-  propagatedBuildInputs = [
-    requests
-    python-dateutil
-    websocket-client
+  build-system = [ setuptools ];
+
+  dependencies = [
     ibm-cloud-sdk-core
+    python-dateutil
+    requests
+    websocket-client
   ];
 
-  checkInputs = [
-    responses
+  nativeCheckInputs = [
+    pytest-rerunfailures
     pytestCheckHook
     python-dotenv
-    pytest-rerunfailures
-    tox
+    responses
   ];
 
-  postPatch = ''
-    substituteInPlace setup.py \
-      --replace websocket-client==1.1.0 websocket-client>=1.1.0
-  '';
-
-  pythonImportsCheck = [
-    "ibm_watson"
+  # FileNotFoundError: [Errno 2] No such file or directory: './auth.json'
+  disabledTestPaths = [
+    "test/integration/test_assistant_v2.py"
+    "test/integration/test_natural_language_understanding_v1.py"
   ];
+
+  pythonImportsCheck = [ "ibm_watson" ];
 
   meta = with lib; {
     description = "Client library to use the IBM Watson Services";
     homepage = "https://github.com/watson-developer-cloud/python-sdk";
+    changelog = "https://github.com/watson-developer-cloud/python-sdk/blob/${src.tag}/CHANGELOG.md";
     license = licenses.asl20;
-    maintainers = with maintainers; [ globin lheckemann ];
+    maintainers = with maintainers; [ globin ];
   };
 }

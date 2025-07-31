@@ -1,41 +1,38 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, pytestCheckHook
-, setuptools-scm
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  pytestCheckHook,
+  setuptools-scm,
+  pythonOlder,
 }:
 
 buildPythonPackage rec {
   pname = "pygmars";
-  version = "0.7.0";
+  version = "1.0.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.9";
 
   src = fetchFromGitHub {
     owner = "nexB";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "0wghk4nzplpl26iwrgvm0n9x88nyxlcxz4ywss4nwdr4hfccl28l";
+    repo = "pygmars";
+    tag = "v${version}";
+    hash = "sha256-AbBhWR9ycOFrxS7Vz0bSsSyS3FEEm2bXJAvMhIba6XQ=";
   };
 
   dontConfigure = true;
 
-  nativeBuildInputs = [
-    setuptools-scm
-  ];
+  build-system = [ setuptools-scm ];
 
-  checkInputs = [
-    pytestCheckHook
-  ];
+  nativeCheckInputs = [ pytestCheckHook ];
 
-  pythonImportsCheck = [
-    "pygmars"
-  ];
+  pythonImportsCheck = [ "pygmars" ];
 
   meta = with lib; {
     description = "Python lexing and parsing library";
     homepage = "https://github.com/nexB/pygmars";
+    changelog = "https://github.com/aboutcode-org/pygmars/blob/${src.tag}/CHANGELOG.rst";
     license = with licenses; [ asl20 ];
     maintainers = with maintainers; [ fab ];
   };

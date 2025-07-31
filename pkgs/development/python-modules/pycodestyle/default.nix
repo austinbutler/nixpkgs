@@ -1,34 +1,47 @@
-{ buildPythonPackage
-, fetchPypi
-, lib
-, python
+{
+  buildPythonPackage,
+  fetchFromGitHub,
+  lib,
+  python,
+  pytestCheckHook,
+  setuptools,
+  isPyPy,
 }:
 
 buildPythonPackage rec {
   pname = "pycodestyle";
-  version = "2.8.0";
+  version = "2.14.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "0zxyrg8029lzjhima6l5nk6y0z6lm5wfp9qchz3s33j3xx3mipgd";
+  src = fetchFromGitHub {
+    owner = "PyCQA";
+    repo = "pycodestyle";
+    tag = version;
+    hash = "sha256-1EEQp/QEulrdU9tTe28NerQ33IWlAiSlicpmNYciW88=";
   };
 
-  dontUseSetuptoolsCheck = true;
+  build-system = [ setuptools ];
 
-  # https://github.com/PyCQA/pycodestyle/blob/2.5.0/tox.ini#L14
-  checkPhase = ''
-    ${python.interpreter} pycodestyle.py --max-doc-length=72 --testsuite testsuite
-    ${python.interpreter} pycodestyle.py --statistics pycodestyle.py
-    ${python.interpreter} pycodestyle.py --max-doc-length=72 --doctest
-    ${python.interpreter} -m unittest discover testsuite -vv
+  pythonImportsCheck = [ "pycodestyle" ];
+
+  nativeCheckInputs = [ pytestCheckHook ];
+
+  # https://github.com/PyCQA/pycodestyle/blob/2.14.0/tox.ini#L16
+  postCheck = ''
+    ${python.interpreter} -m pycodestyle --statistics pycodestyle.py
   '';
 
-  meta = with lib; {
-    description = "Python style guide checker (formerly called pep8)";
-    homepage = "https://pycodestyle.readthedocs.io";
-    license = licenses.mit;
-    maintainers = with maintainers; [
-      kamadorueda
-    ];
+  disabledTests = lib.optionals isPyPy [
+    # PyPy reports a SyntaxError instead of ValueError
+    "test_check_nullbytes"
+  ];
+
+  meta = {
+    changelog = "https://github.com/PyCQA/pycodestyle/blob/${src.tag}/CHANGES.txt";
+    description = "Python style guide checker";
+    mainProgram = "pycodestyle";
+    homepage = "https://pycodestyle.pycqa.org/";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ kamadorueda ];
   };
 }

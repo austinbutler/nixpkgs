@@ -1,58 +1,59 @@
-{ lib
-, aiohttp
-, aresponses
-, buildPythonPackage
-, fetchFromGitHub
-, poetry-core
-, pytest-asyncio
-, pytestCheckHook
-, pythonOlder
-, yarl
+{
+  lib,
+  aiohttp,
+  aresponses,
+  buildPythonPackage,
+  fetchFromGitHub,
+  poetry-core,
+  pytest-asyncio,
+  pytest-cov-stub,
+  pytestCheckHook,
+  syrupy,
+  pythonOlder,
+  yarl,
 }:
 
 buildPythonPackage rec {
   pname = "p1monitor";
-  version = "1.1.0";
-  format = "pyproject";
+  version = "3.1.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.9";
+  disabled = pythonOlder "3.11";
 
   src = fetchFromGitHub {
     owner = "klaasnicolaas";
     repo = "python-p1monitor";
-    rev = "v${version}";
-    hash = "sha256-X8by8qVcLEs5xrb4LjNeGomlmERAYYplo3Yqgh9lKrI=";
+    tag = "v${version}";
+    hash = "sha256-vr/JLvn593cgZ2KEsfDW1lS4QlGiymr0qZ8130zo6Ec=";
   };
 
-  nativeBuildInputs = [
-    poetry-core
-  ];
+  postPatch = ''
+    substituteInPlace pyproject.toml \
+      --replace '"0.0.0"' '"${version}"'
+  '';
 
-  propagatedBuildInputs = [
+  build-system = [ poetry-core ];
+
+  dependencies = [
     aiohttp
     yarl
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     aresponses
     pytest-asyncio
+    pytest-cov-stub
     pytestCheckHook
+    syrupy
   ];
 
-  postPatch = ''
-    substituteInPlace pyproject.toml \
-      --replace '"0.0.0"' '"${version}"' \
-      --replace 'addopts = "--cov"' ""
-  '';
-
-  pythonImportsCheck = [
-    "p1monitor"
-  ];
+  pythonImportsCheck = [ "p1monitor" ];
 
   meta = with lib; {
     description = "Module for interacting with the P1 Monitor";
     homepage = "https://github.com/klaasnicolaas/python-p1monitor";
-    license = with licenses; [ mit ];
+    changelog = "https://github.com/klaasnicolaas/python-p1monitor/releases/tag/v${version}";
+    license = licenses.mit;
     maintainers = with maintainers; [ fab ];
   };
 }

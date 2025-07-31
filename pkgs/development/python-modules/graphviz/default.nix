@@ -1,68 +1,61 @@
-{ lib
-, buildPythonPackage
-, pythonOlder
-, fetchFromGitHub
-, substituteAll
-, graphviz
-, xdg-utils
-, makeFontsConf
-, freefont_ttf
-, mock
-, pytest
-, pytest-mock
-, python
+{
+  lib,
+  stdenv,
+  buildPythonPackage,
+  fetchFromGitHub,
+  replaceVars,
+  graphviz-nox,
+  xdg-utils,
+  makeFontsConf,
+  freefont_ttf,
+  setuptools,
+  mock,
+  pytest-cov-stub,
+  pytest-mock,
+  pytest7CheckHook,
+  writableTmpDirAsHomeHook,
 }:
 
 buildPythonPackage rec {
   pname = "graphviz";
-  version = "0.19.1";
+  version = "0.21";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
-
-  # patch does not apply to PyPI tarball due to different line endings
   src = fetchFromGitHub {
     owner = "xflr6";
     repo = "graphviz";
-    rev = version;
-    sha256 = "sha256-pE1lsx/r/BjvW5W2niDx/UeRXxx4kvCyHzAUAG3bdGc=";
+    tag = version;
+    hash = "sha256-o6woY+UhbsJtUqIzYGXlC0Pw3su7WG4xlAKSslSADwI=";
   };
 
   patches = [
-    (substituteAll {
-      src = ./paths.patch;
-      inherit graphviz;
+    (replaceVars ./paths.patch {
+      graphviz = graphviz-nox;
       xdgutils = xdg-utils;
     })
   ];
 
-  postPatch = ''
-    sed -i "/--cov/d" setup.cfg
-  '';
-
   # Fontconfig error: Cannot load default config file
-  FONTCONFIG_FILE = makeFontsConf {
-    fontDirectories = [ freefont_ttf ];
-  };
+  FONTCONFIG_FILE = makeFontsConf { fontDirectories = [ freefont_ttf ]; };
 
-  checkInputs = [
+  build-system = [ setuptools ];
+
+  nativeCheckInputs = [
     mock
-    pytest
+    pytest-cov-stub
     pytest-mock
+    pytest7CheckHook
+    writableTmpDirAsHomeHook
   ];
 
-  checkPhase = ''
-    runHook preCheck
+  # Too many failures due to attempting to connect to com.apple.fonts daemon
+  doCheck = !stdenv.hostPlatform.isDarwin;
 
-    HOME=$TMPDIR ${python.interpreter} run-tests.py
-
-    runHook postCheck
-  '';
-
-  meta = with lib; {
+  meta = {
     description = "Simple Python interface for Graphviz";
     homepage = "https://github.com/xflr6/graphviz";
-    license = licenses.mit;
-    maintainers = with maintainers; [ dotlambda ];
+    changelog = "https://github.com/xflr6/graphviz/blob/${src.tag}/CHANGES.rst";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ dotlambda ];
   };
-
 }

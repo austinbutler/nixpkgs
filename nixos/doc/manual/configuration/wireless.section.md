@@ -7,25 +7,30 @@ skip the rest of this section on wireless networks.
 NixOS will start wpa_supplicant for you if you enable this setting:
 
 ```nix
-networking.wireless.enable = true;
+{ networking.wireless.enable = true; }
 ```
 
 NixOS lets you specify networks for wpa_supplicant declaratively:
 
 ```nix
-networking.wireless.networks = {
-  echelon = {                # SSID with no spaces or special characters
-    psk = "abcdefgh";
+{
+  networking.wireless.networks = {
+    # SSID with no spaces or special characters
+    echelon = {
+      psk = "abcdefgh";
+    };
+    # SSID with spaces and/or special characters
+    "echelon's AP" = {
+      psk = "ijklmnop";
+    };
+    # Hidden SSID
+    echelon = {
+      hidden = true;
+      psk = "qrstuvwx";
+    };
+    free.wifi = { }; # Public wireless network
   };
-  "echelon's AP" = {         # SSID with spaces and/or special characters
-    psk = "ijklmnop";
-  };
-  echelon = {                # Hidden SSID
-    hidden = true;
-    psk = "qrstuvwx";
-  };
-  free.wifi = {};            # Public wireless network
-};
+}
 ```
 
 Be aware that keys will be written to the nix store in plaintext! When
@@ -46,9 +51,11 @@ network={
 ```
 
 ```nix
-networking.wireless.networks = {
-  echelon = {
-    pskRaw = "dca6d6ed41f4ab5a984c9f55f6f66d4efdc720ebf66959810f4329bb391c5435";
+{
+  networking.wireless.networks = {
+    echelon = {
+      pskRaw = "dca6d6ed41f4ab5a984c9f55f6f66d4efdc720ebf66959810f4329bb391c5435";
+    };
   };
 }
 ```

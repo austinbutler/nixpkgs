@@ -1,37 +1,42 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, django
-, python
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  hatchling,
+  django,
+  pytest-django,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "django-js-asset";
-  version = "unstable-2021-06-07";
-  format = "setuptools";
+  version = "3.1.2";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "matthiask";
-    repo = pname;
-    rev = "a186aa0b5721ca95da6cc032a2fb780a152f581b";
-    sha256 = "141zxng0wwxalsi905cs8pdppy3ad717y3g4fkdxw4n3pd0fjp8r";
+    repo = "django-js-asset";
+    tag = version;
+    hash = "sha256-OG31i8r6rwR2aDzraAorHdYrJrWt/e7SY9+iV7SJGJ8=";
   };
 
-  propagatedBuildInputs = [
-    django
+  build-system = [ hatchling ];
+
+  dependencies = [ django ];
+
+  pythonImportsCheck = [ "js_asset" ];
+
+  nativeCheckInputs = [
+    pytest-django
+    pytestCheckHook
   ];
 
-  pythonImportsCheck = [
-    "js_asset"
-  ];
-
-  checkPhase = ''
-    runHook preCheck
-    ${python.interpreter} tests/manage.py test testapp
-    runHook postCheck
+  preCheck = ''
+    export DJANGO_SETTINGS_MODULE=tests.testapp.settings
   '';
 
   meta = with lib; {
+    changelog = "https://github.com/matthiask/django-js-asset/blob/${version}/CHANGELOG.rst";
     description = "Script tag with additional attributes for django.forms.Media";
     homepage = "https://github.com/matthiask/django-js-asset";
     maintainers = with maintainers; [ hexa ];

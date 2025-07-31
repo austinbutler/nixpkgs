@@ -1,41 +1,62 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pythonOlder
-, setuptools-scm
-, pytestCheckHook
+{
+  lib,
+  aioquic,
+  buildPythonPackage,
+  cryptography,
+  fetchPypi,
+  h2,
+  httpcore,
+  httpx,
+  idna,
+  hatchling,
+  pytestCheckHook,
+  trio,
 }:
 
 buildPythonPackage rec {
   pname = "dnspython";
-  version = "2.2.0";
-  disabled = pythonOlder "3.6";
+  version = "2.7.0";
+  pyproject = true;
 
   src = fetchPypi {
     inherit pname version;
-    extension = "tar.gz";
-    sha256 = "1mi6l2n766y1gic3x1swp2jk2nr7wbkb191qinwhddnh6bh534z7";
+    hash = "sha256-zpxDLtoNyRz2GKXO3xpOFCZRGWu80sgOie1akH5c+vE=";
   };
 
-  checkInputs = [
-    pytestCheckHook
-  ];
+  build-system = [ hatchling ];
+
+  optional-dependencies = {
+    doh = [
+      httpx
+      h2
+      httpcore
+    ];
+    idna = [ idna ];
+    dnssec = [ cryptography ];
+    trio = [ trio ];
+    doq = [ aioquic ];
+  };
+
+  nativeCheckInputs = [ pytestCheckHook ];
 
   disabledTests = [
     # dns.exception.SyntaxError: protocol not found
     "test_misc_good_WKS_text"
   ];
 
-  nativeBuildInputs = [
-    setuptools-scm
-  ];
+  # disable network on all builds (including darwin)
+  # see https://github.com/NixOS/nixpkgs/issues/356803
+  preCheck = ''
+    export NO_INTERNET=1
+  '';
 
   pythonImportsCheck = [ "dns" ];
 
-  meta = with lib; {
-    description = "A DNS toolkit for Python";
+  meta = {
+    description = "DNS toolkit for Python";
     homepage = "https://www.dnspython.org";
-    license = with licenses; [ isc ];
-    maintainers = with maintainers; [ gador ];
+    changelog = "https://github.com/rthalley/dnspython/blob/v${version}/doc/whatsnew.rst";
+    license = lib.licenses.isc;
+    maintainers = with lib.maintainers; [ gador ];
   };
 }

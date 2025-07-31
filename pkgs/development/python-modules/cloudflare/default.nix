@@ -1,40 +1,62 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, attrs
-, beautifulsoup4
-, requests
-, future
-, pyyaml
-, jsonlines
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  httpx,
+  pydantic,
+  typing-extensions,
+  anyio,
+  distro,
+  sniffio,
+  pythonOlder,
+  hatchling,
+  hatch-fancy-pypi-readme,
 }:
 
 buildPythonPackage rec {
   pname = "cloudflare";
-  version = "2.8.15";
+  version = "4.3.1";
+  pyproject = true;
+
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1f47bd324f80e91487dea2c79be934b1dc612bcfa63e784dcf74c6a2f52a41cc";
+    hash = "sha256-seHGvuuNmPY7/gocuodPxOIuAAvMSQVE+VbGibO1slg=";
   };
 
-  propagatedBuildInputs = [
-    attrs
-    beautifulsoup4
-    requests
-    future
-    pyyaml
-    jsonlines
+  postPatch = ''
+    substituteInPlace pyproject.toml \
+      --replace-fail 'hatchling==1.26.3' 'hatchling>=1.26.3'
+  '';
+
+  build-system = [
+    hatchling
+    hatch-fancy-pypi-readme
   ];
 
-  # no tests associated with package
-  doCheck = false;
-  pythonImportsCheck = [ "CloudFlare" ];
+  dependencies = [
+    httpx
+    pydantic
+    typing-extensions
+    anyio
+    distro
+    sniffio
+  ];
 
-  meta = with lib; {
-    description = "Python wrapper for the Cloudflare v4 API";
-    homepage = "https://github.com/cloudflare/python-cloudflare";
-    license = licenses.mit;
-    maintainers = [ maintainers.costrouc ];
+  # tests require networking
+  doCheck = false;
+
+  pythonImportsCheck = [ "cloudflare" ];
+
+  meta = {
+    description = "Official Python library for the Cloudflare API";
+    homepage = "https://github.com/cloudflare/cloudflare-python";
+    changelog = "https://github.com/cloudflare/cloudflare-python/blob/v${version}/CHANGELOG.md";
+    maintainers = with lib.maintainers; [
+      marie
+      jemand771
+    ];
+    license = lib.licenses.asl20;
   };
 }

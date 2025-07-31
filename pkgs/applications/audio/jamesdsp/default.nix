@@ -1,39 +1,85 @@
-{ lib
-, mkDerivation
-, fetchFromGitHub
-, pipewire
-, glibmm
-, qmake
-, makeDesktopItem
-, pkg-config
-, libarchive
-, fetchpatch
+{
+  copyDesktopItems,
+  fetchFromGitHub,
+  fetchpatch,
+  glibmm,
+  gst_all_1,
+  lib,
+  libarchive,
+  makeDesktopItem,
+  pipewire,
+  pkg-config,
+  pulseaudio,
+  qmake,
+  qtbase,
+  qtsvg,
+  qtwayland,
+  stdenv,
+  usePipewire ? true,
+  usePulseaudio ? false,
+  wrapQtAppsHook,
 }:
 
-mkDerivation rec{
+assert lib.asserts.assertMsg (
+  usePipewire != usePulseaudio
+) "You need to enable one and only one of pulseaudio or pipewire support";
+
+stdenv.mkDerivation (finalAttrs: {
   pname = "jamesdsp";
-  version = "2.3";
-  src = fetchFromGitHub rec{
+  version = "2.7.0";
+
+  src = fetchFromGitHub {
     owner = "Audio4Linux";
     repo = "JDSP4Linux";
     fetchSubmodules = true;
-    rev = version;
-    hash = "sha256-Hkzurr+s+vvSyOMCYH9kHI+nIm6mL9yORGNzY2FXslc=";
+    rev = finalAttrs.version;
+    hash = "sha256-eVndqIqJ3DRceuFMT++g2riXq0CL5r+TWbvzvaYIfZ8=";
   };
 
-  patches = [
-    # fixing /usr install assumption, remove on version bump
-    (fetchpatch {
-      url = "https://github.com/Audio4Linux/JDSP4Linux/commit/003c9e9fc426f83e269aed6e05be3ed55273931a.patch";
-      hash = "sha256-crll/a7C9pUq9eL5diq8/YgC5bNC6SrdijZEBxZpJ8E=";
-    })
+  nativeBuildInputs = [
+    qmake
+    pkg-config
+    copyDesktopItems
+    wrapQtAppsHook
   ];
 
-  nativeBuildInputs = [ qmake pkg-config ];
+  patches = [
+    (fetchpatch {
+      url = "https://github.com/Audio4Linux/JDSP4Linux/pull/241.patch";
+      hash = "sha256-RtVKlw2ca8An4FodeD0RN95z9yHDHBgAxsEwLAmW7co=";
+      name = "fix-build-with-new-pipewire.patch";
+    })
+    ./fix-build-on-qt6_9.diff
+  ];
+
   buildInputs = [
     glibmm
     libarchive
+    qtbase
+    qtsvg
+    qtwayland
+  ]
+  ++ lib.optionals usePipewire [
     pipewire
+  ]
+  ++ lib.optionals usePulseaudio [
+    pulseaudio
+    gst_all_1.gst-plugins-base
+    gst_all_1.gst-plugins-good
+    gst_all_1.gstreamer
+  ];
+
+  preFixup = lib.optionalString usePulseaudio ''
+    qtWrapperArgs+=(--prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "$GST_PLUGIN_SYSTEM_PATH_1_0")
+  '';
+
+  qmakeFlags = lib.optionals usePulseaudio [ "CONFIG+=USE_PULSEAUDIO" ];
+
+  # https://github.com/Audio4Linux/JDSP4Linux/issues/228
+  env.NIX_CFLAGS_COMPILE = toString [
+    "-Wno-error=incompatible-pointer-types"
+    "-Wno-error=implicit-int"
+    "-Wno-error=implicit-function-declaration"
   ];
 
   desktopItems = [
@@ -44,17 +90,34 @@ mkDerivation rec{
       exec = "jamesdsp";
       icon = "jamesdsp";
       comment = "JamesDSP for Linux";
-      categories = [ "AudioVideo" "Audio" ];
+      categories = [
+        "AudioVideo"
+        "Audio"
+      ];
       startupNotify = false;
-      keywords = [ "equalizer" "audio" "effect" ];
+      keywords = [
+        "equalizer"
+        "audio"
+        "effect"
+      ];
     })
   ];
 
-  meta = with lib;{
-    description = "An audio effect processor for PipeWire clients";
+  postInstall = ''
+    install -D resources/icons/icon.png $out/share/pixmaps/jamesdsp.png
+    install -D resources/icons/icon.svg $out/share/icons/hicolor/scalable/apps/jamesdsp.svg
+  '';
+
+  meta = {
+    broken = (stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isAarch64);
+    description = "Audio effect processor for PipeWire clients";
+    mainProgram = "jamesdsp";
     homepage = "https://github.com/Audio4Linux/JDSP4Linux";
-    license = licenses.gpl3Only;
-    maintainers = with maintainers;[ pasqui23 ];
-    platforms = platforms.linux;
+    license = lib.licenses.gpl3Only;
+    maintainers = with lib.maintainers; [
+      pasqui23
+      rewine
+    ];
+    platforms = lib.platforms.linux;
   };
-}
+})

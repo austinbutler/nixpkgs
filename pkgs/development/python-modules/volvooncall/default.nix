@@ -1,57 +1,71 @@
-{ lib
-, buildPythonPackage
-, pythonOlder
-, fetchFromGitHub
-, setuptools
-, geopy
-, docopt
-, pyyaml
-, certifi
-, amqtt
-, websockets
-, aiohttp
-, pytestCheckHook
-, asynctest
-, pytest-asyncio
+{
+  lib,
+  aiohttp,
+  amqtt,
+  buildPythonPackage,
+  certifi,
+  docopt,
+  fetchFromGitHub,
+  fetchpatch,
+  geopy,
+  mock,
+  pytest-asyncio,
+  pytestCheckHook,
+  pythonOlder,
 }:
 
 buildPythonPackage rec {
   pname = "volvooncall";
-  version = "0.9.2";
-
-  disabled = pythonOlder "3.8";
-
+  version = "0.10.4";
   format = "setuptools";
+
+  disabled = pythonOlder "3.10";
 
   src = fetchFromGitHub {
     owner = "molobrakos";
     repo = "volvooncall";
-    rev = "v${version}";
-    hash = "sha256-OTs282z7qzILl/xxM3whaxiQr8FZOfgceO2EY3NJKbA=";
+    tag = "v${version}";
+    hash = "sha256-xr3g93rt3jvxVZrZY7cFh5eBP3k0arsejsgvx8p5EV4=";
   };
 
-  propagatedBuildInputs = [
-    geopy
-    docopt
-    pyyaml
-    certifi
-    amqtt
-    websockets
-    aiohttp
+  patches = [
+    # Remove asynctest, https://github.com/molobrakos/volvooncall/pull/92
+    (fetchpatch {
+      name = "remove-asnyc.patch";
+      url = "https://github.com/molobrakos/volvooncall/commit/ef0df403250288c00ed4c600e9dfa79dcba8941e.patch";
+      hash = "sha256-U+hM7vzD9JSEUumvjPSLpVQcc8jAuZHG3/1dQ3wnIcA=";
+    })
   ];
 
+  propagatedBuildInputs = [ aiohttp ];
+
+  optional-dependencies = {
+    console = [
+      certifi
+      docopt
+      geopy
+    ];
+    mqtt = [
+      amqtt
+      certifi
+    ];
+  };
+
   checkInputs = [
-    pytestCheckHook
-    asynctest
+    mock
     pytest-asyncio
-  ];
+    pytestCheckHook
+  ]
+  ++ optional-dependencies.mqtt;
 
   pythonImportsCheck = [ "volvooncall" ];
 
   meta = with lib; {
     description = "Retrieve information from the Volvo On Call web service";
     homepage = "https://github.com/molobrakos/volvooncall";
+    changelog = "https://github.com/molobrakos/volvooncall/releases/tag/v${version}";
     license = licenses.unlicense;
+    mainProgram = "voc";
     maintainers = with maintainers; [ dotlambda ];
   };
 }

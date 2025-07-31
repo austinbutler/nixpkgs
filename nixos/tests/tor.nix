@@ -1,20 +1,20 @@
-import ./make-test-python.nix ({ lib, ... }: with lib;
-
-rec {
+{ lib, ... }:
+{
   name = "tor";
-  meta.maintainers = with maintainers; [ joachifm ];
-
-  common =
-    { ... }:
-    { boot.kernelParams = [ "audit=0" "apparmor=0" "quiet" ];
-      networking.firewall.enable = false;
-      networking.useDHCP = false;
-    };
+  meta.maintainers = with lib.maintainers; [ joachifm ];
 
   nodes.client =
     { pkgs, ... }:
-    { imports = [ common ];
-      environment.systemPackages = with pkgs; [ netcat ];
+    {
+      boot.kernelParams = [
+        "audit=0"
+        "apparmor=0"
+        "quiet"
+      ];
+      networking.firewall.enable = false;
+      networking.useDHCP = false;
+
+      environment.systemPackages = [ pkgs.netcat ];
       services.tor.enable = true;
       services.tor.client.enable = true;
       services.tor.settings.ControlPort = 9051;
@@ -27,4 +27,4 @@ rec {
         "echo GETINFO version | nc 127.0.0.1 9051"
     )
   '';
-})
+}

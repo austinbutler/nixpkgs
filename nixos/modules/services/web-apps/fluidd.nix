@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 with lib;
 let
   cfg = config.services.fluidd;
@@ -8,12 +13,7 @@ in
   options.services.fluidd = {
     enable = mkEnableOption "Fluidd, a Klipper web interface for managing your 3d printer";
 
-    package = mkOption {
-      type = types.package;
-      description = "Fluidd package to be used in the module";
-      default = pkgs.fluidd;
-      defaultText = literalExpression "pkgs.fluidd";
-    };
+    package = mkPackageOption pkgs "fluidd" { };
 
     hostName = mkOption {
       type = types.str;
@@ -22,8 +22,7 @@ in
     };
 
     nginx = mkOption {
-      type = types.submodule
-        (import ../web-servers/nginx/vhost-options.nix { inherit config lib; });
+      type = types.submodule (import ../web-servers/nginx/vhost-options.nix { inherit config lib; });
       default = { };
       example = literalExpression ''
         {

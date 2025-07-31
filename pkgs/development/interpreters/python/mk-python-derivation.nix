@@ -1,193 +1,471 @@
 # Generic builder.
 
-{ lib
-, config
-, python
-, wrapPython
-, unzip
-, ensureNewerSourcesForZipFilesHook
-# Whether the derivation provides a Python module or not.
-, toPythonModule
-, namePrefix
-, update-python-libraries
-, setuptools
-, flitBuildHook
-, pipBuildHook
-, pipInstallHook
-, pythonCatchConflictsHook
-, pythonImportsCheckHook
-, pythonNamespacesHook
-, pythonRemoveBinBytecodeHook
-, pythonRemoveTestsDirHook
-, setuptoolsBuildHook
-, setuptoolsCheckHook
-, wheelUnpackHook
-, eggUnpackHook
-, eggBuildHook
-, eggInstallHook
+{
+  lib,
+  config,
+  python,
+  wrapPython,
+  unzip,
+  ensureNewerSourcesForZipFilesHook,
+  # Whether the derivation provides a Python module or not.
+  toPythonModule,
+  namePrefix,
+  update-python-libraries,
+  setuptools,
+  pypaBuildHook,
+  pypaInstallHook,
+  pythonCatchConflictsHook,
+  pythonImportsCheckHook,
+  pythonNamespacesHook,
+  pythonOutputDistHook,
+  pythonRelaxDepsHook,
+  pythonRemoveBinBytecodeHook,
+  pythonRemoveTestsDirHook,
+  pythonRuntimeDepsCheckHook,
+  setuptoolsBuildHook,
+  wheelUnpackHook,
+  eggUnpackHook,
+  eggBuildHook,
+  eggInstallHook,
 }:
 
-{ name ? "${attrs.pname}-${attrs.version}"
+let
+  inherit (builtins) unsafeGetAttrPos;
+  inherit (lib)
+    elem
+    extendDerivation
+    fixedWidthString
+    flip
+    getName
+    hasSuffix
+    head
+    isBool
+    max
+    optional
+    optionalAttrs
+    optionals
+    optionalString
+    removePrefix
+    splitString
+    stringLength
+    ;
 
-# Build-time dependencies for the package
-, nativeBuildInputs ? []
+  getOptionalAttrs =
+    names: attrs: lib.getAttrs (lib.intersectLists names (lib.attrNames attrs)) attrs;
 
-# Run-time dependencies for the package
-, buildInputs ? []
+  leftPadName =
+    name: against:
+    let
+      len = max (stringLength name) (stringLength against);
+    in
+    fixedWidthString len " " name;
 
-# Dependencies needed for running the checkPhase.
-# These are added to buildInputs when doCheck = true.
-, checkInputs ? []
+  isPythonModule =
+    drv:
+    # all pythonModules have the pythonModule attribute
+    (drv ? "pythonModule")
+    # Some pythonModules are turned in to a pythonApplication by setting the field to false
+    && (!isBool drv.pythonModule);
 
-# propagate build dependencies so in case we have A -> B -> C,
-# C can import package A propagated by B
-, propagatedBuildInputs ? []
+  isMismatchedPython = drv: drv.pythonModule != python;
 
-# DEPRECATED: use propagatedBuildInputs
-, pythonPath ? []
+  withDistOutput' = flip elem [
+    "pyproject"
+    "setuptools"
+    "wheel"
+  ];
 
-# Enabled to detect some (native)BuildInputs mistakes
-, strictDeps ? true
+  isBootstrapInstallPackage' = flip elem [
+    "flit-core"
+    "installer"
+  ];
 
-# used to disable derivation, useful for specific python versions
-, disabled ? false
+  isBootstrapPackage' = flip elem (
+    [
+      "build"
+      "packaging"
+      "pyproject-hooks"
+      "wheel"
+    ]
+    ++ optionals (python.pythonOlder "3.11") [
+      "tomli"
+    ]
+  );
 
-# Raise an error if two packages are installed with the same name
-# TODO: For cross we probably need a different PYTHONPATH, or not
-# add the runtime deps until after buildPhase.
-, catchConflicts ? (python.stdenv.hostPlatform == python.stdenv.buildPlatform)
+  isSetuptoolsDependency' = flip elem [
+    "setuptools"
+    "wheel"
+  ];
 
-# Additional arguments to pass to the makeWrapper function, which wraps
-# generated binaries.
-, makeWrapperArgs ? []
+  cleanAttrs = flip removeAttrs [
+    "disabled"
+    "checkPhase"
+    "checkInputs"
+    "nativeCheckInputs"
+    "doCheck"
+    "doInstallCheck"
+    "pyproject"
+    "format"
+    "outputs"
+    "stdenv"
+    "dependencies"
+    "optional-dependencies"
+    "build-system"
+  ];
 
-# Skip wrapping of python programs altogether
-, dontWrapPythonPrograms ? false
+in
 
-# Don't use Pip to install a wheel
-# Note this is actually a variable for the pipInstallPhase in pip's setupHook.
-# It's included here to prevent an infinite recursion.
-, dontUsePipInstall ? false
+{
+  # Build-time dependencies for the package
+  nativeBuildInputs ? [ ],
 
-# Skip setting the PYTHONNOUSERSITE environment variable in wrapped programs
-, permitUserSite ? false
+  # Run-time dependencies for the package
+  buildInputs ? [ ],
 
-# Remove bytecode from bin folder.
-# When a Python script has the extension `.py`, bytecode is generated
-# Typically, executables in bin have no extension, so no bytecode is generated.
-# However, some packages do provide executables with extensions, and thus bytecode is generated.
-, removeBinBytecode ? true
+  # Dependencies needed for running the checkPhase.
+  # These are added to buildInputs when doCheck = true.
+  checkInputs ? [ ],
+  nativeCheckInputs ? [ ],
 
-# Several package formats are supported.
-# "setuptools" : Install a common setuptools/distutils based package. This builds a wheel.
-# "wheel" : Install from a pre-compiled wheel.
-# "flit" : Install a flit package. This builds a wheel.
-# "pyproject": Install a package using a ``pyproject.toml`` file (PEP517). This builds a wheel.
-# "egg": Install a package from an egg.
-# "other" : Provide your own buildPhase and installPhase.
-, format ? "setuptools"
+  # propagate build dependencies so in case we have A -> B -> C,
+  # C can import package A propagated by B
+  propagatedBuildInputs ? [ ],
 
-, meta ? {}
+  # Python module dependencies.
+  # These are named after PEP-621.
+  dependencies ? [ ],
+  optional-dependencies ? { },
 
-, passthru ? {}
+  # Python PEP-517 build systems.
+  build-system ? [ ],
 
-, doCheck ? config.doCheckByDefault or false
+  # DEPRECATED: use propagatedBuildInputs
+  pythonPath ? [ ],
 
-, disabledTestPaths ? []
+  # Enabled to detect some (native)BuildInputs mistakes
+  strictDeps ? true,
 
-, ... } @ attrs:
+  outputs ? [ "out" ],
 
+  # used to disable derivation, useful for specific python versions
+  disabled ? false,
 
-# Keep extra attributes from `attrs`, e.g., `patchPhase', etc.
-if disabled
-then throw "${name} not supported for interpreter ${python.executable}"
-else
+  # Raise an error if two packages are installed with the same name
+  # TODO: For cross we probably need a different PYTHONPATH, or not
+  # add the runtime deps until after buildPhase.
+  catchConflicts ? (python.stdenv.hostPlatform == python.stdenv.buildPlatform),
+
+  # Additional arguments to pass to the makeWrapper function, which wraps
+  # generated binaries.
+  makeWrapperArgs ? [ ],
+
+  # Skip wrapping of python programs altogether
+  dontWrapPythonPrograms ? false,
+
+  # Don't use Pip to install a wheel
+  # Note this is actually a variable for the pipInstallPhase in pip's setupHook.
+  # It's included here to prevent an infinite recursion.
+  dontUsePipInstall ? false,
+
+  # Skip setting the PYTHONNOUSERSITE environment variable in wrapped programs
+  permitUserSite ? false,
+
+  # Remove bytecode from bin folder.
+  # When a Python script has the extension `.py`, bytecode is generated
+  # Typically, executables in bin have no extension, so no bytecode is generated.
+  # However, some packages do provide executables with extensions, and thus bytecode is generated.
+  removeBinBytecode ? true,
+
+  # pyproject = true <-> format = "pyproject"
+  # pyproject = false <-> format = "other"
+  # https://github.com/NixOS/nixpkgs/issues/253154
+  pyproject ? null,
+
+  # Several package formats are supported.
+  # "setuptools" : Install a common setuptools/distutils based package. This builds a wheel.
+  # "wheel" : Install from a pre-compiled wheel.
+  # "pyproject": Install a package using a ``pyproject.toml`` file (PEP517). This builds a wheel.
+  # "egg": Install a package from an egg.
+  # "other" : Provide your own buildPhase and installPhase.
+  format ? null,
+
+  meta ? { },
+
+  doCheck ? true,
+
+  # Allow passing in a custom stdenv to buildPython*
+  stdenv ? python.stdenv,
+
+  ...
+}@attrs:
 
 let
-  inherit (python) stdenv;
+  # Keep extra attributes from `attrs`, e.g., `patchPhase', etc.
+  self = stdenv.mkDerivation (
+    finalAttrs:
+    let
+      format' =
+        assert (pyproject != null) -> (format == null);
+        if pyproject != null then
+          if pyproject then "pyproject" else "other"
+        else if format != null then
+          format
+        else
+          throw "${name} does not configure a `format`. To build with setuptools as before, set `pyproject = true` and `build-system = [ setuptools ]`.`";
 
-  name_ = name;
+      withDistOutput = withDistOutput' format';
 
-  self = toPythonModule (stdenv.mkDerivation ((builtins.removeAttrs attrs [
-    "disabled" "checkPhase" "checkInputs" "doCheck" "doInstallCheck" "dontWrapPythonPrograms" "catchConflicts" "format"
-    "disabledTestPaths"
-  ]) // {
+      validatePythonMatches =
+        let
+          throwMismatch =
+            attrName: drv:
+            let
+              myName = "'${finalAttrs.name}'";
+              theirName = "'${drv.name}'";
+              optionalLocation =
+                let
+                  pos = unsafeGetAttrPos (if attrs ? "pname" then "pname" else "name") attrs;
+                in
+                optionalString (pos != null) " at ${pos.file}:${toString pos.line}:${toString pos.column}";
+            in
+            throw ''
+              Python version mismatch in ${myName}:
 
-    name = namePrefix + name_;
+              The Python derivation ${myName} depends on a Python derivation
+              named ${theirName}, but the two derivations use different versions
+              of Python:
 
-    nativeBuildInputs = [
-      python
-      wrapPython
-      ensureNewerSourcesForZipFilesHook  # move to wheel installer (pip) or builder (setuptools, flit, ...)?
-      pythonRemoveTestsDirHook
-    ] ++ lib.optionals catchConflicts [
-      setuptools pythonCatchConflictsHook
-    ] ++ lib.optionals removeBinBytecode [
-      pythonRemoveBinBytecodeHook
-    ] ++ lib.optionals (lib.hasSuffix "zip" (attrs.src.name or "")) [
-      unzip
-    ] ++ lib.optionals (format == "setuptools") [
-      setuptoolsBuildHook
-    ] ++ lib.optionals (format == "flit") [
-      flitBuildHook
-    ] ++ lib.optionals (format == "pyproject") [
-      pipBuildHook
-    ] ++ lib.optionals (format == "wheel") [
-      wheelUnpackHook
-    ] ++ lib.optionals (format == "egg") [
-      eggUnpackHook eggBuildHook eggInstallHook
-    ] ++ lib.optionals (!(format == "other") || dontUsePipInstall) [
-      pipInstallHook
-    ] ++ lib.optionals (stdenv.buildPlatform == stdenv.hostPlatform) [
-      # This is a test, however, it should be ran independent of the checkPhase and checkInputs
-      pythonImportsCheckHook
-    ] ++ lib.optionals (python.pythonAtLeast "3.3") [
-      # Optionally enforce PEP420 for python3
-      pythonNamespacesHook
-    ] ++ nativeBuildInputs;
+                  ${leftPadName myName theirName} uses ${python}
+                  ${leftPadName theirName myName} uses ${toString drv.pythonModule}
 
-    buildInputs = buildInputs ++ pythonPath;
+              Possible solutions:
 
-    propagatedBuildInputs = propagatedBuildInputs ++ [ python ];
+                * If ${theirName} is a Python library, change the reference to ${theirName}
+                  in the ${attrName} of ${myName} to use a ${theirName} built from the same
+                  version of Python
 
-    inherit strictDeps;
+                * If ${theirName} is used as a tool during the build, move the reference to
+                  ${theirName} in ${myName} from ${attrName} to nativeBuildInputs
 
-    LANG = "${if python.stdenv.isDarwin then "en_US" else "C"}.UTF-8";
+                * If ${theirName} provides executables that are called at run time, pass its
+                  bin path to makeWrapperArgs:
 
-    # Python packages don't have a checkPhase, only an installCheckPhase
-    doCheck = false;
-    doInstallCheck = attrs.doCheck or true;
-    installCheckInputs = [
-    ] ++ lib.optionals (format == "setuptools") [
-      # Longer-term we should get rid of this and require
-      # users of this function to set the `installCheckPhase` or
-      # pass in a hook that sets it.
-      setuptoolsCheckHook
-    ] ++ checkInputs;
+                      makeWrapperArgs = [ "--prefix PATH : ''${lib.makeBinPath [ ${getName drv} ] }" ];
 
-    postFixup = lib.optionalString (!dontWrapPythonPrograms) ''
-      wrapPythonPrograms
-    '' + attrs.postFixup or "";
+              ${optionalLocation}
+            '';
 
-    # Python packages built through cross-compilation are always for the host platform.
-    disallowedReferences = lib.optionals (python.stdenv.hostPlatform != python.stdenv.buildPlatform) [ python.pythonForBuild ];
+          checkDrv =
+            attrName: drv:
+            if (isPythonModule drv) && (isMismatchedPython drv) then throwMismatch attrName drv else drv;
 
-    meta = {
-      # default to python's platforms
-      platforms = python.meta.platforms;
-      isBuildPythonPackage = python.meta.platforms;
-    } // lib.optionalAttrs (attrs?pname) {
-      mainProgram = attrs.pname;
-    } // meta;
-  } // lib.optionalAttrs (attrs?checkPhase) {
-    # If given use the specified checkPhase, otherwise use the setup hook.
-    # Longer-term we should get rid of `checkPhase` and use `installCheckPhase`.
-    installCheckPhase = attrs.checkPhase;
-  } //  lib.optionalAttrs (disabledTestPaths != []) {
-      disabledTestPaths = lib.escapeShellArgs disabledTestPaths;
-  }));
+        in
+        attrName: inputs: map (checkDrv attrName) inputs;
 
-  passthru.updateScript = let
-      filename = builtins.head (lib.splitString ":" self.meta.position);
-    in attrs.passthru.updateScript or [ update-python-libraries filename ];
-in lib.extendDerivation true passthru self
+      isBootstrapInstallPackage = isBootstrapInstallPackage' (attrs.pname or null);
+
+      isBootstrapPackage = isBootstrapInstallPackage || isBootstrapPackage' (attrs.pname or null);
+
+      isSetuptoolsDependency = isSetuptoolsDependency' (attrs.pname or null);
+
+      name = namePrefix + attrs.name or "${finalAttrs.pname}-${finalAttrs.version}";
+
+    in
+    (cleanAttrs attrs)
+    // {
+      inherit name;
+
+      inherit catchConflicts;
+
+      nativeBuildInputs = [
+        python
+        wrapPython
+        ensureNewerSourcesForZipFilesHook # move to wheel installer (pip) or builder (setuptools, flit, ...)?
+        pythonRemoveTestsDirHook
+      ]
+      ++ optionals (finalAttrs.catchConflicts && !isBootstrapPackage && !isSetuptoolsDependency) [
+        #
+        # 1. When building a package that is also part of the bootstrap chain, we
+        #    must ignore conflicts after installation, because there will be one with
+        #    the package in the bootstrap.
+        #
+        # 2. When a package is a dependency of setuptools, we must ignore conflicts
+        #    because the hook that checks for conflicts uses setuptools.
+        #
+        pythonCatchConflictsHook
+      ]
+      ++ optionals (attrs ? pythonRelaxDeps || attrs ? pythonRemoveDeps) [
+        pythonRelaxDepsHook
+      ]
+      ++ optionals removeBinBytecode [
+        pythonRemoveBinBytecodeHook
+      ]
+      ++ optionals (hasSuffix "zip" (attrs.src.name or "")) [
+        unzip
+      ]
+      ++ optionals (format' == "setuptools") [
+        setuptoolsBuildHook
+      ]
+      ++ optionals (format' == "pyproject") [
+        (
+          if isBootstrapPackage then
+            pypaBuildHook.override {
+              inherit (python.pythonOnBuildForHost.pkgs.bootstrap) build;
+              wheel = null;
+            }
+          else
+            pypaBuildHook
+        )
+        (
+          if isBootstrapPackage then
+            pythonRuntimeDepsCheckHook.override {
+              inherit (python.pythonOnBuildForHost.pkgs.bootstrap) packaging;
+            }
+          else
+            pythonRuntimeDepsCheckHook
+        )
+      ]
+      ++ optionals (format' == "wheel") [
+        wheelUnpackHook
+      ]
+      ++ optionals (format' == "egg") [
+        eggUnpackHook
+        eggBuildHook
+        eggInstallHook
+      ]
+      ++ optionals (format' != "other") [
+        (
+          if isBootstrapInstallPackage then
+            pypaInstallHook.override {
+              inherit (python.pythonOnBuildForHost.pkgs.bootstrap) installer;
+            }
+          else
+            pypaInstallHook
+        )
+      ]
+      ++ optionals (stdenv.buildPlatform == stdenv.hostPlatform) [
+        # This is a test, however, it should be ran independent of the checkPhase and checkInputs
+        pythonImportsCheckHook
+      ]
+      ++ optionals (python.pythonAtLeast "3.3") [
+        # Optionally enforce PEP420 for python3
+        pythonNamespacesHook
+      ]
+      ++ optionals withDistOutput [
+        pythonOutputDistHook
+      ]
+      ++ nativeBuildInputs
+      ++ build-system;
+
+      buildInputs = validatePythonMatches "buildInputs" (buildInputs ++ pythonPath);
+
+      propagatedBuildInputs = validatePythonMatches "propagatedBuildInputs" (
+        propagatedBuildInputs
+        ++ dependencies
+        ++ [
+          # we propagate python even for packages transformed with 'toPythonApplication'
+          # this pollutes the PATH but avoids rebuilds
+          # see https://github.com/NixOS/nixpkgs/issues/170887 for more context
+          python
+        ]
+      );
+
+      inherit strictDeps;
+
+      LANG = "${if python.stdenv.hostPlatform.isDarwin then "en_US" else "C"}.UTF-8";
+
+      # Python packages don't have a checkPhase, only an installCheckPhase
+      doCheck = false;
+      doInstallCheck = attrs.doCheck or true;
+      nativeInstallCheckInputs = nativeCheckInputs;
+      installCheckInputs = checkInputs;
+
+      inherit dontWrapPythonPrograms;
+
+      postFixup =
+        optionalString (!finalAttrs.dontWrapPythonPrograms) ''
+          wrapPythonPrograms
+        ''
+        + attrs.postFixup or "";
+
+      # Python packages built through cross-compilation are always for the host platform.
+      disallowedReferences = optionals (python.stdenv.hostPlatform != python.stdenv.buildPlatform) [
+        python.pythonOnBuildForHost
+      ];
+
+      outputs = outputs ++ optional withDistOutput "dist";
+
+      passthru = {
+        inherit disabled;
+      }
+      // {
+        updateScript =
+          let
+            filename = head (splitString ":" finalAttrs.finalPackage.meta.position);
+          in
+          [
+            update-python-libraries
+            filename
+          ];
+      }
+      // optionalAttrs (dependencies != [ ]) {
+        inherit dependencies;
+      }
+      // optionalAttrs (optional-dependencies != { }) {
+        inherit optional-dependencies;
+      }
+      // optionalAttrs (build-system != [ ]) {
+        inherit build-system;
+      }
+      // attrs.passthru or { };
+
+      meta = {
+        # default to python's platforms
+        platforms = python.meta.platforms;
+        isBuildPythonPackage = python.meta.platforms;
+      }
+      // meta;
+    }
+    // optionalAttrs (attrs ? checkPhase) {
+      # If given use the specified checkPhase, otherwise use the setup hook.
+      # Longer-term we should get rid of `checkPhase` and use `installCheckPhase`.
+      installCheckPhase = attrs.checkPhase;
+    }
+    //
+      lib.mapAttrs
+        (
+          name: value:
+          lib.throwIf (
+            attrs.${name} == [ ]
+          ) "${lib.getName finalAttrs}: ${name} must be unspecified, null or a non-empty list." attrs.${name}
+        )
+        (
+          getOptionalAttrs [
+            "enabledTestMarks"
+            "enabledTestPaths"
+            "enabledTests"
+          ] attrs
+        )
+  );
+
+  # This derivation transformation function must be independent to `attrs`
+  # for fixed-point arguments support in the future.
+  transformDrv =
+    let
+      # Workaround to make the `lib.extendDerivation`-based disabled functionality
+      # respect `<pkg>.overrideAttrs`
+      # It doesn't cover `<pkg>.<output>.overrideAttrs`.
+      disablePythonPackage =
+        drv:
+        extendDerivation (
+          drv.disabled
+          -> throw "${removePrefix namePrefix drv.name} not supported for interpreter ${python.executable}"
+        ) { } drv
+        // {
+          overrideAttrs = fdrv: disablePythonPackage (drv.overrideAttrs fdrv);
+        };
+    in
+    drv: disablePythonPackage (toPythonModule drv);
+
+in
+transformDrv self

@@ -1,33 +1,56 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, nose
-, numpy
-, quantities
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  numpy,
+  packaging,
+  quantities,
+  pythonOlder,
+  setuptools,
+  pytestCheckHook,
+  pillow,
+  which,
 }:
 
 buildPythonPackage rec {
   pname = "neo";
-  version = "0.10.1";
-  disabled = pythonOlder "3.6";
+  version = "0.14.2";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-RE/xUnjdz541d4IOh4z2ufQiDOFFvxATyPMFNs9gk5s=";
+  disabled = pythonOlder "3.8";
+
+  src = fetchFromGitHub {
+    owner = "NeuralEnsemble";
+    repo = "python-neo";
+    tag = version;
+    hash = "sha256-THAdUFCbteiUdfhjLzl6ocM2I0zFKHfFxJExCnK1z1Y=";
   };
 
-  propagatedBuildInputs = [ numpy quantities ];
+  build-system = [ setuptools ];
 
-  checkInputs = [ nose ];
+  dependencies = [
+    numpy
+    packaging
+    quantities
+  ];
 
-  checkPhase = ''
-    nosetests --exclude=iotest
-  '';
+  nativeCheckInputs = [
+    pytestCheckHook
+    pillow
+    which
+  ];
+
+  disabledTestPaths = [
+    # Requires network and export HOME dir
+    "neo/test/rawiotest/test_maxwellrawio.py"
+  ];
+
+  pythonImportsCheck = [ "neo" ];
 
   meta = with lib; {
+    description = "Package for representing electrophysiology data";
     homepage = "https://neuralensemble.org/neo/";
-    description = "Package for representing electrophysiology data in Python";
+    changelog = "https://neo.readthedocs.io/en/${src.tag}/releases/${src.tag}.html";
     license = licenses.bsd3;
     maintainers = with maintainers; [ bcdarwin ];
   };

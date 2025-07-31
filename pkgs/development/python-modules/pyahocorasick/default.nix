@@ -1,32 +1,27 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, fetchpatch
-, pytestCheckHook
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  pytestCheckHook,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "pyahocorasick";
-  version = "1.4.1";
+  version = "2.2.0";
+  format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "WojciechMula";
-    repo = pname;
-    rev = version;
-    sha256 = "13x3718if28l50474xrz1b9709kvnvdg3nzm6y8bh7mc9a4zyss5";
+    repo = "pyahocorasick";
+    tag = "v${version}";
+    hash = "sha256-lFJhHDN9QAKw5dqzgjRxcs+7+LuTqP9qQ68B5LlCNmU=";
   };
 
-  patches = [
-    # Use proper temporary directory on Hydra
-    (fetchpatch {
-      url = "https://github.com/WojciechMula/pyahocorasick/commit/b6549e06f3cced7ffdf4d1b587cd7de12041f495.patch";
-      sha256 = "sha256-v3J/0aIPOnBhLlJ18r/l7O0MckqLOCtcmqIS9ZegaSI=";
-    })
-  ];
+  build-system = [ setuptools ];
 
-  checkInputs = [ pytestCheckHook ];
+  nativeCheckInputs = [ pytestCheckHook ];
 
-  pytestFlagsArray = [ "unittests.py" ];
   pythonImportsCheck = [ "ahocorasick" ];
 
   meta = with lib; {
@@ -37,7 +32,8 @@ buildPythonPackage rec {
       key strings occurrences at once in some input text.
     '';
     homepage = "https://github.com/WojciechMula/pyahocorasick";
-    license = with licenses; [ bsd3 ];
+    changelog = "https://github.com/WojciechMula/pyahocorasick/blob/${src.tag}/CHANGELOG.rst";
+    license = licenses.bsd3;
     maintainers = with maintainers; [ fab ];
   };
 }

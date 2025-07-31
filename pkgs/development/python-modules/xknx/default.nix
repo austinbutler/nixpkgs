@@ -1,41 +1,63 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, netifaces
-, voluptuous
-, pyyaml
-, pytest-asyncio
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  async-timeout,
+  buildPythonPackage,
+  fetchFromGitHub,
+  cryptography,
+  ifaddr,
+  freezegun,
+  pytest-asyncio,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "xknx";
-  version = "0.19.2";
-  format = "setuptools";
+  version = "3.8.0";
+  pyproject = true;
 
-  disabled = pythonOlder "3.8";
+  disabled = pythonOlder "3.10";
 
   src = fetchFromGitHub {
     owner = "XKNX";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-LJ7MmKCWx+n7caud0pN4+7f9H4XzwuAAn9u86X/FACo=";
+    repo = "xknx";
+    tag = version;
+    hash = "sha256-iuub8ZO5XN5PWTDGlo/8U7A7+1NpSVGFtG+EmJR9VfM=";
   };
 
-  propagatedBuildInputs = [
-    voluptuous
-    netifaces
-    pyyaml
-  ];
+  build-system = [ setuptools ];
 
-  checkInputs = [
+  dependencies = [
+    cryptography
+    ifaddr
+  ]
+  ++ lib.optionals (pythonOlder "3.11") [ async-timeout ];
+
+  nativeCheckInputs = [
+    freezegun
     pytest-asyncio
     pytestCheckHook
   ];
 
-  pythonImportsCheck = [
-    "xknx"
+  pythonImportsCheck = [ "xknx" ];
+
+  disabledTests = [
+    # Test requires network access
+    "test_routing_indication_multicast"
+    "test_scan_timeout"
+    "test_start_secure_routing_explicit_keyring"
+    "test_start_secure_routing_knx_keys"
+    "test_start_secure_routing_manual"
+    # RuntimeError: Event loop is closed
+    "test_has_group_address_localtime"
+    "test_invalid_authentication"
+    "test_invalid_frames"
+    "test_no_authentication"
+    "test_process_read_localtime"
+    "test_sync_date"
+    "test_sync_datetime"
+    "test_sync_time_local"
   ];
 
   meta = with lib; {
@@ -45,7 +67,8 @@ buildPythonPackage rec {
       packets. It provides support for KNX/IP routing and tunneling devices.
     '';
     homepage = "https://github.com/XKNX/xknx";
-    license = with licenses; [ mit ];
+    changelog = "https://github.com/XKNX/xknx/releases/tag/${version}";
+    license = licenses.mit;
     maintainers = with maintainers; [ fab ];
     platforms = platforms.linux;
   };

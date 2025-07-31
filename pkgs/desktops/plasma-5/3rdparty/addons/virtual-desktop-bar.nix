@@ -1,13 +1,14 @@
-{ lib
-, mkDerivation
-, fetchFromGitHub
-, extra-cmake-modules
-, kwindowsystem
-, plasma-framework
-, qtx11extras
+{
+  lib,
+  mkDerivation,
+  fetchFromGitHub,
+  extra-cmake-modules,
+  kwindowsystem,
+  plasma-framework,
+  qtx11extras,
 }:
 
-mkDerivation rec {
+mkDerivation {
   pname = "plasma-applet-virtual-desktop-bar";
   version = "unstable-2021-02-20";
 
@@ -19,7 +20,9 @@ mkDerivation rec {
   };
 
   buildInputs = [
-    kwindowsystem plasma-framework qtx11extras
+    kwindowsystem
+    plasma-framework
+    qtx11extras
   ];
 
   nativeBuildInputs = [

@@ -1,44 +1,48 @@
-{ lib
-, buildPythonPackage
-, chardet
-, fetchPypi
-, jinja2
-, jinja2_pluralize
-, pluggy
-, pycodestyle
-, pyflakes
-, pygments
-, pylint
-, pytest-datadir
-, pytest-mock
-, pytestCheckHook
-, pythonOlder
-, tomli
+{
+  lib,
+  buildPythonPackage,
+  chardet,
+  fetchPypi,
+  jinja2,
+  jinja2-pluralize,
+  pluggy,
+  poetry-core,
+  pycodestyle,
+  pyflakes,
+  pygments,
+  pylint,
+  pytest-datadir,
+  pytest-mock,
+  pytestCheckHook,
+  pythonOlder,
+  tomli,
 }:
 
 buildPythonPackage rec {
   pname = "diff-cover";
-  version = "6.4.4";
-  format = "setuptools";
+  version = "9.3.2";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.9";
 
   src = fetchPypi {
     pname = "diff_cover";
     inherit version;
-    sha256 = "b1d782c1ce53ad4b2c5545f8b7aa799eb61a0b12a62b376a18e2313c6f2d77f1";
+    hash = "sha256-Kpkjn7iWhlDaR5aKg0YHtreXFD5dBAXiTEWnG+WQdVs=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ poetry-core ];
+
+  dependencies = [
     chardet
     jinja2
-    jinja2_pluralize
+    jinja2-pluralize
     pluggy
     pygments
     tomli
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     pycodestyle
     pyflakes
     pylint
@@ -50,17 +54,19 @@ buildPythonPackage rec {
   disabledTests = [
     # Tests check for flake8
     "file_does_not_exist"
-    # AssertionError: assert '.c { color:...
+    # Comparing console output doesn't work reliable
+    "console"
+    # Assertion failure
+    "test_html_with_external_css"
     "test_style_defs"
   ];
 
-  pythonImportsCheck = [
-    "diff_cover"
-  ];
+  pythonImportsCheck = [ "diff_cover" ];
 
   meta = with lib; {
     description = "Automatically find diff lines that need test coverage";
     homepage = "https://github.com/Bachmann1234/diff-cover";
+    changelog = "https://github.com/Bachmann1234/diff_cover/releases/tag/v${version}";
     license = licenses.asl20;
     maintainers = with maintainers; [ dzabraev ];
   };

@@ -1,60 +1,41 @@
-{ lib
-, stdenv
-, buildPythonPackage
-, fetchFromGitHub
-, sqlite
-, isPyPy
-, pytestCheckHook
+{
+  lib,
+  buildPythonPackage,
+  fetchurl,
+  setuptools,
+  sqlite,
 }:
 
 buildPythonPackage rec {
   pname = "apsw";
-  version = "3.37.0-r1";
-  format = "setuptools";
+  version = "3.48.0.0";
+  pyproject = true;
 
-  disabled = isPyPy;
-
-  src = fetchFromGitHub {
-    owner = "rogerbinns";
-    repo = "apsw";
-    rev = version;
-    sha256 = "0p6rlbk7p6hj5mbmk1a8phazw3ym6hf5103zkxzg4p1jgjgi0xpl";
+  # https://github.com/rogerbinns/apsw/issues/548
+  src = fetchurl {
+    url = "https://github.com/rogerbinns/apsw/releases/download/${version}/apsw-${version}.tar.gz";
+    hash = "sha256-iwvUW6vOQu2EiUuYWVaz5D3ePSLrj81fmLxoGRaTzRk=";
   };
 
-  buildInputs = [
-    sqlite
-  ];
+  build-system = [ setuptools ];
 
-  checkInputs = [
-    pytestCheckHook
-  ];
+  buildInputs = [ sqlite ];
 
-  pytestFlagsArray = [
-    "tests.py"
-  ];
+  # apsw explicitly doesn't use pytest
+  # see https://github.com/rogerbinns/apsw/issues/548#issuecomment-2891633403
+  checkPhase = ''
+    runHook preCheck
+    python -m apsw.tests
+    runHook postCheck
+  '';
 
-  disabledTests = [
-    "testCursor"
-    "testLoadExtension"
-    "testShell"
-    "testVFS"
-    "testVFSWithWAL"
-    "testdb"
-  ] ++ lib.optionals stdenv.isDarwin [
-    # This is https://github.com/rogerbinns/apsw/issues/277 but
-    # because we use pytestCheckHook we need to blacklist the test
-    # manually
-    "testzzForkChecker"
-  ];
+  pythonImportsCheck = [ "apsw" ];
 
-  pythonImportsCheck = [
-    "apsw"
-  ];
-
-  meta = with lib; {
-    description = "A Python wrapper for the SQLite embedded relational database engine";
+  meta = {
+    changelog = "https://github.com/rogerbinns/apsw/blob/${version}/doc/changes.rst";
+    description = "Python wrapper for the SQLite embedded relational database engine";
     homepage = "https://github.com/rogerbinns/apsw";
-    license = licenses.zlib;
-    maintainers = with maintainers; [ ];
+    license = lib.licenses.zlib;
+    maintainers = with lib.maintainers; [ gador ];
   };
 }

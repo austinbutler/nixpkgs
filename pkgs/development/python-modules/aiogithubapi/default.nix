@@ -1,56 +1,76 @@
-{ lib
-, aiohttp
-, aresponses
-, async-timeout
-, backoff
-, buildPythonPackage
-, fetchFromGitHub
-, pytest-asyncio
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  aiohttp,
+  aresponses,
+  async-timeout,
+  backoff,
+  buildPythonPackage,
+  fetchFromGitHub,
+  poetry-core,
+  pytest-asyncio,
+  pytestCheckHook,
+  pythonOlder,
+  sigstore,
 }:
 
 buildPythonPackage rec {
   pname = "aiogithubapi";
-  version = "22.2.4";
-  format = "setuptools";
+  version = "25.5.0";
+  pyproject = true;
 
   disabled = pythonOlder "3.8";
 
   src = fetchFromGitHub {
     owner = "ludeeus";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-2RYpeyX88+eEilK/wLDJ6Ock1JBgIUPWbm/ZBJSQ2pg=";
+    repo = "aiogithubapi";
+    tag = version;
+    hash = "sha256-zl9QpFpkvSTs0BUDMBmwTeLY1YvNRSqbkIZ5LDUP3zw=";
   };
 
-  propagatedBuildInputs = [
+  __darwinAllowLocalNetworking = true;
+
+  pythonRelaxDeps = [ "async-timeout" ];
+
+  postPatch = ''
+    # Upstream is releasing with the help of a CI to PyPI, GitHub releases
+    # are not in their focus
+    substituteInPlace pyproject.toml \
+      --replace-fail 'version = "0"' 'version = "${version}"'
+  '';
+
+  build-system = [ poetry-core ];
+
+  dependencies = [
     aiohttp
     async-timeout
     backoff
   ];
 
-  checkInputs = [
+  # Optional dependencies for deprecated-verify are not added
+  # Only sigstore < 2 is supported
+
+  nativeCheckInputs = [
     aresponses
     pytest-asyncio
     pytestCheckHook
   ];
 
-  postPatch = ''
-    # Upstream is releasing with the help of a CI to PyPI, GitHub releases
-    # are not in their focus
-    substituteInPlace setup.py \
-      --replace 'version="main",' 'version="${version}",'
+  pytestFlags = [ "--asyncio-mode=auto" ];
+
+  preCheck = ''
+    export HOME=$(mktemp -d)
+
+    # Need sigstore is an optional dependencies and need <2
+    rm -rf tests/test_helper.py
   '';
 
-  pythonImportsCheck = [
-    "aiogithubapi"
-  ];
+  pythonImportsCheck = [ "aiogithubapi" ];
 
-  meta = with lib; {
+  meta = {
     description = "Python client for the GitHub API";
     homepage = "https://github.com/ludeeus/aiogithubapi";
-    license = with licenses; [ mit ];
-    maintainers = with maintainers; [ fab ];
+    changelog = "https://github.com/ludeeus/aiogithubapi/releases/tag/${version}";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ fab ];
   };
 }

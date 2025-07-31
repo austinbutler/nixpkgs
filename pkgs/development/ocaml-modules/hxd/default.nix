@@ -1,25 +1,23 @@
-{ lib, buildDunePackage, fetchurl
-, ocaml, dune-configurator, cmdliner
-, lwt, withLwt ? lib.versionAtLeast ocaml.version "4.07"
+{
+  lib,
+  buildDunePackage,
+  fetchurl,
+  dune-configurator,
+  cmdliner,
+  lwt,
+  withLwt ? true,
 }:
 
 buildDunePackage rec {
   pname = "hxd";
-  version = "0.3.1";
+  version = "0.3.4";
 
-  useDune2 = true;
-
-  minimumOCamlVersion = "4.06";
+  minimalOCamlVersion = "4.08";
 
   src = fetchurl {
-    url = "https://github.com/dinosaure/hxd/releases/download/v${version}/hxd-v${version}.tbz";
-    sha256 = "1c226c91e17cd329dec0c287bfd20f36302aa533069ff9c6ced32721f96b29bc";
+    url = "https://github.com/dinosaure/hxd/releases/download/v${version}/hxd-${version}.tbz";
+    sha256 = "sha256-jor8KLUvHqgt37Dnh3JRB/eMIYSevVzGEBsvG4quDmI=";
   };
-
-  # ignore yes stderr output due to trapped SIGPIPE
-  postPatch = ''
-    sed -i 's|yes ".\+"|& 2> /dev/null|' test/*.t
-  '';
 
   propagatedBuildInputs = lib.optional withLwt lwt;
 
@@ -30,10 +28,15 @@ buildDunePackage rec {
 
   doCheck = true;
 
+  preCheck = ''
+    export DUNE_CACHE=disabled
+  '';
+
   meta = with lib; {
     description = "Hexdump in OCaml";
     homepage = "https://github.com/dinosaure/hxd";
     license = licenses.mit;
     maintainers = [ maintainers.sternenseemann ];
+    mainProgram = "hxd.xxd";
   };
 }

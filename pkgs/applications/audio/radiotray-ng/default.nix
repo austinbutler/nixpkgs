@@ -1,67 +1,94 @@
-{ lib, stdenv, fetchFromGitHub
-, cmake, pkg-config
-# Transport
-, curl
-# Libraries
-, boost
-, jsoncpp
-, libbsd
-, pcre
-# GUI/Desktop
-, dbus
-, glibmm
-, gsettings-desktop-schemas
-, hicolor-icon-theme
-, libappindicator-gtk3
-, libnotify
-, libxdg_basedir
-, wxGTK
-# GStreamer
-, gst_all_1
-# User-agent info
-, lsb-release
-# rt2rtng
-, python3
-# Testing
-, gtest
-# Fixup
-, wrapGAppsHook
-, makeWrapper
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  cmake,
+  pkg-config,
+  # Transport
+  curl,
+  # Libraries
+  boost,
+  jsoncpp,
+  libbsd,
+  # GUI/Desktop
+  dbus,
+  glibmm,
+  gsettings-desktop-schemas,
+  hicolor-icon-theme,
+  libappindicator-gtk3,
+  libnotify,
+  libxdg_basedir,
+  wxGTK,
+  # GStreamer
+  glib-networking,
+  gst_all_1,
+  # User-agent info
+  lsb-release,
+  # rt2rtng
+  python3,
+  # Testing
+  gtest,
+  # Fixup
+  wrapGAppsHook3,
+  makeWrapper,
 }:
 
 let
   gstInputs = with gst_all_1; [
-    gstreamer gst-plugins-base
-    gst-plugins-good gst-plugins-bad gst-plugins-ugly
+    gstreamer
+    gst-plugins-base
+    gst-plugins-good
+    gst-plugins-bad
+    gst-plugins-ugly
     gst-libav
   ];
   # For the rt2rtng utility for converting bookmark file to -ng format
-  pythonInputs = with python3.pkgs; [ python lxml ];
+  pythonInputs = with python3.pkgs; [
+    python
+    lxml
+  ];
 in
 stdenv.mkDerivation rec {
   pname = "radiotray-ng";
-  version = "0.2.8";
+  version = "0.2.9";
 
   src = fetchFromGitHub {
     owner = "ebruck";
     repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-/0GlQdSsIPKGrDT9CgxvaH8TpAbqxFduwL2A2+BSrEI=";
+    tag = "v${version}";
+    hash = "sha256-rRD/IfVnOxowr2mO2BB2hcHK5ByZSmTbcgYdULogYUs=";
   };
 
-  nativeBuildInputs = [ cmake pkg-config wrapGAppsHook makeWrapper ];
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+    wrapGAppsHook3
+    makeWrapper
+  ];
 
   buildInputs = [
     curl
-    boost jsoncpp libbsd pcre
-    glibmm hicolor-icon-theme gsettings-desktop-schemas libappindicator-gtk3 libnotify
+    boost
+    jsoncpp
+    libbsd
+    glibmm
+    hicolor-icon-theme
+    gsettings-desktop-schemas
+    libappindicator-gtk3
+    libnotify
     libxdg_basedir
     lsb-release
     wxGTK
-  ] ++ gstInputs
-    ++ pythonInputs;
+    # for https gstreamer / libsoup
+    glib-networking
+  ]
+  ++ gstInputs
+  ++ pythonInputs;
 
-  patches = [ ./no-dl-googletest.patch ];
+  patches = [
+    ./no-dl-googletest.patch
+    ./tests-c++17.patch
+  ];
 
   postPatch = ''
     for x in package/CMakeLists.txt include/radiotray-ng/common.hpp data/*.desktop; do
@@ -80,19 +107,22 @@ stdenv.mkDerivation rec {
     "-DBUILD_TESTS=${if doCheck then "ON" else "OFF"}"
   ];
 
-  checkInputs = [ gtest ];
-  doCheck = !stdenv.isAarch64; # single failure that I can't explain
+  # 'wxFont::wxFont(int, int, int, int, bool, const wxString&, wxFontEncoding)' is deprecated
+  env.NIX_CFLAGS_COMPILE = "-Wno-error=deprecated-declarations";
+
+  nativeCheckInputs = [ gtest ];
+  doCheck = !stdenv.hostPlatform.isAarch64; # single failure that I can't explain
 
   preFixup = ''
     gappsWrapperArgs+=(--suffix PATH : ${lib.makeBinPath [ dbus ]})
     wrapProgram $out/bin/rt2rtng --prefix PYTHONPATH : $PYTHONPATH
   '';
 
-  meta = with lib; {
-    description = "An internet radio player for linux";
+  meta = {
+    description = "Internet radio player for linux";
     homepage = "https://github.com/ebruck/radiotray-ng";
-    license = licenses.gpl3;
-    maintainers = with maintainers; [ dtzWill ];
-    platforms = platforms.all;
+    license = lib.licenses.gpl3;
+    maintainers = [ ];
+    platforms = lib.platforms.linux;
   };
 }

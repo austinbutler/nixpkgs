@@ -1,33 +1,34 @@
-{ lib
-, stdenv
-, fetchurl
-, fetchpatch
-, pkg-config
-, intltool
-, meson
-, ninja
-, itstool
-, libxml2
-, python3
-, gtk3
-, json-glib
-, isocodes
-, openssl
-, gnome
-, gobject-introspection
-, vala
-, libgee
-, sqlite
-, gtk-doc
-, yelp-tools
-, mysqlSupport ? false
-, libmysqlclient ? null
-, postgresSupport ? false
-, postgresql ? null
+{
+  lib,
+  stdenv,
+  fetchurl,
+  fetchpatch,
+  pkg-config,
+  intltool,
+  meson,
+  ninja,
+  itstool,
+  libxml2,
+  python3,
+  gtk3,
+  json-glib,
+  isocodes,
+  openssl,
+  gnome,
+  gobject-introspection,
+  vala,
+  libgee,
+  sqlite,
+  gtk-doc,
+  yelp-tools,
+  mysqlSupport ? false,
+  libmysqlclient ? null,
+  postgresSupport ? false,
+  libpq ? null,
 }:
 
 assert mysqlSupport -> libmysqlclient != null;
-assert postgresSupport -> postgresql != null;
+assert postgresSupport -> libpq != null;
 
 stdenv.mkDerivation rec {
   pname = "libgda";
@@ -49,6 +50,12 @@ stdenv.mkDerivation rec {
     (fetchpatch {
       url = "https://gitlab.gnome.org/GNOME/libgda/-/commit/57f618a3b2a3758ee3dcbf9bbdc566122dd8566d.patch";
       sha256 = "pyfymUd61m1kHaGyMbUQMma+szB8mlqGWwcFBBQawf8=";
+    })
+
+    (fetchpatch {
+      name = "CVE-2021-39359.patch";
+      url = "https://gitlab.gnome.org/GNOME/libgda/-/commit/bebdffb4de586fb43fd07ac549121f4b22f6812d.patch";
+      sha256 = "sha256-UjHP1nhb5n6TOdaMdQeE2s828T4wv/0ycG3FAk+I1QA=";
     })
   ];
 
@@ -73,11 +80,15 @@ stdenv.mkDerivation rec {
     openssl
     libgee
     sqlite
-  ] ++ lib.optionals mysqlSupport [
+  ]
+  ++ lib.optionals mysqlSupport [
     libmysqlclient
-  ] ++ lib.optionals postgresSupport [
-    postgresql
+  ]
+  ++ lib.optionals postgresSupport [
+    libpq
   ];
+
+  env.NIX_CFLAGS_COMPILE = lib.optionalString stdenv.cc.isClang "-Wno-error=incompatible-function-pointer-types";
 
   postPatch = ''
     patchShebangs \
@@ -102,7 +113,7 @@ stdenv.mkDerivation rec {
       # CLI tools
       gpl2Plus
     ];
-    maintainers = teams.gnome.members;
+    teams = [ teams.gnome ];
     platforms = platforms.unix;
   };
 }

@@ -1,14 +1,16 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
 let
   cfg = config.services.resilio;
 
-  resilioSync = pkgs.resilio-sync;
-
   sharedFoldersRecord = map (entry: {
-    secret = entry.secret;
     dir = entry.directory;
 
     use_relay_server = entry.useRelayServer;
@@ -20,25 +22,69 @@ let
     known_hosts = entry.knownHosts;
   }) cfg.sharedFolders;
 
-  configFile = pkgs.writeText "config.json" (builtins.toJSON ({
-    device_name = cfg.deviceName;
-    storage_path = cfg.storagePath;
-    listening_port = cfg.listeningPort;
-    use_gui = false;
-    check_for_updates = cfg.checkForUpdates;
-    use_upnp = cfg.useUpnp;
-    download_limit = cfg.downloadLimit;
-    upload_limit = cfg.uploadLimit;
-    lan_encrypt_data = cfg.encryptLAN;
-  } // optionalAttrs (cfg.directoryRoot != "") { directory_root = cfg.directoryRoot; }
-    // optionalAttrs cfg.enableWebUI {
-    webui = { listen = "${cfg.httpListenAddr}:${toString cfg.httpListenPort}"; } //
-      (optionalAttrs (cfg.httpLogin != "") { login = cfg.httpLogin; }) //
-      (optionalAttrs (cfg.httpPass != "") { password = cfg.httpPass; }) //
-      (optionalAttrs (cfg.apiKey != "") { api_key = cfg.apiKey; });
-  } // optionalAttrs (sharedFoldersRecord != []) {
-    shared_folders = sharedFoldersRecord;
-  }));
+  configFile = pkgs.writeText "config.json" (
+    builtins.toJSON (
+      {
+        device_name = cfg.deviceName;
+        storage_path = cfg.storagePath;
+        listening_port = cfg.listeningPort;
+        use_gui = false;
+        check_for_updates = cfg.checkForUpdates;
+        use_upnp = cfg.useUpnp;
+        download_limit = cfg.downloadLimit;
+        upload_limit = cfg.uploadLimit;
+        lan_encrypt_data = cfg.encryptLAN;
+      }
+      // optionalAttrs (cfg.directoryRoot != "") { directory_root = cfg.directoryRoot; }
+      // optionalAttrs cfg.enableWebUI {
+        webui = {
+          listen = "${cfg.httpListenAddr}:${toString cfg.httpListenPort}";
+        }
+        // (optionalAttrs (cfg.httpLogin != "") { login = cfg.httpLogin; })
+        // (optionalAttrs (cfg.httpPass != "") { password = cfg.httpPass; })
+        // (optionalAttrs (cfg.apiKey != "") { api_key = cfg.apiKey; });
+      }
+      // optionalAttrs (sharedFoldersRecord != [ ]) {
+        shared_folders = sharedFoldersRecord;
+      }
+    )
+  );
+
+  sharedFoldersSecretFiles = map (entry: {
+    dir = entry.directory;
+    secretFile =
+      if builtins.hasAttr "secret" entry then
+        toString (
+          pkgs.writeTextFile {
+            name = "secret-file";
+            text = entry.secret;
+          }
+        )
+      else
+        entry.secretFile;
+  }) cfg.sharedFolders;
+
+  runConfigPath = "/run/rslsync/config.json";
+
+  createConfig = pkgs.writeShellScriptBin "create-resilio-config" (
+    if cfg.sharedFolders != [ ] then
+      ''
+        ${pkgs.jq}/bin/jq \
+          '.shared_folders |= map(.secret = $ARGS.named[.dir])' \
+          ${
+            lib.concatMapStringsSep " \\\n  " (
+              entry: ''--arg '${entry.dir}' "$(cat '${entry.secretFile}')"''
+            ) sharedFoldersSecretFiles
+          } \
+          <${configFile} \
+          >${runConfigPath}
+      ''
+    else
+      ''
+        # no secrets, passing through config
+        cp ${configFile} ${runConfigPath};
+      ''
+  );
 
 in
 {
@@ -53,6 +99,8 @@ in
           NixOS configuration.
         '';
       };
+
+      package = mkPackageOption pkgs "resilio-sync" { };
 
       deviceName = mkOption {
         type = types.str;
@@ -154,9 +202,9 @@ in
         default = false;
         description = ''
           Enable Web UI for administration. Bound to the specified
-          <literal>httpListenAddress</literal> and
-          <literal>httpListenPort</literal>.
-          '';
+          `httpListenAddress` and
+          `httpListenPort`.
+        '';
       };
 
       storagePath = mkOption {
@@ -183,41 +231,39 @@ in
       };
 
       sharedFolders = mkOption {
-        default = [];
+        default = [ ];
         type = types.listOf (types.attrsOf types.anything);
-        example =
-          [ { secret         = "AHMYFPCQAHBM7LQPFXQ7WV6Y42IGUXJ5Y";
-              directory      = "/home/user/sync_test";
-              useRelayServer = true;
-              useTracker     = true;
-              useDHT         = false;
-              searchLAN      = true;
-              useSyncTrash   = true;
-              knownHosts     = [
-                "192.168.1.2:4444"
-                "192.168.1.3:4444"
-              ];
-            }
-          ];
+        example = [
+          {
+            secretFile = "/run/resilio-secret";
+            directory = "/home/user/sync_test";
+            useRelayServer = true;
+            useTracker = true;
+            useDHT = false;
+            searchLAN = true;
+            useSyncTrash = true;
+            knownHosts = [
+              "192.168.1.2:4444"
+              "192.168.1.3:4444"
+            ];
+          }
+        ];
         description = ''
           Shared folder list. If enabled, web UI must be
-          disabled. Secrets can be generated using <literal>rslsync
-          --generate-secret</literal>. Note that this secret will be
-          put inside the Nix store, so it is realistically not very
-          secret.
+          disabled. Secrets can be generated using `rslsync --generate-secret`.
 
           If you would like to be able to modify the contents of this
           directories, it is recommended that you make your user a
-          member of the <literal>rslsync</literal> group.
+          member of the `rslsync` group.
 
           Directories in this list should be in the
-          <literal>rslsync</literal> group, and that group must have
+          `rslsync` group, and that group must have
           write access to the directory. It is also recommended that
-          <literal>chmod g+s</literal> is applied to the directory
+          `chmod g+s` is applied to the directory
           so that any sub directories created will also belong to
-          the <literal>rslsync</literal> group. Also,
-          <literal>setfacl -d -m group:rslsync:rwx</literal> and
-          <literal>setfacl -m group:rslsync:rwx</literal> should also
+          the `rslsync` group. Also,
+          `setfacl -d -m group:rslsync:rwx` and
+          `setfacl -m group:rslsync:rwx` should also
           be applied so that the sub directories are writable by
           the group.
         '';
@@ -226,40 +272,47 @@ in
   };
 
   config = mkIf cfg.enable {
-    assertions =
-      [ { assertion = cfg.deviceName != "";
-          message   = "Device name cannot be empty.";
-        }
-        { assertion = cfg.enableWebUI -> cfg.sharedFolders == [];
-          message   = "If using shared folders, the web UI cannot be enabled.";
-        }
-        { assertion = cfg.apiKey != "" -> cfg.enableWebUI;
-          message   = "If you're using an API key, you must enable the web server.";
-        }
-      ];
+    assertions = [
+      {
+        assertion = cfg.deviceName != "";
+        message = "Device name cannot be empty.";
+      }
+      {
+        assertion = cfg.enableWebUI -> cfg.sharedFolders == [ ];
+        message = "If using shared folders, the web UI cannot be enabled.";
+      }
+      {
+        assertion = cfg.apiKey != "" -> cfg.enableWebUI;
+        message = "If you're using an API key, you must enable the web server.";
+      }
+    ];
 
     users.users.rslsync = {
-      description     = "Resilio Sync Service user";
-      home            = cfg.storagePath;
-      createHome      = true;
-      uid             = config.ids.uids.rslsync;
-      group           = "rslsync";
+      description = "Resilio Sync Service user";
+      home = cfg.storagePath;
+      createHome = true;
+      uid = config.ids.uids.rslsync;
+      group = "rslsync";
     };
 
-    users.groups.rslsync = {};
+    users.groups.rslsync.gid = config.ids.gids.rslsync;
 
     systemd.services.resilio = with pkgs; {
       description = "Resilio Sync Service";
-      wantedBy    = [ "multi-user.target" ];
-      after       = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
       serviceConfig = {
-        Restart   = "on-abort";
-        UMask     = "0002";
-        User      = "rslsync";
+        Restart = "on-abort";
+        UMask = "0002";
+        User = "rslsync";
+        RuntimeDirectory = "rslsync";
+        ExecStartPre = "${createConfig}/bin/create-resilio-config";
         ExecStart = ''
-          ${resilioSync}/bin/rslsync --nodaemon --config ${configFile}
+          ${lib.getExe cfg.package} --nodaemon --config ${runConfigPath}
         '';
       };
     };
   };
+
+  meta.maintainers = [ ];
 }

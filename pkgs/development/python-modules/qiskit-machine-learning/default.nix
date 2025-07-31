@@ -1,50 +1,55 @@
-{ lib
-, pythonOlder
-, pythonAtLeast
-, buildPythonPackage
-, fetchFromGitHub
-, fetchpatch
+{
+  lib,
+  pythonOlder,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
   # Python Inputs
-, fastdtw
-, numpy
-, psutil
-, qiskit-terra
-, scikit-learn
-, sparse
-  # Optional inputs
-, withTorch ? true
-, pytorch
+  fastdtw,
+  numpy,
+  psutil,
+  qiskit-terra,
+  scikit-learn,
+  sparse,
+  torch,
   # Check Inputs
-, pytestCheckHook
-, ddt
-, pytest-timeout
-, qiskit-aer
+  pytestCheckHook,
+  ddt,
+  pytest-timeout,
+  qiskit-aer,
 }:
 
 buildPythonPackage rec {
   pname = "qiskit-machine-learning";
-  version = "0.3.0";
+  version = "0.8.2";
+  pyproject = true;
 
   disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "qiskit";
     repo = pname;
-    rev = version;
-    sha256 = "0jycs18apnwrksarpwpmp7scndyx91vnv6fchil4jyx4kym8mnf9";
+    tag = version;
+    hash = "sha256-dvGUtB7R44B+DYZKl4R2Q0GdvLTjVKWD0KmuyCoaOSc=";
   };
+
+  nativeBuildInputs = [ setuptools ];
 
   propagatedBuildInputs = [
     fastdtw
     numpy
     psutil
+    torch
     qiskit-terra
     scikit-learn
     sparse
-  ] ++ lib.optional withTorch pytorch;
+  ];
 
-  doCheck = false;  # TODO: enable. Tests fail on unstable due to some multithreading issue?
-  checkInputs = [
+  doCheck = false; # TODO: enable. Tests fail on unstable due to some multithreading issue?
+  nativeCheckInputs = [
     pytestCheckHook
     pytest-timeout
     ddt
@@ -53,11 +58,13 @@ buildPythonPackage rec {
 
   pythonImportsCheck = [ "qiskit_machine_learning" ];
 
-  pytestFlagsArray = [
+  pytestFlags = [
     "--durations=10"
     "--showlocals"
     "-vv"
-    "--ignore=test/connectors/test_torch_connector.py"  # TODO: fix, get multithreading errors with python3.9, segfaults
+  ];
+  disabledTestPaths = [
+    "test/connectors/test_torch_connector.py" # TODO: fix, get multithreading errors with python3.9, segfaults
   ];
   disabledTests = [
     # Slow tests >10 s

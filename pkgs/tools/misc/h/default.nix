@@ -1,14 +1,19 @@
-{ lib, stdenv, fetchFromGitHub, makeWrapper, ruby }:
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  ruby,
+}:
 
 stdenv.mkDerivation rec {
   pname = "h";
-  version = "1.0.3";
+  version = "1.1.0";
 
   src = fetchFromGitHub {
     owner = "zimbatm";
     repo = "h";
     rev = "v${version}";
-    hash = "sha256-RyQZ9F+rZ0a/90hljSyNCzYK8eA3rYJlJkV7B5NPRzY=";
+    hash = "sha256-4rhol8a+OMX2+MxFPEM1WzM/70C7sye8jw4pg7CujRo=";
   };
 
   buildInputs = [ ruby ];
@@ -20,7 +25,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with lib; {
-    description = "faster shell navigation of projects";
+    description = "Faster shell navigation of projects";
     homepage = "https://github.com/zimbatm/h";
     license = licenses.mit;
     maintainers = [ maintainers.zimbatm ];

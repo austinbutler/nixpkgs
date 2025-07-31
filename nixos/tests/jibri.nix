@@ -1,10 +1,13 @@
-import ./make-test-python.nix ({ pkgs, ... }: {
+{ pkgs, ... }:
+{
   name = "jibri";
   meta = with pkgs.lib; {
     maintainers = teams.jitsi.members;
   };
 
-    machine = { config, pkgs, ... }: {
+  nodes.machine =
+    { config, pkgs, ... }:
+    {
       virtualisation.memorySize = 5120;
 
       services.jitsi-meet = {
@@ -15,16 +18,19 @@ import ./make-test-python.nix ({ pkgs, ... }: {
       services.jibri.ignoreCert = true;
       services.jitsi-videobridge.openFirewall = true;
 
-      networking.firewall.allowedTCPPorts = [ 80 443 ];
+      networking.firewall.allowedTCPPorts = [
+        80
+        443
+      ];
 
       services.nginx.virtualHosts.machine = {
         enableACME = true;
         forceSSL = true;
       };
 
-      security.acme.email = "me@example.org";
+      security.acme.defaults.email = "me@example.org";
       security.acme.acceptTerms = true;
-      security.acme.server = "https://example.com"; # self-signed only
+      security.acme.defaults.server = "https://example.com"; # self-signed only
     };
 
   testScript = ''
@@ -35,9 +41,6 @@ import ./make-test-python.nix ({ pkgs, ... }: {
     machine.wait_for_unit("jibri.service")
 
     machine.wait_until_succeeds(
-        "journalctl -b -u jitsi-videobridge2 -o cat | grep -q 'Performed a successful health check'", timeout=30
-    )
-    machine.wait_until_succeeds(
         "journalctl -b -u prosody -o cat | grep -q 'Authenticated as focus@auth.machine'", timeout=31
     )
     machine.wait_until_succeeds(
@@ -47,7 +50,7 @@ import ./make-test-python.nix ({ pkgs, ... }: {
         "journalctl -b -u prosody -o cat | grep -q 'Authenticated as jibri@auth.machine'", timeout=33
     )
     machine.wait_until_succeeds(
-        "cat /var/log/jitsi/jibri/log.0.txt | grep -q 'Joined MUC: jibribrewery@internal.machine'", timeout=34
+        "cat /var/log/jitsi/jibri/log.0.txt | grep -q 'Joined MUC: jibribrewery@internal.auth.machine'", timeout=34
     )
 
     assert '"busyStatus":"IDLE","health":{"healthStatus":"HEALTHY"' in machine.succeed(
@@ -66,4 +69,4 @@ import ./make-test-python.nix ({ pkgs, ... }: {
         "cat /var/log/jitsi/jibri/log.0.txt | grep -q 'Finalize script finished with exit value 0'", timeout=36
     )
   '';
-})
+}

@@ -1,27 +1,34 @@
-{ lib, stdenv, fetchFromGitHub, kernel, bc }:
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  kernel,
+  kernelModuleMakeFlags,
+  bc,
+  nix-update-script,
+}:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "rtl8821ce";
-  version = "${kernel.version}-unstable-2021-11-19";
+  version = "0-unstable-2025-05-31";
 
   src = fetchFromGitHub {
     owner = "tomaspinho";
     repo = "rtl8821ce";
-    rev = "ca204c60724d23ab10244f920d4e50759ed1affb";
-    sha256 = "18ma8a8h1l90dss0k6al7q6plwr57jc9g67p22g9917k1jfbhm97";
+    rev = "66c015af7738039a2045b6da755875e126d3fe73";
+    hash = "sha256-JU8ge2QpoR6nJe5G93iTEP7WOU6tLb4NJ1QrkEYUXRA=";
   };
 
   hardeningDisable = [ "pic" ];
 
-  nativeBuildInputs = [ bc ];
-  buildInputs = kernel.moduleBuildDependencies;
+  nativeBuildInputs = [ bc ] ++ kernel.moduleBuildDependencies;
+  makeFlags = kernelModuleMakeFlags;
 
   prePatch = ''
     substituteInPlace ./Makefile \
-      --replace /lib/modules/ "${kernel.dev}/lib/modules/" \
-      --replace '$(shell uname -r)' "${kernel.modDirVersion}" \
-      --replace /sbin/depmod \# \
-      --replace '$(MODDESTDIR)' "$out/lib/modules/${kernel.modDirVersion}/kernel/net/wireless/"
+      --replace-fail /lib/modules/ "${kernel.dev}/lib/modules/" \
+      --replace-fail /sbin/depmod \# \
+      --replace-fail '$(MODDESTDIR)' "$out/lib/modules/${kernel.modDirVersion}/kernel/net/wireless/"
   '';
 
   preInstall = ''
@@ -30,12 +37,16 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  meta = with lib; {
+  passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch=master" ]; };
+
+  meta = {
     description = "Realtek rtl8821ce driver";
     homepage = "https://github.com/tomaspinho/rtl8821ce";
-    license = licenses.gpl2Only;
-    platforms = platforms.linux;
-    broken = stdenv.isAarch64;
-    maintainers = with maintainers; [ hhm ivar ];
+    license = lib.licenses.gpl2Only;
+    platforms = lib.platforms.linux;
+    maintainers = with lib.maintainers; [ defelo ];
+    broken =
+      stdenv.hostPlatform.isAarch64
+      || ((lib.versions.majorMinor kernel.version) == "5.4" && kernel.isHardened);
   };
-}
+})

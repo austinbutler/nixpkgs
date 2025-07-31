@@ -1,23 +1,32 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, azure-core
-, uamqp
+{
+  lib,
+  azure-core,
+  buildPythonPackage,
+  fetchFromGitHub,
+  gitUpdater,
+  setuptools,
+  typing-extensions,
 }:
 
 buildPythonPackage rec {
   pname = "azure-eventhub";
-  version = "5.7.0";
+  version = "5.15.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    extension = "zip";
-    sha256 = "6ac364e5f1c5b376604c3b5a25ad0be5e3a5f96368f590e05b47e6745f1006ee";
+  src = fetchFromGitHub {
+    owner = "Azure";
+    repo = "azure-sdk-for-python";
+    tag = "azure-eventhub_${version}";
+    hash = "sha256-zpj1DUeFCXgVw44LcBCYtuFcQtA9BnrDKAxKSYzu4ts=";
   };
 
-  propagatedBuildInputs = [
+  sourceRoot = "${src.name}/sdk/eventhub/azure-eventhub";
+
+  build-system = [ setuptools ];
+
+  dependencies = [
     azure-core
-    uamqp
+    typing-extensions
   ];
 
   # too complicated to set up
@@ -28,9 +37,14 @@ buildPythonPackage rec {
     "azure.eventhub.aio"
   ];
 
+  passthru = {
+    updateScript = gitUpdater { rev-prefix = "azure.eventhub."; };
+  };
+
   meta = with lib; {
     description = "Microsoft Azure Event Hubs Client Library for Python";
     homepage = "https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/eventhub/azure-eventhub";
+    changelog = "https://github.com/Azure/azure-sdk-for-python/blob/${src.tag}/sdk/eventhub/azure-eventhub/CHANGELOG.md";
     license = licenses.mit;
     maintainers = with maintainers; [ dotlambda ];
   };

@@ -1,49 +1,64 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, libcst
-, google-api-core
-, grpc-google-iam-v1
-, proto-plus
-, pytest-asyncio
-, pytestCheckHook
-, mock
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  google-api-core,
+  grpc-google-iam-v1,
+  libcst,
+  mock,
+  nix-update-script,
+  proto-plus,
+  protobuf,
+  pytest-asyncio,
+  pytestCheckHook,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "google-cloud-datacatalog";
-  version = "3.7.0";
-  format = "setuptools";
+  version = "3.27.1";
+  pyproject = true;
 
-  disabled = pythonOlder "3.6";
-
-  src = fetchPypi {
-    inherit pname version;
-    hash = "sha256-5ehghcpPZTlw8dOJ74pkB4k0g79wHLh+zj3fLCOR4Rc=";
+  src = fetchFromGitHub {
+    owner = "googleapis";
+    repo = "google-cloud-python";
+    tag = "google-cloud-datacatalog-v${version}";
+    hash = "sha256-4Ifg9igzsVR8pWH/lcrGwCnByqYQjPKChNPJGmmQbKI=";
   };
 
-  propagatedBuildInputs = [
-    libcst
+  sourceRoot = "${src.name}/packages/google-cloud-datacatalog";
+
+  build-system = [ setuptools ];
+
+  dependencies = [
     google-api-core
     grpc-google-iam-v1
+    libcst
     proto-plus
-  ];
+    protobuf
+  ]
+  ++ google-api-core.optional-dependencies.grpc;
 
-  checkInputs = [
+  nativeCheckInputs = [
+    mock
     pytest-asyncio
     pytestCheckHook
-    mock
   ];
 
-  pythonImportsCheck = [
-    "google.cloud.datacatalog"
-  ];
+  pythonImportsCheck = [ "google.cloud.datacatalog" ];
 
-  meta = with lib; {
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--version-regex"
+      "google-cloud-datacatalog-v([0-9.]+)"
+    ];
+  };
+
+  meta = {
     description = "Google Cloud Data Catalog API API client library";
-    homepage = "https://github.com/googleapis/python-datacatalog";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ SuperSandro2000 ];
+    homepage = "https://github.com/googleapis/google-cloud-python/tree/main/packages/google-cloud-datacatalog";
+    changelog = "https://github.com/googleapis/google-cloud-python/blob/google-cloud-datacatalog-v${version}/packages/google-cloud-datacatalog/CHANGELOG.md";
+    license = lib.licenses.asl20;
+    maintainers = [ lib.maintainers.sarahec ];
   };
 }

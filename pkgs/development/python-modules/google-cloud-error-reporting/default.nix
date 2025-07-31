@@ -1,46 +1,61 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pytestCheckHook
-, google-cloud-logging
-, google-cloud-testutils
-, libcst
-, mock
-, proto-plus
-, pytest-asyncio
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+
+  # build-system
+  setuptools,
+
+  # dependencies
+  google-api-core,
+  google-cloud-logging,
+  proto-plus,
+  protobuf,
+
+  # testing
+  google-cloud-testutils,
+  mock,
+  pytest-asyncio,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
   pname = "google-cloud-error-reporting";
-  version = "1.5.0";
+  version = "1.12.0";
+  pyproject = true;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-qvhZU7T2fHA2uRyXJjRxqeEAFwShH+TpGwICczgX7Sk=";
+  src = fetchFromGitHub {
+    owner = "googleapis";
+    repo = "python-error-reporting";
+    tag = "v${version}";
+    hash = "sha256-V97V3WbsChc93nqhCOh34O/hn8fqLMwR4/DcHmc9vdU=";
   };
 
-  postPatch = ''
-    substituteInPlace setup.py \
-      --replace 'google-cloud-logging>=1.14.0, <2.4' 'google-cloud-logging>=1.14.0'
-  '';
+  build-system = [ setuptools ];
 
-  propagatedBuildInputs = [
+  pythonRelaxDeps = [ "protobuf" ];
+
+  dependencies = [
+    google-api-core
     google-cloud-logging
-    libcst
     proto-plus
-  ];
+    protobuf
+  ]
+  ++ google-api-core.optional-dependencies.grpc;
 
-  checkInputs = [
+  nativeCheckInputs = [
     google-cloud-testutils
     mock
-    pytestCheckHook
     pytest-asyncio
+    pytestCheckHook
   ];
 
   disabledTests = [
-    # require credentials
+    # Tests require credentials
     "test_report_error_event"
     "test_report_exception"
+    # Import is already tested
+    "test_namespace_package_compat"
   ];
 
   preCheck = ''
@@ -48,10 +63,16 @@ buildPythonPackage rec {
     rm -r google
   '';
 
-  meta = with lib; {
+  pythonImportsCheck = [
+    "google.cloud.error_reporting"
+    "google.cloud.errorreporting_v1beta1"
+  ];
+
+  meta = {
     description = "Stackdriver Error Reporting API client library";
     homepage = "https://github.com/googleapis/python-error-reporting";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ SuperSandro2000 ];
+    changelog = "https://github.com/googleapis/python-error-reporting/blob/${src.tag}/CHANGELOG.md";
+    license = lib.licenses.asl20;
+    maintainers = [ lib.maintainers.sarahec ];
   };
 }

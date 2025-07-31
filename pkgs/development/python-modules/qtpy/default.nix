@@ -1,36 +1,35 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  pythonOlder,
 
-# propagates
-, packaging
+  # propagates
+  packaging,
 
-# tests
-, pyqt5
-, pyside
-, pytestCheckHook
+  # tests
+  pyqt5,
+  pyside2,
+  pytestCheckHook,
 }:
 
 buildPythonPackage rec {
-  pname = "QtPy";
-  version = "2.0.0";
+  pname = "qtpy";
+  version = "2.4.3";
   format = "setuptools";
 
-  disabled = pythonOlder "3.6";
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "777e333df4d711b2ec9743117ab319dadfbd743a5a0eee35923855ca3d35cd9d";
+    hash = "sha256-23RPeDLm09qQVoumzLyj7is7SokMPW+7xjFC9uTN9bs=";
   };
 
-  propagatedBuildInputs = [
-    packaging
-  ];
+  propagatedBuildInputs = [ packaging ];
 
   doCheck = false; # ModuleNotFoundError: No module named 'PyQt5.QtConnectivity'
-  checkInputs = [
-    pyside
+  nativeCheckInputs = [
+    pyside2
     (pyqt5.override {
       withConnectivity = true;
       withMultimedia = true;
@@ -46,7 +45,8 @@ buildPythonPackage rec {
   ];
 
   meta = with lib; {
-    description = "Abstraction layer for PyQt5/PyQt4/PySide2/PySide";
+    description = "Abstraction layer for PyQt5/PyQt6/PySide2/PySide6";
+    mainProgram = "qtpy";
     homepage = "https://github.com/spyder-ide/qtpy";
     license = licenses.mit;
   };

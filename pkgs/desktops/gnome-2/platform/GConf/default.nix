@@ -1,4 +1,16 @@
-{ lib, stdenv, fetchurl, pkg-config, dbus-glib, glib, ORBit2, libxml2, polkit, python3, intltool }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+  pkg-config,
+  dbus-glib,
+  glib,
+  ORBit2,
+  libxml2,
+  polkit,
+  python312,
+  intltool,
+}:
 
 stdenv.mkDerivation rec {
   pname = "gconf";
@@ -9,20 +21,37 @@ stdenv.mkDerivation rec {
     sha256 = "0k3q9nh53yhc9qxf1zaicz4sk8p3kzq4ndjdsgpaa2db0ccbj4hr";
   };
 
-  outputs = [ "out" "dev" "man" ];
+  outputs = [
+    "out"
+    "dev"
+    "man"
+  ];
 
-  buildInputs = [ ORBit2 libxml2 python3 ]
-    # polkit requires pam, which requires shadow.h, which is not available on
-    # darwin
-    ++ lib.optional (!stdenv.isDarwin) polkit;
+  strictDeps = true;
 
-  propagatedBuildInputs = [ glib dbus-glib ];
+  buildInputs = [
+    ORBit2
+    libxml2
+  ]
+  # polkit requires pam, which requires shadow.h, which is not available on
+  # darwin
+  ++ lib.optional (!stdenv.hostPlatform.isDarwin) polkit;
 
-  nativeBuildInputs = [ pkg-config intltool ];
+  propagatedBuildInputs = [
+    glib
+    dbus-glib
+  ];
+
+  nativeBuildInputs = [
+    pkg-config
+    intltool
+    python312
+    glib
+  ];
 
   configureFlags =
     # fixes the "libgconfbackend-oldxml.so is not portable" error on darwin
-    lib.optional stdenv.isDarwin [ "--enable-static" ];
+    lib.optionals stdenv.hostPlatform.isDarwin [ "--enable-static" ];
 
   postPatch = ''
     2to3 --write --nobackup gsettings/gsettings-schema-convert

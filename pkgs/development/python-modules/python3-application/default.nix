@@ -1,36 +1,47 @@
-{ lib, isPy3k, buildPythonPackage, fetchFromGitHub, fetchpatch, zope_interface, twisted }:
+{
+  lib,
+  isPy3k,
+  buildPythonPackage,
+  fetchFromGitHub,
+  gitUpdater,
+  zope-interface,
+  twisted,
+}:
 
 buildPythonPackage rec {
   pname = "python3-application";
-  version = "3.0.3";
+  version = "3.0.9";
+  pyproject = true;
 
   disabled = !isPy3k;
 
   src = fetchFromGitHub {
     owner = "AGProjects";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-oscUI/Ag/UXmAi/LN1pPTdyqQe9aAfeQzhKFxaTmW3A=";
+    repo = "python3-application";
+    rev = "release-${version}";
+    hash = "sha256-79Uu9zaBIuuc+1O5Y7Vp4Qg2/aOrwvmdi5G/4AvL+T4=";
   };
 
-  patches = [
-    # Apply bugfix commit that is not yet part of a release
-    (fetchpatch {
-      name = "fix-time-import.patch";
-      url = "https://github.com/AGProjects/python3-application/commit/695f7d769e69c84e065872ffb403157d0af282fd.patch";
-      sha256 = "sha256-MGs8uUIFXkPXStOn5oCNNEMVmcKrq8YPl8Xvl3OTOUM=";
-    })
+  dependencies = [
+    zope-interface
+    twisted
   ];
-
-  propagatedBuildInputs = [ zope_interface twisted ];
 
   pythonImportsCheck = [ "application" ];
 
-  meta = with lib; {
-    description = "A collection of modules that are useful when building python applications";
+  passthru.updateScript = gitUpdater {
+    rev-prefix = "release-";
+  };
+
+  meta = {
+    description = "Collection of modules that are useful when building python applications";
     homepage = "https://github.com/AGProjects/python3-application";
-    license = licenses.lgpl21Plus;
-    maintainers = with maintainers; [ chanley ];
+    license = lib.licenses.lgpl21Plus;
+    maintainers = with lib.maintainers; [
+      chanley
+      yureien
+    ];
+    teams = [ lib.teams.ngi ];
     longDescription = ''
       This package is a collection of modules that are useful when building python applications. Their purpose is to eliminate the need to divert resources into implementing the small tasks that every application needs to do in order to run successfully and focus instead on the application logic itself.
       The modules that the application package provides are:

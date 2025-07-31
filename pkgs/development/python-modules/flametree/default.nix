@@ -1,25 +1,27 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, fontconfig
-, matplotlib
-, pandas
-, pytestCheckHook
-, weasyprint
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  fontconfig,
+  matplotlib,
+  pandas,
+  pytestCheckHook,
+  weasyprint,
 }:
 
 buildPythonPackage rec {
   pname = "flametree";
-  version = "0.1.11";
+  version = "0.2.0";
+  format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "Edinburgh-Genome-Foundry";
     repo = "Flametree";
-    rev = "v${version}";
-    sha256 = "1ynrk1ivl1vjiga0ayl8k89vs5il7i0pf9jz2ycn771c47szwk4x";
+    tag = "v${version}";
+    hash = "sha256-4yU4u5OmVP3adz9DNsU0BtuQ7LZYqbOLxbuS48lksHM=";
   };
 
-  checkInputs = [
+  nativeCheckInputs = [
     matplotlib
     pandas
     pytestCheckHook

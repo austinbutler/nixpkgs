@@ -1,38 +1,50 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, azure-mgmt-common
-, azure-mgmt-core
-, isPy3k
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  azure-mgmt-common,
+  azure-mgmt-core,
+  isodate,
+  pythonOlder,
+  setuptools,
 }:
 
 buildPythonPackage rec {
-  version = "19.1.0";
   pname = "azure-mgmt-storage";
-  disabled = !isPy3k;
+  version = "23.0.1";
+  pyproject = true;
+
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
-    inherit pname version;
-    extension = "zip";
-    sha256 = "sha256-Seoi8A4JZaNVCvNKQcGh06SBaQ9lAMeOhUCIAvVtdBY=";
+    pname = "azure_mgmt_storage";
+    inherit version;
+    hash = "sha256-w6sqyTUtHAHYW1bWcW3M4eRoD5ILFIoktDabuRuSI7Q=";
   };
 
-  propagatedBuildInputs = [
+  build-system = [ setuptools ];
+
+  dependencies = [
     azure-mgmt-common
     azure-mgmt-core
+    isodate
   ];
 
   pythonNamespaces = [ "azure.mgmt" ];
 
   pythonImportsCheck = [ "azure.mgmt.storage" ];
 
-  # has no tests
+  # Module has no tests
   doCheck = false;
 
   meta = with lib; {
     description = "This is the Microsoft Azure Storage Management Client Library";
     homepage = "https://github.com/Azure/azure-sdk-for-python";
+    changelog = "https://github.com/Azure/azure-sdk-for-python/blob/azure-mgmt-storage_${version}/sdk/storage/azure-mgmt-storage/CHANGELOG.md";
     license = licenses.mit;
-    maintainers = with maintainers; [ jonringer olcai maxwilson ];
+    maintainers = with maintainers; [
+      olcai
+      maxwilson
+    ];
   };
 }

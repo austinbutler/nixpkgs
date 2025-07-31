@@ -1,29 +1,47 @@
-{ lib, stdenv, callPackage, fetchFromGitHub, runCommandLocal, makeWrapper, substituteAll
-, sbcl, bash, which, perl, hostname
-, openssl, glucose, minisat, abc-verifier, z3, python2
-, certifyBooks ? true
-} @ args:
+{
+  lib,
+  stdenv,
+  callPackage,
+  fetchFromGitHub,
+  fetchpatch,
+  runCommandLocal,
+  makeWrapper,
+  replaceVars,
+  sbcl,
+  bash,
+  which,
+  perl,
+  hostname,
+  openssl,
+  glucose,
+  minisat,
+  abc-verifier,
+  z3,
+  python3,
+  certifyBooks ? true,
+}@args:
 
 let
   # Disable immobile space so we don't run out of memory on large books, and
   # supply 2GB of dynamic space to avoid exhausting the heap while building the
   # ACL2 system itself; see
   # https://www.cs.utexas.edu/users/moore/acl2/current/HTML/installation/requirements.html#Obtaining-SBCL
-  sbcl' = args.sbcl.override { disableImmobileSpace = true; };
-  sbcl = runCommandLocal args.sbcl.name { buildInputs = [ makeWrapper ]; } ''
+  sbcl' = args.sbcl.overrideAttrs { disableImmobileSpace = true; };
+  sbcl = runCommandLocal args.sbcl.name { nativeBuildInputs = [ makeWrapper ]; } ''
     makeWrapper ${sbcl'}/bin/sbcl $out/bin/sbcl \
       --add-flags "--dynamic-space-size 2000"
   '';
 
-in stdenv.mkDerivation rec {
+in
+stdenv.mkDerivation rec {
   pname = "acl2";
-  version = "8.4";
+  version = "8.5";
 
   src = fetchFromGitHub {
     owner = "acl2-devel";
     repo = "acl2-devel";
     rev = version;
-    sha256 = "16rr9zqmd3y1sd6zxff2f9gdd84l99pr7mdp1sjwmh427h661c68";
+    sha256 = "12cv5ms1j3vfrq066km020nwxb6x2dzh12g8nz6xxyxysn44wzzi";
   };
 
   # You can swap this out with any other IPASIR implementation at
@@ -33,22 +51,43 @@ in stdenv.mkDerivation rec {
   # $IPASIR_SHARED_LIBRARY environment variable.
   libipasir = callPackage ./libipasirglucose4 { };
 
-  patches = [(substituteAll {
-    src = ./0001-Fix-some-paths-for-Nix-build.patch;
-    libipasir = "${libipasir}/lib/${libipasir.libname}";
-    libssl = "${openssl.out}/lib/libssl${stdenv.hostPlatform.extensions.sharedLibrary}";
-    libcrypto = "${openssl.out}/lib/libcrypto${stdenv.hostPlatform.extensions.sharedLibrary}";
-  })];
+  patches = [
+    (replaceVars ./0001-Fix-some-paths-for-Nix-build.patch {
+      libipasir = "${libipasir}/lib/${libipasir.libname}";
+      libssl = "${lib.getLib openssl}/lib/libssl${stdenv.hostPlatform.extensions.sharedLibrary}";
+      libcrypto = "${lib.getLib openssl}/lib/libcrypto${stdenv.hostPlatform.extensions.sharedLibrary}";
+    })
+    (fetchpatch {
+      name = "fix-fastnumio-on-newer-sbcl.patch";
+      url = "https://github.com/acl2-devel/acl2-devel/commit/84f5a6cd4a1aaf204e8bae3eab4c21e8c061f469.patch";
+      hash = "sha256-VA9giXZMb/Ob8ablxfbBAaZ2+2PGcv7WtooXwKDgT08=";
+    })
+  ];
+
+  # We need the timestamps on the source tree to be stable for certification to
+  # work properly, so reset them here as necessary after patching
+  postPatch = ''
+    find . -type f -newer "$src" -execdir touch -r "$src" {} +
+  '';
+
+  nativeBuildInputs = lib.optional certifyBooks makeWrapper;
 
   buildInputs = [
     # ACL2 itself only needs a Common Lisp compiler/interpreter:
     sbcl
-  ] ++ lib.optionals certifyBooks [
+  ]
+  ++ lib.optionals certifyBooks [
     # To build community books, we need Perl and a couple of utilities:
-    which perl hostname makeWrapper
+    which
+    perl
+    hostname
     # Some of the books require one or more of these external tools:
-    openssl.out glucose minisat abc-verifier libipasir
-    z3 (python2.withPackages (ps: [ ps.z3 ]))
+    glucose
+    minisat
+    abc-verifier
+    libipasir
+    z3
+    (python3.withPackages (ps: [ ps.z3-solver ]))
   ];
 
   # NOTE: Parallel building can be memory-intensive depending on the number of
@@ -59,7 +98,8 @@ in stdenv.mkDerivation rec {
   preConfigure = ''
     # When certifying books, ACL2 doesn't like $HOME not existing.
     export HOME=$(pwd)/fake-home
-  '' + lib.optionalString certifyBooks ''
+  ''
+  + lib.optionalString certifyBooks ''
     # Some books also care about $USER being nonempty.
     export USER=nobody
   '';
@@ -75,7 +115,10 @@ in stdenv.mkDerivation rec {
   '';
 
   preBuild = "mkdir -p $HOME";
-  makeFlags = "LISP=${sbcl}/bin/sbcl ACL2_MAKE_LOG=NONE";
+  makeFlags = [
+    "LISP=${sbcl}/bin/sbcl"
+    "ACL2_MAKE_LOG=NONE"
+  ];
 
   doCheck = true;
   checkTarget = "mini-proveall";
@@ -83,7 +126,8 @@ in stdenv.mkDerivation rec {
   installPhase = ''
     mkdir -p $out/bin
     ln -s $out/share/${pname}/saved_acl2           $out/bin/${pname}
-  '' + lib.optionalString certifyBooks ''
+  ''
+  + lib.optionalString certifyBooks ''
     ln -s $out/share/${pname}/books/build/cert.pl  $out/bin/${pname}-cert
     ln -s $out/share/${pname}/books/build/clean.pl $out/bin/${pname}-clean
   '';
@@ -110,7 +154,8 @@ in stdenv.mkDerivation rec {
   '';
 
   meta = with lib; {
-    description = "An interpreter and a prover for a Lisp dialect";
+    description = "Interpreter and prover for a Lisp dialect";
+    mainProgram = "acl2";
     longDescription = ''
       ACL2 is a logic and programming language in which you can model computer
       systems, together with a tool to help you prove properties of those
@@ -124,23 +169,41 @@ in stdenv.mkDerivation rec {
       build tools cert.pl and clean.pl, renamed to ${pname}-cert and
       ${pname}-clean.
 
-    '' + (if certifyBooks then ''
-      The community books are also included and certified with the `make
-      everything` target.
-    '' else ''
-      The community books are not included in this package.
-    '');
+    ''
+    + (
+      if certifyBooks then
+        ''
+          The community books are also included and certified with the `make
+          everything` target.
+        ''
+      else
+        ''
+          The community books are not included in this package.
+        ''
+    );
     homepage = "https://www.cs.utexas.edu/users/moore/acl2/";
     downloadPage = "https://github.com/acl2-devel/acl2-devel/releases";
-    license = with licenses; [
-      # ACL2 itself is bsd3
-      bsd3
-    ] ++ optionals certifyBooks [
-      # The community books are mostly bsd3 or mit but with a few
-      # other things thrown in.
-      mit gpl2 llgpl21 cc0 publicDomain unfreeRedistributable
+    license =
+      with licenses;
+      [
+        # ACL2 itself is bsd3
+        bsd3
+      ]
+      ++ optionals certifyBooks [
+        # The community books are mostly bsd3 or mit but with a few
+        # other things thrown in.
+        mit
+        gpl2
+        llgpl21
+        cc0
+        publicDomain
+        unfreeRedistributable
+      ];
+    maintainers = with maintainers; [
+      kini
+      raskin
     ];
-    maintainers = with maintainers; [ kini raskin ];
     platforms = platforms.all;
+    broken = stdenv.hostPlatform.isDarwin;
   };
 }

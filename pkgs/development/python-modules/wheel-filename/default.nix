@@ -1,27 +1,42 @@
-{ lib
-, buildPythonPackage
-, fetchurl
-, attrs
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  hatchling,
+  pytest-cov-stub,
+  pytestCheckHook,
+  pythonOlder,
 }:
 
 buildPythonPackage rec {
   pname = "wheel-filename";
-  version = "1.3.0";
-  format = "wheel";
+  version = "1.4.2";
+  pyproject = true;
 
-  src = fetchurl {
-    url = "https://github.com/jwodder/wheel-filename/releases/download/v1.1.0/wheel_filename-1.1.0-py3-none-any.whl";
-    sha256 = "0aee45553f34e3a1b8a5db64aa832326f13c138b7f925a53daf96f984f9e6a38";
+  disabled = pythonOlder "3.8";
+
+  src = fetchFromGitHub {
+    owner = "jwodder";
+    repo = "wheel-filename";
+    tag = "v${version}";
+    hash = "sha256-KAuUrrSq6HJAy+5Gj6svI4M6oV6Fsle1A79E2q2FKW8=";
   };
 
-  buildInputs = [
-    attrs
+  build-system = [ hatchling ];
+
+  nativeCheckInputs = [
+    pytestCheckHook
+    pytest-cov-stub
   ];
 
+  pythonImportsCheck = [ "wheel_filename" ];
+
   meta = with lib; {
-    homepage = "https://github.com/jwodder/wheel-filename";
     description = "Parse wheel filenames";
-    license = with licenses; [ mit ];
+    homepage = "https://github.com/jwodder/wheel-filename";
+    changelog = "https://github.com/wheelodex/wheel-filename/releases/tag/${src.tag}";
+    license = licenses.mit;
     maintainers = with lib.maintainers; [ ayazhafiz ];
+    mainProgram = "wheel-filename";
   };
 }

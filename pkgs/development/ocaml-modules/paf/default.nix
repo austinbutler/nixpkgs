@@ -1,43 +1,39 @@
-{ buildDunePackage
-, lib
-, fetchurl
-, fetchpatch
-, mirage-stack
-, mirage-time
-, h2
-, tls-mirage
-, mimic
-, ke
-, bigstringaf
-, faraday
-, tls
-, lwt
-, logs
-, fmt
-, mirage-crypto-rng
-, tcpip
-, mirage-time-unix
-, ptime
-, uri
-, alcotest-lwt
-, cstruct
+{
+  buildDunePackage,
+  lib,
+  fetchurl,
+  h1,
+  h2,
+  tls-mirage,
+  mimic,
+  ke,
+  bigstringaf,
+  faraday,
+  tls,
+  lwt,
+  logs,
+  fmt,
+  mirage-crypto-rng,
+  tcpip,
+  ptime,
+  uri,
+  alcotest-lwt,
+  cstruct,
 }:
 
 buildDunePackage rec {
   pname = "paf";
-  version = "0.0.8";
+  version = "0.8.0";
 
   src = fetchurl {
     url = "https://github.com/dinosaure/paf-le-chien/releases/download/${version}/paf-${version}.tbz";
-    sha256 = "CyIIV11G7oUPPHuhov52LP4Ih4pY6bcUApD23/9q39k=";
+    hash = "sha256-0q07gZpzUyDoWlA4m/P+EGSvvVKAZ7RwVkpOziqzG2M=";
   };
 
-  useDune2 = true;
-  minimumOCamlVersion = "4.08";
+  minimalOCamlVersion = "4.08";
 
   propagatedBuildInputs = [
-    mirage-stack
-    mirage-time
+    h1
     h2
     tls-mirage
     mimic
@@ -49,17 +45,18 @@ buildDunePackage rec {
     tcpip
   ];
 
-  doCheck = false;
+  doCheck = true;
   checkInputs = [
     lwt
     logs
     fmt
     mirage-crypto-rng
-    mirage-time-unix
     ptime
     uri
     alcotest-lwt
   ];
+
+  __darwinAllowLocalNetworking = true;
 
   meta = {
     description = "HTTP/AF and MirageOS";

@@ -1,15 +1,17 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, azure-common
-, azure-storage-common
-, isPy3k
-, futures ? null
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  azure-common,
+  azure-storage-common,
+  isPy3k,
+  futures ? null,
 }:
 
 buildPythonPackage rec {
   pname = "azure-storage-file";
   version = "2.1.0";
+  format = "setuptools";
 
   src = fetchPypi {
     inherit pname version;
@@ -19,7 +21,8 @@ buildPythonPackage rec {
   propagatedBuildInputs = [
     azure-common
     azure-storage-common
-  ] ++ lib.optional (!isPy3k) futures;
+  ]
+  ++ lib.optional (!isPy3k) futures;
 
   # has no tests
   doCheck = false;

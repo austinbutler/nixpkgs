@@ -1,52 +1,48 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, flaky
-, hypothesis
-, pytest
-, pytestCheckHook
-, pythonOlder
-, setuptools-scm
+{
+  lib,
+  buildPythonPackage,
+  callPackage,
+  fetchFromGitHub,
+  pytest,
+  setuptools-scm,
 }:
 
 buildPythonPackage rec {
   pname = "pytest-asyncio";
-  version = "0.17.2";
-  format = "setuptools";
-
-  disabled = pythonOlder "3.6";
+  version = "0.26.0"; # N.B.: when updating, tests bleak and aioesphomeapi tests
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "pytest-dev";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-4wDXvO6pDK0dQLnyfJTTa+GXf9Qtsi6ywYDUIdhkgGo=";
+    repo = "pytest-asyncio";
+    tag = "v${version}";
+    hash = "sha256-GEhFwwQCXwtqfSiew/sOvJYV3JREqOGD4fQONlRR/Mw=";
   };
 
-  SETUPTOOLS_SCM_PRETEND_VERSION = version;
-
-  nativeBuildInputs = [
-    setuptools-scm
+  outputs = [
+    "out"
+    "testout"
   ];
 
-  propagatedBuildInputs = [
-    pytest
-  ];
+  build-system = [ setuptools-scm ];
 
-  checkInputs = [
-    flaky
-    hypothesis
-    pytestCheckHook
-  ];
+  buildInputs = [ pytest ];
 
-  pythonImportsCheck = [
-    "pytest_asyncio"
-  ];
+  postInstall = ''
+    mkdir $testout
+    cp -R tests $testout/tests
+  '';
+
+  doCheck = false;
+  passthru.tests.pytest = callPackage ./tests.nix { };
+
+  pythonImportsCheck = [ "pytest_asyncio" ];
 
   meta = with lib; {
-    description = "library for testing asyncio code with pytest";
+    description = "Library for testing asyncio code with pytest";
     homepage = "https://github.com/pytest-dev/pytest-asyncio";
+    changelog = "https://github.com/pytest-dev/pytest-asyncio/blob/${src.tag}/docs/reference/changelog.rst";
     license = licenses.asl20;
-    maintainers = with maintainers; [ ];
+    maintainers = with maintainers; [ dotlambda ];
   };
 }

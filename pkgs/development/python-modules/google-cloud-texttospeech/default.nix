@@ -1,29 +1,47 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pytestCheckHook
-, google-api-core
-, libcst
-, mock
-, proto-plus
-, pytest-asyncio
+{
+  lib,
+  buildPythonPackage,
+  fetchPypi,
+  google-api-core,
+  mock,
+  proto-plus,
+  protobuf,
+  pytest-asyncio,
+  pytestCheckHook,
+  pythonOlder,
+  setuptools,
 }:
 
 buildPythonPackage rec {
   pname = "google-cloud-texttospeech";
-  version = "2.10.1";
+  version = "2.27.0";
+  pyproject = true;
+
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-5uFtHqZJgouUBgkGNqSBFQrWaU2Gm06icDjKx57HY94=";
+    pname = "google_cloud_texttospeech";
+    inherit version;
+    hash = "sha256-lKOCyVt8xY79JQWiTClo4mFPxr3512+5qBnU7SmuGI4=";
   };
 
-  propagatedBuildInputs = [ libcst google-api-core proto-plus ];
+  build-system = [ setuptools ];
 
-  checkInputs = [ mock pytest-asyncio pytestCheckHook ];
+  dependencies = [
+    google-api-core
+    proto-plus
+    protobuf
+  ]
+  ++ google-api-core.optional-dependencies.grpc;
+
+  nativeCheckInputs = [
+    mock
+    pytest-asyncio
+    pytestCheckHook
+  ];
 
   disabledTests = [
-    # Disable tests that require credentials
+    # Tests that require credentials
     "test_list_voices"
     "test_synthesize_speech"
   ];
@@ -36,8 +54,9 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Google Cloud Text-to-Speech API client library";
-    homepage = "https://github.com/googleapis/python-texttospeech";
+    homepage = "https://github.com/googleapis/google-cloud-python/tree/main/packages/google-cloud-texttospeech";
+    changelog = "https://github.com/googleapis/google-cloud-python/blob/google-cloud-texttospeech-v${version}/packages/google-cloud-texttospeech/CHANGELOG.md";
     license = licenses.asl20;
-    maintainers = with maintainers; [ SuperSandro2000 ];
+    maintainers = [ ];
   };
 }

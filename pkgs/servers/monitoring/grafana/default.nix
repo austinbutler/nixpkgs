@@ -1,51 +1,128 @@
-{ lib, buildGoModule, fetchurl, fetchFromGitHub, nixosTests, tzdata, wire }:
+{
+  lib,
+  stdenv,
+  buildGoModule,
+  fetchFromGitHub,
+  removeReferencesTo,
+  tzdata,
+  wire,
+  yarn-berry_4,
+  python3,
+  jq,
+  moreutils,
+  nix-update-script,
+  nixosTests,
+  xcbuild,
+  faketty,
+}:
 
+let
+  # Grafana seems to just set it to the latest version available
+  # nowadays.
+  # NOTE: I(Ma27) leave this in, even if it's technically dead code because
+  # it doesn't make sense to pull this out of the history on every other release.
+  #
+  # Please make sure to always set a Go version to `.0`: it may happen that
+  # stable is on an older patch-release of Go and then the build would fail
+  # after a backport.
+  patchGoVersion = ''
+    find . -name go.mod -not -path "./.bingo/*" -print0 | while IFS= read -r -d ''' line; do
+      substituteInPlace "$line" \
+        --replace-fail "go 1.24.4" "go 1.24.0"
+    done
+    find . -name go.work -print0 | while IFS= read -r -d ''' line; do
+      substituteInPlace "$line" \
+        --replace-fail "go 1.24.4" "go 1.24.0"
+    done
+    substituteInPlace Makefile \
+      --replace-fail "GO_VERSION = 1.24.4" "GO_VERSION = 1.24.0"
+  '';
+in
 buildGoModule rec {
   pname = "grafana";
-  version = "8.4.2";
+  version = "12.0.2+security-01";
 
-  excludedPackages = "\\(alert_webhook_listener\\|clean-swagger\\|release_publisher\\|slow_proxy\\|slow_proxy_mac\\|macaron\\)";
+  subPackages = [
+    "pkg/cmd/grafana"
+    "pkg/cmd/grafana-server"
+    "pkg/cmd/grafana-cli"
+  ];
 
   src = fetchFromGitHub {
-    rev = "v${version}";
     owner = "grafana";
     repo = "grafana";
-    sha256 = "sha256-ZRVX7nqBsjTODRtfdL4l/azC3ZH2WJCBOXjldkNvweE=";
+    rev = "v${version}";
+    hash = "sha256-aMbxBDLikmUBZwfZQPLcCCk8BpMeQ7Pj1li4p28aZ88=";
   };
 
-  srcStatic = fetchurl {
-    url = "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz";
-    sha256 = "sha256-4k+6KMoSzoEffPFl/y2paheeY1F35jRPsHtH05Zxr/Y=";
+  # borrowed from: https://github.com/NixOS/nixpkgs/blob/d70d9425f49f9aba3c49e2c389fe6d42bac8c5b0/pkgs/development/tools/analysis/snyk/default.nix#L20-L22
+  env = {
+    CYPRESS_INSTALL_BINARY = 0;
+
+    # The build OOMs on memory constrained aarch64 without this
+    NODE_OPTIONS = "--max_old_space_size=4096";
   };
 
-  vendorSha256 = "sha256-RugV5cHlpR739CA1C/7FkXasvkv18m7pPsK6mxfSkC0=";
+  missingHashes = ./missing-hashes.json;
+  offlineCache = yarn-berry_4.fetchYarnBerryDeps {
+    inherit src missingHashes;
+    hash = "sha256-vQdiQyxebtVrO76Pl4oC3DM37owhtQgZqYWaiIyKysQ=";
+  };
 
-  nativeBuildInputs = [ wire ];
+  disallowedRequisites = [ offlineCache ];
 
-  preBuild = ''
+  postPatch = patchGoVersion;
+
+  vendorHash = "sha256-cJxvZPJmf5YY+IWE7rdoGUkXxDeE6b0troGsdpsQzeU=";
+
+  proxyVendor = true;
+
+  nativeBuildInputs = [
+    wire
+    jq
+    moreutils
+    removeReferencesTo
+    # required to run old node-gyp
+    (python3.withPackages (ps: [ ps.distutils ]))
+    faketty
+    yarn-berry_4
+    yarn-berry_4.yarnBerryConfigHook
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [ xcbuild.xcbuild ];
+
+  # We have to remove this setupHook, otherwise it also runs in the `goModules`
+  # derivation and fails because `offlineCache` is missing there.
+  overrideModAttrs = (
+    old: {
+      nativeBuildInputs = lib.filter (
+        x: lib.getName x != (lib.getName yarn-berry_4.yarnBerryConfigHook)
+      ) old.nativeBuildInputs;
+    }
+  );
+
+  postConfigure = ''
     # Generate DI code that's required to compile the package.
     # From https://github.com/grafana/grafana/blob/v8.2.3/Makefile#L33-L35
     wire gen -tags oss ./pkg/server
     wire gen -tags oss ./pkg/cmd/grafana-cli/runner
 
-    # The testcase makes an API call against grafana.com:
-    #
-    # [...]
-    # grafana> t=2021-12-02T14:24:58+0000 lvl=dbug msg="Failed to get latest.json repo from github.com" logger=update.checker error="Get \"https://raw.githubusercontent.com/grafana/grafana/main/latest.json\": dial tcp: lookup raw.githubusercontent.com on [::1]:53: read udp [::1]:36391->[::1]:53: read: connection refused"
-    # grafana> t=2021-12-02T14:24:58+0000 lvl=dbug msg="Failed to get plugins repo from grafana.com" logger=plugin.manager error="Get \"https://grafana.com/api/plugins/versioncheck?slugIn=&grafanaVersion=\": dial tcp: lookup grafana.com on [::1]:53: read udp [::1]:41796->[::1]:53: read: connection refused"
-    sed -i -e '/Request is not forbidden if from an admin/a t.Skip();' pkg/tests/api/plugins/api_plugins_test.go
+    GOARCH= CGO_ENABLED=0 go generate ./kinds/gen.go
+    GOARCH= CGO_ENABLED=0 go generate ./public/app/plugins/gen.go
 
-    # Skip a flaky test (https://github.com/NixOS/nixpkgs/pull/126928#issuecomment-861424128)
-    sed -i -e '/it should change folder successfully and return correct result/{N;s/$/\nt.Skip();/}'\
-      pkg/services/libraryelements/libraryelements_patch_test.go
+  '';
 
+  postBuild = ''
+    # After having built all the Go code, run the JS builders now.
 
-    # main module (github.com/grafana/grafana) does not contain package github.com/grafana/grafana/scripts/go
-    rm -r scripts/go
+    # Workaround for https://github.com/nrwl/nx/issues/22445
+    faketty yarn run build
+    yarn run plugins:build-bundled
   '';
 
   ldflags = [
-    "-s" "-w" "-X main.version=${version}"
+    "-s"
+    "-w"
+    "-X main.version=${version}"
   ];
 
   # Tests start http servers which need to bind to local addresses:
@@ -59,21 +136,39 @@ buildGoModule rec {
   '';
 
   postInstall = ''
-    tar -xvf $srcStatic
     mkdir -p $out/share/grafana
-    mv grafana-*/{public,conf,tools} $out/share/grafana/
-
-    cp ./conf/defaults.ini $out/share/grafana/conf/
+    cp -r public conf $out/share/grafana/
   '';
 
-  passthru.tests = { inherit (nixosTests) grafana; };
+  postFixup = ''
+    while read line; do
+      remove-references-to -t $offlineCache "$line"
+    done < <(find $out -type f -name '*.js.map' -or -name '*.js')
+  '';
+
+  passthru = {
+    tests = { inherit (nixosTests) grafana; };
+    updateScript = nix-update-script { };
+  };
 
   meta = with lib; {
     description = "Gorgeous metric viz, dashboards & editors for Graphite, InfluxDB & OpenTSDB";
-    license = licenses.agpl3;
+    license = licenses.agpl3Only;
     homepage = "https://grafana.com";
-    maintainers = with maintainers; [ offline fpletz willibutz globin ma27 Frostman ];
-    platforms = platforms.linux ++ platforms.darwin;
+    maintainers = with maintainers; [
+      offline
+      fpletz
+      globin
+      ma27
+      Frostman
+      ryan4yin
+    ];
+    platforms = [
+      "x86_64-linux"
+      "x86_64-darwin"
+      "aarch64-linux"
+      "aarch64-darwin"
+    ];
     mainProgram = "grafana-server";
   };
 }
