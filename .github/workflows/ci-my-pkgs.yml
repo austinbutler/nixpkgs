@@ -30,9 +30,9 @@ on:
           - macos-13 # Last free x86_64 macOS version
           - ubuntu-latest # x86_64
           # https://github.com/actions/partner-runner-images
-          - ubuntu-latest-arm # aarch64, can have long queue times
-          - ubuntu-24.04-arm
-          - some-shit-that-doesnt-exist
+          - ubuntu-24.04-arm # aarch64
+          # ubuntu-latest-arm doesn't exist?
+          # https://github.com/actions/partner-runner-images/issues/118
 jobs:
   parse-inputs:
     runs-on: ubuntu-latest
@@ -66,4 +66,4 @@ jobs:
       - name: Show kernel info
         run: uname -a
       - name: Build package
-        run: NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix-build -A ${{ matrix.package }} $([[ "${{ github.event.inputs.check }}" == "true" ]] && printf %s '--check')
+        run: NIXPKGS_ALLOW_BROKEN=1 NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix-build -A ${{ matrix.package }} $([[ "${{ github.event.inputs.check }}" == "true" ]] && printf %s '--check')
