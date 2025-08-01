@@ -31,6 +31,7 @@ on:
           - ubuntu-latest # x86_64
           # https://github.com/actions/partner-runner-images
           - ubuntu-latest-arm # aarch64, can have long queue times
+          - ubuntu-24.04-arm
           - some-shit-that-doesnt-exist
 jobs:
   parse-inputs:
