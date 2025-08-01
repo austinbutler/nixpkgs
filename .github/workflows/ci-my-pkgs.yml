@@ -69,7 +69,7 @@ jobs:
       - name: Show kernel info
         run: uname -a
       - name: Build package
-        run: NIXPKGS_ALLOW_BROKEN=1 NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix build .#${{ matrix.package }} $([[ "${{ github.event.inputs.check }}" == "true" ]] && printf %s '--check') --log-format raw-with-logs
+        run: NIXPKGS_ALLOW_BROKEN=1 NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix build --impure .#${{ matrix.package }} $([[ "${{ github.event.inputs.check }}" == "true" ]] && printf %s '--check') --log-format raw-with-logs
       # - name: Show logs
       #   if: failure()
       #   run: nix log .#${{ matrix.package }} $([[ "${{ github.event.inputs.check }}" == "true" ]] && printf %s '--check')
