@@ -62,6 +62,6 @@ jobs:
           name: austinbutler
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Show kernel info
-        run: uname --all
+        run: uname -a
       - name: Build package
         run: NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix-build -A ${{ matrix.package }} $([[ "${{ github.event.inputs.check }}" == "true" ]] && printf %s '--check')
