@@ -30,7 +30,7 @@ let
       stripRoot = false;
       hash =
         {
-          x86_64-linux = "sha256-R4hBsfb6iS1xVNVDWQKCQUBYWVMwfdxLqqsR/gZiGiQ=";
+          x86_64-linux = "sha256-khYVM0jocno97lV8mRH71WHzopIjnq3eX/PD1kQuZnE=";
           aarch64-linux = "sha256-4QRCSqzvhnHUsSLWpaCUREq9pqW83Km6txqvjtFiN7E=";
         }
         .${system} or throwSystem;
