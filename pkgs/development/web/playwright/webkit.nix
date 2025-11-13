@@ -137,7 +137,7 @@ let
       stripRoot = false;
       hash =
         {
-          x86_64-linux = "sha256-FndRfpPsBh+x15MIL2ybhxG1QskpvHLmIa7RhSw6GBQ=";
+          x86_64-linux = "sha256-giXoY2uPjwLzc6sbADI+g/qLgE/O+FJbQok7xNNrsaQ=";
           aarch64-linux = "sha256-frZLMVhMrokww1teSBb7VCM9vkCX6n3js0Pa1G51254=";
         }
         .${system} or throwSystem;

@@ -17,7 +17,7 @@ let
       }.zip";
       hash =
         {
-          x86_64-linux = "sha256-hGlG7Snw/YVgXDHWXK24Ci87JxpENEfhpve7fu+ol1E=";
+          x86_64-linux = "sha256-qdAlGPnpiOfa49zJZsbLvNtEqh4xnaPDH3TvX5fA+PA=";
           aarch64-linux = "sha256-R5wl+oln2gFse+31NFfLaIsGQOOVrCRj8drOE9qmiwY=";
         }
         .${system} or throwSystem;
