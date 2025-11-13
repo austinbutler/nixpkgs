@@ -110,7 +110,7 @@ let
     hash =
       {
         x86_64-darwin = "sha256-Dj4Pf86gdXLKB/T9Qty+0w3N8Im0SRHlKCQgdt5/Mdc=";
-        aarch64-darwin = "sha256-lyJV3WJq6XmDgehsMwc/fW9Ieylz1mrQIXbKS4KHLiI=";
+        aarch64-darwin = "sha256-G7PlHJPlDQXQzO5MGuCuGQUxV9VqKY4yQebuoltVq6U=";
       }
       .${system} or throwSystem;
   };
