@@ -219,7 +219,7 @@ let
     hash =
       {
         x86_64-darwin = "sha256-4uvJFUEQ63mER+jjVOwYVgSfWRegujuuOXO7Sm6bGzU=";
-        aarch64-darwin = "sha256-+8LzvP2pNrb04S3N/JId4YimH9bfxAeLzpqYeKO5hb0=";
+        aarch64-darwin = "sha256-1DaDFVn6RyyFevx2oUai5ZtWMRE5WiDEZfpOY1A+/oU=";
       }
       .${system} or throwSystem;
   };
