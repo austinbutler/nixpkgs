@@ -61,13 +61,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "audacity";
-  version = "3.7.4";
+  version = "3.7.6";
 
   src = fetchFromGitHub {
     owner = "audacity";
     repo = "audacity";
     rev = "Audacity-${finalAttrs.version}";
-    hash = "sha256-kESKpIke9Xi4A55i3mUu1JkDjp8voBJBixiAK8pUkKA=";
+    hash = "sha256-Y59bKs0l97HJWiCHYBkzbbHJsmraUkM2qRGfKSXjT80=";
   };
 
   patches = [
@@ -78,7 +78,7 @@ stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     mkdir src/private
     substituteInPlace scripts/build/macOS/fix_bundle.py \
-      --replace-fail "path.startswith('/usr/lib/')" "path.startswith('${builtins.storeDir}')"
+      --replace-fail "path.startswith('/usr/lib/')" "path.startswith('/usr/lib/') or path.startswith('${builtins.storeDir}')"
   ''
   + lib.optionalString stdenv.hostPlatform.isLinux ''
     substituteInPlace libraries/lib-files/FileNames.cpp \

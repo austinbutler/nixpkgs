@@ -20,7 +20,7 @@ rustPlatform.buildRustPackage rec {
   src = fetchFromGitHub {
     owner = "kornelski";
     repo = "pngquant";
-    rev = version;
+    tag = version;
     hash = "sha256-u2zEp9Llo+c/+1QGW4V4r40KQn/ATHCTEsrpy7bRf/I=";
     fetchSubmodules = true;
   };
@@ -55,6 +55,6 @@ rustPlatform.buildRustPackage rec {
       bsd2
     ];
     mainProgram = "pngquant";
-    maintainers = with lib.maintainers; [ ];
+    maintainers = [ ];
   };
 }

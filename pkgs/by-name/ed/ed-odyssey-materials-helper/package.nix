@@ -2,9 +2,8 @@
   stdenv,
   lib,
   fetchFromGitHub,
-  gradle,
-  jdk24,
-  makeWrapper,
+  gradle_9,
+  jdk25,
   wrapGAppsHook3,
   libXxf86vm,
   libXtst,
@@ -17,20 +16,22 @@
   makeDesktopItem,
   writeScript,
 }:
+let
+  gradle = gradle_9;
+in
 stdenv.mkDerivation rec {
   pname = "ed-odyssey-materials-helper";
-  version = "2.199";
+  version = "3.1.7";
 
   src = fetchFromGitHub {
     owner = "jixxed";
     repo = "ed-odyssey-materials-helper";
     tag = version;
-    hash = "sha256-1d5OzhAFo0s5xshJCdfWufo5Xb0UtHzUPdR6fwuaGYQ=";
+    hash = "sha256-m4Wv1M6UliyERjZHZvAqJVttFwZfsr0oxrK4/AZmy1Q=";
   };
 
   nativeBuildInputs = [
     gradle
-    makeWrapper
     wrapGAppsHook3
     copyDesktopItems
   ];
@@ -65,16 +66,20 @@ stdenv.mkDerivation rec {
   };
 
   gradleFlags = [
-    "-Dorg.gradle.java.home=${jdk24}"
+    "-Dorg.gradle.java.home=${jdk25}"
     "--stacktrace"
   ];
 
   gradleBuildTask = "application:jpackage";
 
   env = {
-    # The source no longer contains this, so this has been extracted from the binary releases
-    SENTRY_DSN = "https://1aacf97280717f749dfc93a1713f9551@o4507814449774592.ingest.de.sentry.io/4507814504759376";
+    EDDN_SOFTWARE_NAME = "EDO Materials Helper";
   };
+
+  preBuild = ''
+    # required to make EDDN_SOFTWARE_NAME work and for the program to know its own version
+    gradle $gradleFlags application:generateSecrets
+  '';
 
   installPhase = ''
     runHook preInstall
@@ -91,9 +96,7 @@ stdenv.mkDerivation rec {
   dontWrapGApps = true;
 
   postFixup = ''
-    # The logs would go into the current directory, so the wrapper will cd to the config dir first
-    makeShellWrapper $out/share/ed-odyssey-materials-helper/bin/Elite\ Dangerous\ Odyssey\ Materials\ Helper $out/bin/ed-odyssey-materials-helper \
-      --run 'mkdir -p ~/.config/odyssey-materials-helper/ && cd ~/.config/odyssey-materials-helper/' \
+    makeWrapper $out/share/ed-odyssey-materials-helper/bin/Elite\ Dangerous\ Odyssey\ Materials\ Helper $out/bin/ed-odyssey-materials-helper \
       --prefix LD_LIBRARY_PATH : ${
         lib.makeLibraryPath [
           libXxf86vm

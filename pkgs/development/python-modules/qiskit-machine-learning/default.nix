@@ -11,7 +11,7 @@
   fastdtw,
   numpy,
   psutil,
-  qiskit-terra,
+  qiskit,
   scikit-learn,
   sparse,
   torch,
@@ -24,7 +24,7 @@
 
 buildPythonPackage rec {
   pname = "qiskit-machine-learning";
-  version = "0.8.2";
+  version = "0.8.3";
   pyproject = true;
 
   disabled = pythonOlder "3.6";
@@ -33,7 +33,7 @@ buildPythonPackage rec {
     owner = "qiskit";
     repo = pname;
     tag = version;
-    hash = "sha256-dvGUtB7R44B+DYZKl4R2Q0GdvLTjVKWD0KmuyCoaOSc=";
+    hash = "sha256-XnLCejK6m8p/OC5gKCoP1UXVblISChu3lKF8BnrnRbk=";
   };
 
   nativeBuildInputs = [ setuptools ];
@@ -43,7 +43,7 @@ buildPythonPackage rec {
     numpy
     psutil
     torch
-    qiskit-terra
+    qiskit
     scikit-learn
     sparse
   ];
@@ -84,11 +84,12 @@ buildPythonPackage rec {
   ];
 
   meta = with lib; {
+    broken = true; # incompatible with qiskit >= 2.0 (see https://github.com/Qiskit/qiskit-machine-learning/issues/934)
     description = "Software for developing quantum computing programs";
     homepage = "https://qiskit.org";
     downloadPage = "https://github.com/QISKit/qiskit-optimization/releases";
     changelog = "https://qiskit.org/documentation/release_notes.html";
     license = licenses.asl20;
-    maintainers = with maintainers; [ drewrisinger ];
+    maintainers = [ ];
   };
 }

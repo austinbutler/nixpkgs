@@ -53,7 +53,9 @@ in
 
       backlogLimit = lib.mkOption {
         type = lib.types.int;
-        default = 64; # Apparently the kernel default
+        # Significantly increase from the kernel default of 64 because a
+        # normal systems generates way more logs.
+        default = 1024;
         description = ''
           The maximum number of outstanding audit buffers allowed; exceeding this is
           considered a failure and handled in a manner specified by failureMode.
@@ -81,7 +83,22 @@ in
   };
 
   config = lib.mkIf (cfg.enable == "lock" || cfg.enable) {
-    systemd.services.audit-rules = {
+    boot.kernelParams = [
+      # A lot of audit events happen before the systemd service starts. Thus
+      # enable it via the kernel commandline to have the audit subsystem ready
+      # as soon as the kernel starts.
+      "audit=1"
+      # Also set the backlog limit because the kernel default is too small to
+      # capture all of them before the service starts.
+      "audit_backlog_limit=${toString cfg.backlogLimit}"
+    ];
+
+    environment.systemPackages = [ pkgs.audit ];
+
+    # upstream contains a audit-rules.service, which uses augenrules.
+    # That script does not handle cleanup correctly and insists on loading from /etc/audit.
+    # So, instead we have our own service for loading rules.
+    systemd.services.audit-rules-nixos = {
       description = "Load Audit Rules";
       wantedBy = [ "sysinit.target" ];
       before = [

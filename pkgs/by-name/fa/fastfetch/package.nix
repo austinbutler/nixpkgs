@@ -59,13 +59,13 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastfetch";
-  version = "2.49.0";
+  version = "2.56.0";
 
   src = fetchFromGitHub {
     owner = "fastfetch-cli";
     repo = "fastfetch";
     tag = finalAttrs.version;
-    hash = "sha256-M1/VThHWRB6MbmPpHcgaM3j07kmuj0RnjblKo54RatY=";
+    hash = "sha256-kOI0PUEKmI5hZowEl/VRinjRMDXOP4K12eoFHuIDqOo=";
   };
 
   outputs = [
@@ -270,6 +270,7 @@ stdenv.mkDerivation (finalAttrs: {
     maintainers = with lib.maintainers; [
       luftmensch-luftmensch
       khaneliman
+      defelo
     ];
     platforms = lib.platforms.all;
     mainProgram = "fastfetch";

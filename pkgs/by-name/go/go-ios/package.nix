@@ -1,10 +1,13 @@
 {
   lib,
+  stdenv,
   buildGoModule,
   fetchFromGitHub,
   nix-update-script,
   pkg-config,
   libusb1,
+  iproute2,
+  net-tools,
 }:
 
 buildGoModule rec {
@@ -24,6 +27,14 @@ buildGoModule rec {
   excludedPackages = [
     "restapi"
   ];
+
+  postPatch = lib.optionalString stdenv.hostPlatform.isLinux ''
+    substituteInPlace ncm/linux_commands.go \
+      --replace-fail "ip " "${lib.getExe' iproute2 "ip"} "
+
+    substituteInPlace ios/tunnel/tunnel.go \
+      --replace-fail "ifconfig" "${lib.getExe' net-tools "ifconfig"}"
+  '';
 
   nativeBuildInputs = [
     pkg-config

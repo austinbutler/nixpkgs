@@ -14,18 +14,16 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "syshud";
-  version = "0-unstable-2025-07-26";
+  version = "0-unstable-2025-11-06";
 
   src = fetchFromGitHub {
     owner = "System64fumo";
     repo = "syshud";
-    rev = "d954c124280b71f80930046a11e390a814c1b229";
-    hash = "sha256-FUPnIUl9x0eZmhls4CmPGg4kZb1MNmKU5BKecFDQdHM=";
+    rev = "523b7f812746123e814d09e687f64781b71ac303";
+    hash = "sha256-o4gKVsvOz09DazOTfEwNo4iOb8D++by3eAOko/1GMsI=";
   };
 
   postPatch = ''
-    substituteInPlace Makefile \
-      --replace-fail pkg-config ''${PKG_CONFIG}
     substituteInPlace src/main.cpp \
       --replace-fail /usr/share/sys64/hud/config.conf $out/share/sys64/hud/config.conf
     substituteInPlace src/window.cpp \
@@ -64,6 +62,8 @@ stdenv.mkDerivation (finalAttrs: {
   postInstall = ''
     wrapProgram $out/bin/syshud --prefix LD_LIBRARY_PATH : $out/lib
   '';
+
+  strictDeps = true;
 
   passthru.updateScript = nix-update-script {
     extraArgs = [

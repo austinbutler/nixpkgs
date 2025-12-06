@@ -7,13 +7,13 @@
 
 stdenvNoCC.mkDerivation {
   pname = "nu_scripts";
-  version = "0-unstable-2025-07-24";
+  version = "0-unstable-2025-12-01";
 
   src = fetchFromGitHub {
     owner = "nushell";
     repo = "nu_scripts";
-    rev = "bd128cf5257bf3f6c3453cbb4fd431d01d3467db";
-    hash = "sha256-8sJc7oF0m/hi/Uqm1X6ciIYAk5zW8hm0byX2RVZS6V8=";
+    rev = "485a62c9a3522ef13abb1770523a2a566da721bd";
+    hash = "sha256-+m4T1xSngA5z0OHQGyzhVg6kOyEzwOOX7VuWsluYP10=";
   };
 
   installPhase = ''
@@ -21,6 +21,7 @@ stdenvNoCC.mkDerivation {
 
     mkdir -p $out/share/nu_scripts
     mv ./* $out/share/nu_scripts
+    rm -r $out/share/nu_scripts/themes/screenshots
 
     runHook postInstall
   '';

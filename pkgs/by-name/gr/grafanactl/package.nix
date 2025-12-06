@@ -8,16 +8,16 @@
 
 buildGoModule (finalAttrs: {
   pname = "grafanactl";
-  version = "0.1.1";
+  version = "0.1.8";
 
   src = fetchFromGitHub {
     owner = "grafana";
     repo = "grafanactl";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-l+Aj1n0ZU7tW5hTKeTkZQgvlnOBISaYJ2qFramD4eiY=";
+    hash = "sha256-UaltfA3O9IkcWXCnxe0pOhYm3//5YZEvhVi3emCy1mM=";
   };
 
-  vendorHash = "sha256-eEgGrb/un+KkT7DBJ1SMUUHauZQMYroKo6OBrgzGicM=";
+  vendorHash = "sha256-wIp05nwc4MICkNFoEAjOd4kjs1RE7RpINcdYzIdq4YY=";
 
   ldflags = [
     "-X main.version=v${finalAttrs.version}"
@@ -44,7 +44,7 @@ buildGoModule (finalAttrs: {
   meta = {
     description = "Tool designed to simplify interaction with Grafana instances";
     homepage = "https://github.com/grafana/grafanactl";
-    changelog = "https://github.com/grafana/grafanactl/tags/v${finalAttrs.version}";
+    changelog = "https://github.com/grafana/grafanactl/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.asl20;
     maintainers = with lib.maintainers; [ wcarlsen ];
     mainProgram = "grafanactl";

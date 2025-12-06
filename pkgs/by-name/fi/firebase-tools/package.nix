@@ -10,19 +10,20 @@
 
 buildNpmPackage rec {
   pname = "firebase-tools";
-  version = "14.11.1";
+  version = "14.27.0";
 
   src = fetchFromGitHub {
     owner = "firebase";
     repo = "firebase-tools";
     tag = "v${version}";
-    hash = "sha256-2igmTOGheCMlBo2fKbKOpc+IFhwLcYKJ7u5evKl0buY=";
+    hash = "sha256-mkHZtC3W8ueB0cB4fVSAY5DID2QEdv+2ZmkhsVTunEc=";
   };
 
-  npmDepsHash = "sha256-9ysvVXaJbV2axsZn/TEAdDBPwoM8baI5jnMO9dH6JqE=";
+  npmDepsHash = "sha256-XDaFdYbowygMiM0BX1ggfWt1JXHaLOaZ2Npztip7CAU=";
 
+  # No more package-lock.json in upstream src
   postPatch = ''
-    ln -s npm-shrinkwrap.json package-lock.json
+    cp ./npm-shrinkwrap.json ./package-lock.json
   '';
 
   nativeBuildInputs = [

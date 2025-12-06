@@ -18,17 +18,18 @@
   linkFarm,
   lightdm-slick-greeter,
   numlockx,
+  xapp-symbolic-icons,
 }:
 
 stdenv.mkDerivation rec {
   pname = "lightdm-slick-greeter";
-  version = "2.2.0";
+  version = "2.2.3";
 
   src = fetchFromGitHub {
     owner = "linuxmint";
     repo = "slick-greeter";
     rev = version;
-    hash = "sha256-xuNUCS8v8XXidXNT/DP+sckdadUTeflFK34ZDpF1iyc=";
+    hash = "sha256-htyFH1Q8RFyvkW75NMpjajNJDzv/87k/Dr8+R5beT2w=";
   };
 
   nativeBuildInputs = [
@@ -69,10 +70,6 @@ stdenv.mkDerivation rec {
     substituteInPlace data/x.dm.slick-greeter.gschema.xml \
       --replace-fail "/usr/share/onboard" "/run/current-system/sw/share/onboard"
 
-    # This image is really just a fallback.
-    substituteInPlace src/user-prompt-box.vala \
-      --replace-fail "/usr/share/cinnamon/faces/" "/run/current-system/sw/share/cinnamon/faces/"
-
     patchShebangs files/usr/bin/*
   '';
 
@@ -89,6 +86,7 @@ stdenv.mkDerivation rec {
     buildPythonPath "$out $pythonPath"
     gappsWrapperArgs+=(
       --prefix PYTHONPATH : "$program_PYTHONPATH"
+      --prefix XDG_DATA_DIRS : "${lib.makeSearchPath "share" [ xapp-symbolic-icons ]}"
     )
   '';
 

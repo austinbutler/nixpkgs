@@ -67,7 +67,7 @@ let
       # we can also run non-NixOS guests during tests. This, however, is
       # mostly futureproofing as the test instrumentation is still very
       # tightly coupled to NixOS.
-      PS1="" exec ${pkgs.coreutils}/bin/env bash --norc /dev/hvc0
+      PS1="" exec ${pkgs.bashNonInteractive}/bin/bash --norc /dev/hvc0
     '';
     serviceConfig.KillSignal = "SIGHUP";
   };
@@ -85,6 +85,9 @@ in
 {
 
   options.testing = {
+    backdoor = lib.mkEnableOption "backdoor service in stage 2" // {
+      default = true;
+    };
 
     initrdBackdoor = lib.mkEnableOption ''
       backdoor.service in initrd. Requires
@@ -107,12 +110,14 @@ in
       }
     ];
 
-    systemd.services.backdoor = lib.mkMerge [
-      backdoorService
-      {
-        wantedBy = [ "multi-user.target" ];
-      }
-    ];
+    systemd.services.backdoor = lib.mkIf cfg.backdoor (
+      lib.mkMerge [
+        backdoorService
+        {
+          wantedBy = [ "multi-user.target" ];
+        }
+      ]
+    );
 
     boot.initrd.systemd = lib.mkMerge [
       {

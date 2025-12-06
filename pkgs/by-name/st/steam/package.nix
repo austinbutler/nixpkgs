@@ -21,10 +21,11 @@ let
       extraPreBwrapCmds ? "",
       extraBwrapArgs ? [ ],
       extraEnv ? { },
+      privateTmp ? true,
       ...
     }@args:
     buildFHSEnv (
-      (builtins.removeAttrs args [
+      (removeAttrs args [
         "extraPkgs"
         "extraLibraries"
         "extraProfile"
@@ -150,6 +151,7 @@ buildRuntimeEnv {
     extraPreBwrapCmds
     extraBwrapArgs
     extraEnv
+    privateTmp
     ;
 
   runScript = writeShellScript "steam-wrapped" ''
@@ -175,6 +177,7 @@ buildRuntimeEnv {
             extraPreBwrapCmds
             extraBwrapArgs
             extraEnv
+            privateTmp
             ;
 
           runScript = writeShellScript "steam-run" ''

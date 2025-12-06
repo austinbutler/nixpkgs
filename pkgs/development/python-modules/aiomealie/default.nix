@@ -18,7 +18,7 @@
 
 buildPythonPackage rec {
   pname = "aiomealie";
-  version = "0.10.0";
+  version = "1.1.0";
   pyproject = true;
 
   disabled = pythonOlder "3.11";
@@ -27,7 +27,7 @@ buildPythonPackage rec {
     owner = "joostlek";
     repo = "python-mealie";
     tag = "v${version}";
-    hash = "sha256-PpmgXiKJ8qQKHt7FVWpNgt3XKwqZ2caIcm7EO7UsfbI=";
+    hash = "sha256-sz/8b0iTtvS4RPBJynvGKf5oiRPJ9Lu/z6leZ1Hoqns=";
   };
 
   build-system = [ poetry-core ];

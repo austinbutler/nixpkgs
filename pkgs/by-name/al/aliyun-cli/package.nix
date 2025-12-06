@@ -8,17 +8,17 @@
 
 buildGoModule rec {
   pname = "aliyun-cli";
-  version = "3.0.291";
+  version = "3.2.0";
 
   src = fetchFromGitHub {
     owner = "aliyun";
     repo = "aliyun-cli";
     tag = "v${version}";
-    hash = "sha256-/nrspG9pB8pOnkTpnY3/4872sfe1Wg14MnKftEz4YX0=";
+    hash = "sha256-JZ0LbULvUwovGtKMiENV6OiBhOQMOqBMdLs874x95HA=";
     fetchSubmodules = true;
   };
 
-  vendorHash = "sha256-pa60hGn1UmzSgmopw+OAFgsL0o7mjEXTpYLAHgdTcMI=";
+  vendorHash = "sha256-lmlCPBEqopmoNjkihVOh8zKSKsS4HmaDQ+QAEJ/pEvA=";
 
   subPackages = [ "main" ];
 

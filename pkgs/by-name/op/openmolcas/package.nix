@@ -48,11 +48,6 @@ let
   nevpt2Src = stdenv.mkDerivation {
     pname = "nevpt2-src";
     version = "unstable";
-    phases = [
-      "unpackPhase"
-      "patchPhase"
-      "installPhase"
-    ];
     src = fetchFromGitHub {
       owner = "qcscine";
       repo = "nevpt2";
@@ -69,13 +64,13 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "openmolcas";
-  version = "25.06";
+  version = "25.10";
 
   src = fetchFromGitLab {
     owner = "Molcas";
     repo = "OpenMolcas";
     rev = "v${version}";
-    hash = "sha256-/d+jusCFtbAVwvords2B7Cxuxh3FwnR/AWGDeir43oU=";
+    hash = "sha256-z5RNLUP1DjvQ+LvNzOBwiPrYqGeZoPPbtaJv9gIefuM=";
   };
 
   patches = [

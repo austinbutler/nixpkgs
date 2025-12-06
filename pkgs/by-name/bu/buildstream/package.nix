@@ -2,12 +2,16 @@
   lib,
   python3Packages,
   fetchFromGitHub,
+  nix-update-script,
 
   # buildInputs
   buildbox,
   fuse3,
   lzip,
   patch,
+
+  # nativeBuildInputs
+  installShellFiles,
 
   # tests
   addBinToPathHook,
@@ -20,14 +24,14 @@
 
 python3Packages.buildPythonApplication rec {
   pname = "buildstream";
-  version = "2.4.1";
+  version = "2.6.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "apache";
     repo = "buildstream";
     tag = version;
-    hash = "sha256-6a0VzYO5yj7EHvAb0xa4xZ0dgBKjFcwKv2F4o93oahY=";
+    hash = "sha256-2Z+s0dQB85MBO06llhIEO3jwWfL53n74S28ENHcbe/Q=";
   };
 
   build-system = with python3Packages; [
@@ -42,7 +46,6 @@ python3Packages.buildPythonApplication rec {
   ]
   ++ (with python3Packages; [
     click
-    dulwich
     grpcio
     jinja2
     markupsafe
@@ -51,14 +54,16 @@ python3Packages.buildPythonApplication rec {
     protobuf
     psutil
     pyroaring
-    requests
     ruamel-yaml
     ruamel-yaml-clib
-    tomlkit
     ujson
   ])
   ++ lib.optionals enableBuildstreamPlugins [
     python3Packages.buildstream-plugins
+  ];
+
+  nativeBuildInputs = [
+    installShellFiles
   ];
 
   buildInputs = [
@@ -84,9 +89,6 @@ python3Packages.buildPythonApplication rec {
   ];
 
   disabledTests = [
-    # ValueError: Unexpected comparison between all and ''
-    "test_help"
-
     # Error loading project: project.conf [line 37 column 2]: Failed to load source-mirror plugin 'mirror': No package metadata was found for sample-plugins
     "test_source_mirror_plugin"
 
@@ -102,9 +104,6 @@ python3Packages.buildPythonApplication rec {
 
     # Blob not found in the local CAS
     "test_source_pull_partial_fallback_fetch"
-
-    # FAILED tests/sources/tar.py::test_out_of_basedir_hardlinks - AssertionError
-    "test_out_of_basedir_hardlinks"
   ];
 
   disabledTestPaths = [
@@ -112,8 +111,16 @@ python3Packages.buildPythonApplication rec {
     "tests/internals/cascache.py"
   ];
 
+  postInstall = ''
+    installShellCompletion --cmd bst \
+      --bash src/buildstream/data/bst \
+      --zsh src/buildstream/data/zsh/_bst
+  '';
+
   versionCheckProgram = "${placeholder "out"}/bin/bst";
   versionCheckProgramArg = "--version";
+
+  passthru.updateScript = nix-update-script { };
 
   meta = {
     description = "Powerful software integration tool";

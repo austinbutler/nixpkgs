@@ -25,14 +25,14 @@
 
 buildPythonPackage rec {
   pname = "google-auth";
-  version = "2.40.2";
+  version = "2.41.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "googleapis";
     repo = "google-auth-library-python";
     tag = "v${version}";
-    hash = "sha256-jO6brNdTH8BitLKKP/nwrlUo5hfQnThT/bPbzefvRbM=";
+    hash = "sha256-EPiI3cJy+NkT1oyKZJKcvQwAb64UQZDSNfWorZjIew8=";
   };
 
   build-system = [ setuptools ];
@@ -64,6 +64,8 @@ buildPythonPackage rec {
     requests = [ requests ];
   };
 
+  pythonRelaxDeps = [ "cachetools" ];
+
   nativeCheckInputs = [
     aioresponses
     flask
@@ -75,7 +77,7 @@ buildPythonPackage rec {
     pytestCheckHook
     responses
   ]
-  ++ lib.flatten (lib.attrValues optional-dependencies);
+  ++ lib.concatAttrValues optional-dependencies;
 
   disabledTestPaths = [
     "samples/"
@@ -101,7 +103,7 @@ buildPythonPackage rec {
       authentication mechanisms to access Google APIs.
     '';
     homepage = "https://github.com/googleapis/google-auth-library-python";
-    changelog = "https://github.com/googleapis/google-auth-library-python/blob/v${version}/CHANGELOG.md";
+    changelog = "https://github.com/googleapis/google-auth-library-python/blob/${src.tag}/CHANGELOG.md";
     license = lib.licenses.asl20;
     maintainers = [ lib.maintainers.sarahec ];
   };

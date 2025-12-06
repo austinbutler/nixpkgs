@@ -18,6 +18,7 @@
   pytest-asyncio,
   pytest-mock,
   pytestCheckHook,
+  redis,
 
   # passthru
   gitUpdater,
@@ -25,14 +26,14 @@
 
 buildPythonPackage rec {
   pname = "langgraph-checkpoint";
-  version = "2.1.1";
+  version = "3.0.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "langchain-ai";
     repo = "langgraph";
     tag = "checkpoint==${version}";
-    hash = "sha256-UY3AChShKfOrtOQzOm5vi3Yy3rlBc+TAje9L2L6My/U=";
+    hash = "sha256-3hh1KyEIsp9JzhaJW1ycp179FGpggPYzg6OwnD/cTBM=";
   };
 
   sourceRoot = "${src.name}/libs/checkpoint";
@@ -55,10 +56,15 @@ buildPythonPackage rec {
     pytest-asyncio
     pytest-mock
     pytestCheckHook
+    redis
   ];
 
-  passthru.updateScript = gitUpdater {
-    rev-prefix = "checkpoint==";
+  passthru = {
+    # python updater script sets the wrong tag
+    skipBulkUpdate = true;
+    updateScript = gitUpdater {
+      rev-prefix = "checkpoint==";
+    };
   };
 
   meta = {
@@ -67,7 +73,6 @@ buildPythonPackage rec {
     homepage = "https://github.com/langchain-ai/langgraph/tree/main/libs/checkpoint";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [
-      drupol
       sarahec
     ];
   };

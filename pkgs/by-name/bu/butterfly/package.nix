@@ -1,30 +1,33 @@
 {
   lib,
-  flutter329,
+  flutter335,
   fetchFromGitHub,
   runCommand,
-  butterfly,
-  yq,
+  yq-go,
   _experimental-update-script-combinators,
   gitUpdater,
+  dart,
 }:
 
-flutter329.buildFlutterApplication rec {
-  pname = "butterfly";
-  version = "2.3.2";
+let
+  version = "2.4.1";
 
   src = fetchFromGitHub {
     owner = "LinwoodDev";
     repo = "Butterfly";
     tag = "v${version}";
-    hash = "sha256-eAkepyZm4WgPo8ieBbWHoSSv/Zfr9U9HCsbxEyrzy0Y=";
+    hash = "sha256-izoxMMvNjcgBPpc0kvhv4OIuqa1OHvmeoqFKrVgp0bE=";
   };
+in
+flutter335.buildFlutterApplication {
+  pname = "butterfly";
+  inherit version src;
 
   pubspecLock = lib.importJSON ./pubspec.lock.json;
 
   sourceRoot = "${src.name}/app";
 
-  gitHashes = lib.importJSON ./gitHashes.json;
+  gitHashes = lib.importJSON ./git-hashes.json;
 
   postInstall = ''
     cp -r linux/debian/usr/share $out/share
@@ -34,21 +37,37 @@ flutter329.buildFlutterApplication rec {
     pubspecSource =
       runCommand "pubspec.lock.json"
         {
-          buildInputs = [ yq ];
-          inherit (butterfly) src;
+          inherit src;
+          nativeBuildInputs = [ yq-go ];
         }
         ''
-          cat $src/app/pubspec.lock | yq > $out
+          yq eval --output-format=json --prettyPrint $src/app/pubspec.lock > "$out"
         '';
     updateScript = _experimental-update-script-combinators.sequence [
-      (gitUpdater {
-        ignoredVersions = ".*(rc|beta).*";
-        rev-prefix = "v";
-      })
-      (_experimental-update-script-combinators.copyAttrOutputToFile "butterfly.pubspecSource" ./pubspec.lock.json)
+      (
+        (gitUpdater {
+          ignoredVersions = ".*(rc|beta).*";
+          rev-prefix = "v";
+        })
+        // {
+          supportedFeatures = [ ];
+        }
+      )
+      (
+        (_experimental-update-script-combinators.copyAttrOutputToFile "butterfly.pubspecSource" ./pubspec.lock.json)
+        // {
+          supportedFeatures = [ ];
+        }
+      )
       {
-        command = [ ./update-gitHashes.py ];
-        supportedFeatures = [ "silent" ];
+        command = [
+          dart.fetchGitHashesScript
+          "--input"
+          ./pubspec.lock.json
+          "--output"
+          ./git-hashes.json
+        ];
+        supportedFeatures = [ ];
       }
     ];
   };
@@ -62,7 +81,7 @@ flutter329.buildFlutterApplication rec {
       cc-by-sa-40
       asl20
     ];
-    maintainers = with lib.maintainers; [ ];
+    maintainers = [ ];
     platforms = [
       "aarch64-linux"
       "x86_64-linux"

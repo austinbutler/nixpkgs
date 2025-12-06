@@ -7,8 +7,6 @@
   tk,
   addDriverRunpath,
 
-  apple-sdk_12,
-
   koboldLiteSupport ? true,
 
   config,
@@ -41,13 +39,13 @@ let
 in
 effectiveStdenv.mkDerivation (finalAttrs: {
   pname = "koboldcpp";
-  version = "1.96";
+  version = "1.103";
 
   src = fetchFromGitHub {
     owner = "LostRuins";
     repo = "koboldcpp";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-/kHx2v9g0o5eh38d9hlhc724vQNTXVpaX1GeQouJPhk=";
+    hash = "sha256-lvrsgycFLqIGypB7lZvi9bDBtiKNAte4tLnEnRiPnZU=";
   };
 
   enableParallelBuilding = true;
@@ -57,13 +55,20 @@ effectiveStdenv.mkDerivation (finalAttrs: {
     python3Packages.wrapPython
   ];
 
+  postPatch = ''
+    nixLog "patching $PWD/Makefile to remove explicit linking against CUDA driver"
+    substituteInPlace "$PWD/Makefile" \
+      --replace-fail \
+        'CUBLASLD_FLAGS = -lcuda ' \
+        'CUBLASLD_FLAGS = '
+  '';
+
   pythonInputs = builtins.attrValues { inherit (python3Packages) tkinter customtkinter packaging; };
 
   buildInputs = [
     tk
   ]
   ++ finalAttrs.pythonInputs
-  ++ lib.optionals stdenv.hostPlatform.isDarwin [ apple-sdk_12 ]
   ++ lib.optionals cublasSupport [
     cudaPackages.libcublas
     cudaPackages.cuda_nvcc
@@ -89,12 +94,6 @@ effectiveStdenv.mkDerivation (finalAttrs: {
     (lib.optionals cublasSupport "CUDA_DOCKER_ARCH=${builtins.head cudaArches}")
   ];
 
-  env = {
-    # Fixes an issue where "fprintf" is being called with a format string that isn't a string literal
-    NIX_CFLAGS_COMPILE = lib.optionalString vulkanSupport "-Wno-error=format-security";
-    NIX_CXXFLAGS_COMPILE = lib.optionalString vulkanSupport "-Wno-error=format-security";
-  };
-
   installPhase = ''
     runHook preInstall
 
@@ -102,7 +101,7 @@ effectiveStdenv.mkDerivation (finalAttrs: {
 
     install -Dm755 koboldcpp.py "$out/bin/koboldcpp.unwrapped"
     cp *.so "$out/bin"
-    cp *.embd "$out/bin"
+    cp embd_res/*.embd "$out/bin"
 
     ${lib.optionalString metalSupport ''
       cp *.metal "$out/bin"
@@ -132,7 +131,7 @@ effectiveStdenv.mkDerivation (finalAttrs: {
     mainProgram = "koboldcpp";
     maintainers = with lib.maintainers; [
       maxstrid
-      donteatoreo
+      FlameFlag
     ];
     platforms = lib.platforms.unix;
   };

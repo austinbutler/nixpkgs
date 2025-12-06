@@ -1,5 +1,6 @@
 {
   lib,
+  stdenv,
   buildGoModule,
   fetchFromGitHub,
   installShellFiles,
@@ -7,15 +8,15 @@
 
 buildGoModule rec {
   pname = "infracost";
-  version = "0.10.42";
+  version = "0.10.43";
 
   src = fetchFromGitHub {
     owner = "infracost";
     rev = "v${version}";
     repo = "infracost";
-    sha256 = "sha256-o6QVD6zZUs8eGTavxBhlcdiiBgG8w5fiYsb3ohHh+Vg=";
+    sha256 = "sha256-02HQp11MfUKK0tXcBRmGqatG5C7462VEWtHHCjLv32I=";
   };
-  vendorHash = "sha256-So2D6FNX0SETgC1B0tKVDy0JlImHokJWB2roklonuMY=";
+  vendorHash = "sha256-cNL68orv14HhzwsuaqzfDbVnBsMNE3Lu4EiCvKQhgpM=";
 
   ldflags = [
     "-s"
@@ -43,7 +44,7 @@ buildGoModule rec {
     "-short"
   ];
 
-  postInstall = ''
+  postInstall = lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
     export INFRACOST_SKIP_UPDATE_CHECK=true
     installShellCompletion --cmd infracost \
       --bash <($out/bin/infracost completion --shell bash) \

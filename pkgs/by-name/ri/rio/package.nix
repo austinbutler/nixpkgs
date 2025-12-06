@@ -6,28 +6,25 @@
   rustPlatform,
   nixosTests,
   nix-update-script,
-
   autoPatchelfHook,
+  installShellFiles,
   cmake,
   ncurses,
+  scdoc,
   pkg-config,
-
   gcc-unwrapped,
   fontconfig,
   libGL,
   vulkan-loader,
   libxkbcommon,
-
   withX11 ? !stdenv.hostPlatform.isDarwin,
   libX11,
   libXcursor,
   libXi,
   libXrandr,
   libxcb,
-
   withWayland ? !stdenv.hostPlatform.isDarwin,
   wayland,
-
   testers,
   rio,
 }:
@@ -53,19 +50,22 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "rio";
-  version = "0.2.23";
+  version = "0.2.36";
 
   src = fetchFromGitHub {
     owner = "raphamorim";
     repo = "rio";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-hhKlXuhv0PP8/xCIZ0lFGtCYCzOzH0gUeh48GdKpG6A=";
+    hash = "sha256-c/+agFoGRB+kvVSUo5+yc1LlSvLsgD5J1yk2ufDRgc4=";
   };
 
-  cargoHash = "sha256-+pfudGeWq4EARQDu+HAZczWlzStuzDPArMm1oCZGfKU=";
+  cargoHash = "sha256-KITGepJC6luNwA7ypGDjajLtmBx5faV2ruJ0aXyrFVo=";
 
   nativeBuildInputs = [
+    rustPlatform.bindgenHook
     ncurses
+    scdoc
+    installShellFiles
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
     cmake
@@ -103,6 +103,11 @@ rustPlatform.buildRustPackage (finalAttrs: {
     tic -xe rio,rio-direct -o "$terminfo/share/terminfo" misc/rio.terminfo
     mkdir -p $out/nix-support
     echo "$terminfo" >> $out/nix-support/propagated-user-env-packages
+
+    scdoc < extra/man/rio.1.scd > rio.1
+    scdoc < extra/man/rio.5.scd > rio.5
+    scdoc < extra/man/rio-bindings.5.scd > rio-bindings.5
+    installManPage rio.1 rio.5 rio-bindings.5
   ''
   + lib.optionalString stdenv.hostPlatform.isDarwin ''
     mkdir $out/Applications/
@@ -133,7 +138,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   meta = {
     description = "Hardware-accelerated GPU terminal emulator powered by WebGPU";
-    homepage = "https://raphamorim.io/rio";
+    homepage = "https://rioterm.com/";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [
       tornax
@@ -141,7 +146,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
       oluceps
     ];
     platforms = lib.platforms.unix;
-    changelog = "https://github.com/raphamorim/rio/blob/v${finalAttrs.version}/docs/docs/releases.md";
+    changelog = "https://github.com/raphamorim/rio/releases/tag/v${finalAttrs.version}";
     mainProgram = "rio";
   };
 })
