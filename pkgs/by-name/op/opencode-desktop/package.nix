@@ -32,7 +32,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     ;
 
   cargoRoot = "packages/desktop/src-tauri";
-  cargoHash = "sha256-bLM/ZcUaaswFrg+WogY81HnTn5do/7tu+JA/+tJNmMw=";
+  cargoHash = "sha256-WI48iYdxmizF1YgOQtk05dvrBEMqFjHP9s3+zBFAat0=";
   buildAndTestSubdir = finalAttrs.cargoRoot;
 
   nativeBuildInputs = [
@@ -79,11 +79,11 @@ rustPlatform.buildRustPackage (finalAttrs: {
     cp ${opencode}/bin/opencode packages/desktop/src-tauri/sidecars/opencode-cli-${stdenv.hostPlatform.rust.rustcTarget}
   '';
 
-  meta = with lib; {
+  meta = {
     description = "AI coding agent desktop client";
     homepage = "https://opencode.ai";
-    license = licenses.mit;
-    maintainers = with maintainers; [
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [
       xiaoxiangmoe
     ];
     mainProgram = "OpenCode";
