@@ -35,7 +35,7 @@
   cxxtest,
   freetype,
   withEditor ? true,
-  wxGTK32,
+  wxwidgets_3_2,
 }:
 
 # You can find more instructions on how to build 0ad here:
@@ -101,20 +101,22 @@ stdenv.mkDerivation (finalAttrs: {
     premake5
     cxxtest
   ]
-  ++ lib.optional withEditor wxGTK32;
+  ++ lib.optional withEditor wxwidgets_3_2;
 
-  env.NIX_CFLAGS_COMPILE = toString [
-    "-I${xorgproto}/include"
-    "-I${libx11.dev}/include"
-    "-I${libxcursor.dev}/include"
-    "-I${SDL2}/include/SDL2"
-    "-I${fmt_9.dev}/include"
-    "-I${nvidia-texture-tools.dev}/include"
-  ];
+  env = {
+    NIX_CFLAGS_COMPILE = toString [
+      "-I${xorgproto}/include"
+      "-I${libx11.dev}/include"
+      "-I${libxcursor.dev}/include"
+      "-I${SDL2}/include/SDL2"
+      "-I${fmt_9.dev}/include"
+      "-I${nvidia-texture-tools.dev}/include"
+    ];
 
-  NIX_CFLAGS_LINK = toString [
-    "-L${nvidia-texture-tools.lib}/lib/static"
-  ];
+    NIX_CFLAGS_LINK = toString [
+      "-L${nvidia-texture-tools.lib}/lib/static"
+    ];
+  };
 
   patches = [
     ./rootdir_env.patch

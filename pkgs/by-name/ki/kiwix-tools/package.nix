@@ -3,6 +3,7 @@
   docopt_cpp,
   fetchFromGitHub,
   gitUpdater,
+  nixosTests,
   icu,
   libkiwix,
   meson,
@@ -13,13 +14,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "kiwix-tools";
-  version = "3.7.0-unstable-2024-12-21";
+  version = "3.8.2";
 
   src = fetchFromGitHub {
     owner = "kiwix";
     repo = "kiwix-tools";
-    rev = "43b00419dd3f33eb644e1d83c2e802fc200b2de7";
-    hash = "sha256-Rctb6ZPTXjgSrLRB5VK4CEqYHuEPB7a+SQaNi47cxv0=";
+    tag = finalAttrs.version;
+    hash = "sha256-JtHi/rbXMoP0YT1wsBjjx9jK3weptnTs8hm1rhW06Bg=";
   };
 
   nativeBuildInputs = [
@@ -33,6 +34,8 @@ stdenv.mkDerivation (finalAttrs: {
     icu
     libkiwix
   ];
+
+  passthru.tests.kiwix-serve = nixosTests.kiwix-serve;
 
   passthru.updateScript = gitUpdater { };
 

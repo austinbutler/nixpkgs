@@ -95,6 +95,9 @@
   makeFontsConf,
   noto-fonts-cjk-sans,
   noto-fonts-cjk-serif,
+
+  # Create a symlink at $out/bin/microsoft-edge-stable
+  withSymlink ? true,
 }:
 let
   opusWithCustomModes = libopus.override { withCustomModes = true; };
@@ -167,11 +170,11 @@ let
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "microsoft-edge";
-  version = "145.0.3800.70";
+  version = "145.0.3800.82";
 
   src = fetchurl {
     url = "https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-stable/microsoft-edge-stable_${finalAttrs.version}-1_amd64.deb";
-    hash = "sha256-gUyh9AD1ntnZb2iLRwKLxy0PxY0Dist73oT9AC2pFQI=";
+    hash = "sha256-KejSggcs88eY5STNG9F7TueZgvBnmxesoNbtUNjSrfk=";
   };
 
   # With strictDeps on, some shebangs were not being patched correctly
@@ -268,6 +271,10 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       patchelf --set-rpath $rpath $elf
       patchelf --set-interpreter ${bintools.dynamicLinker} $elf
     done
+
+    ${lib.optionalString withSymlink ''
+      ln -s $out/bin/microsoft-edge $out/bin/microsoft-edge-stable
+    ''}
 
     runHook postInstall
   '';
