@@ -59,8 +59,8 @@ let
         else "${cftBase}/linux64/chrome-linux64.zip";
       hash =
         {
-          x86_64-linux = "";
-          aarch64-linux = "";
+          x86_64-linux = "sha256-dJSO05xOzlSl/EwOWNQCeuSb+lhUU6NlGBnRu59irnM=";
+          aarch64-linux = "sha256-9DFLCPuc9WZjYLzlRW+Df2pb+mViPK3/IOkkUozELsw=";
         }
         .${system} or throwSystem;
     };
@@ -130,8 +130,8 @@ let
     stripRoot = false;
     hash =
       {
-        x86_64-darwin = "";
-        aarch64-darwin = "";
+        x86_64-darwin = "sha256-vQuBHM0jkk6S/Gco/bBqSPJqXi/CJt/+nkbGtFNpgwk=";
+        aarch64-darwin = "sha256-qXdgHeBS5IFIa4hZVmjq0+31v/uDPXHyc4aH7Wn2E7E=";
       }
       .${system} or throwSystem;
   };
