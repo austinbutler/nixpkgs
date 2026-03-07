@@ -5,6 +5,7 @@
   chromium,
   fetchzip,
   revision,
+  browserVersion,
   suffix,
   system,
   throwSystem,
@@ -41,24 +42,25 @@
   ...
 }:
 let
-  # Playwright expects different directory names for different architectures:
-  # - linux-x64 expects: chrome-linux64
-  # - linux-arm64 expects: chrome-linux
+  cftBase = "https://cdn.playwright.dev/chrome-for-testing-public/${browserVersion}";
+  cdnBase = "https://cdn.playwright.dev/dbazure/download/playwright/builds/chromium/${revision}";
+
+  # Playwright expects different directory names for different architectures
   chromeDir =
-    {
-      x86_64-linux = "chrome-linux64";
-      aarch64-linux = "chrome-linux";
-    }
-    .${system} or throwSystem;
+    if system == "aarch64-linux" then "chrome-linux" else "chrome-linux64";
 
   chromium-linux = stdenv.mkDerivation {
     name = "playwright-chromium";
     src = fetchzip {
-      url = "https://playwright.azureedge.net/builds/chromium/${revision}/chromium-${suffix}.zip";
+      # x86_64 uses Chrome for Testing, aarch64 uses the Playwright CDN
+      url =
+        if system == "aarch64-linux"
+        then "${cdnBase}/chromium-linux-arm64.zip"
+        else "${cftBase}/linux64/chrome-linux64.zip";
       hash =
         {
-          x86_64-linux = "sha256-r715GrQMPRIsM2/Z6SRyvo/6j4fbWXKfCCh//Cc2DGw=";
-          aarch64-linux = "sha256-bS8CstCia8dm2DG9vBKHjsfeoXkyBZStBefu0kD8c2o=";
+          x86_64-linux = "";
+          aarch64-linux = "";
         }
         .${system} or throwSystem;
     };
@@ -121,12 +123,15 @@ let
     '';
   };
   chromium-darwin = fetchzip {
-    url = "https://playwright.azureedge.net/builds/chromium/${revision}/chromium-${suffix}.zip";
+    url =
+      if system == "aarch64-darwin"
+      then "${cftBase}/mac-arm64/chrome-mac-arm64.zip"
+      else "${cftBase}/mac-x64/chrome-mac-x64.zip";
     stripRoot = false;
     hash =
       {
-        x86_64-darwin = "sha256-kGHlIxS9Ti362XmBt+aepYV45cCZoBRqJ+YBsLasDp0=";
-        aarch64-darwin = "sha256-LwY25Ckh1ZY+L196shf8ydF4IHXUIeI83Yqp8KG+nc4=";
+        x86_64-darwin = "";
+        aarch64-darwin = "";
       }
       .${system} or throwSystem;
   };

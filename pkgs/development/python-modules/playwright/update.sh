@@ -39,50 +39,13 @@ sed -E 's#\bnpmDepsHash = ".*?"#npmDepsHash = "'"$mcp_npm_hash"'"#' -i "$mcp_pac
 
 # update binaries of browsers, used by playwright.
 replace_sha() {
-  sed -i "s|$2 = \".\{44,52\}\"|$2 = \"$3\"|" "$1"
+  sed -i "s|$2 = \"[^\"]*\"|$2 = \"$3\"|" "$1"
 }
 
 prefetch_browser() {
   # nix-prefetch is used to obtain sha with `stripRoot = false`
   # doesn't work on macOS https://github.com/msteen/nix-prefetch/issues/53
   nix-prefetch --option extra-experimental-features flakes -q "{ stdenv, fetchzip }: stdenv.mkDerivation { name=\"browser\"; src = fetchzip { url = \"$1\"; stripRoot = $2; }; }"
-}
-
-update_browser() {
-    name="$1"
-    platform="$2"
-    stripRoot="false"
-    if [ "$platform" = "darwin" ]; then
-        if [ "$name" = "webkit" ]; then
-            suffix="mac-14"
-        else
-            suffix="mac"
-        fi
-    else
-        if [ "$name" = "ffmpeg" ] || [ "$name" = "chromium-headless-shell" ]; then
-            suffix="linux"
-        elif [ "$name" = "chromium" ]; then
-            stripRoot="true"
-            suffix="linux"
-        elif [ "$name" = "firefox" ]; then
-            stripRoot="true"
-            suffix="ubuntu-22.04"
-        else
-            suffix="ubuntu-22.04"
-        fi
-    fi
-    aarch64_suffix="$suffix-arm64"
-    if [ "$name" = "chromium-headless-shell" ]; then
-        buildname="chromium";
-    else
-        buildname="$name"
-    fi
-
-    revision="$(jq -r ".browsers[\"$buildname\"].revision" "$playwright_dir/browsers.json")"
-    replace_sha "$playwright_dir/$name.nix" "x86_64-$platform" \
-        "$(prefetch_browser "https://playwright.azureedge.net/builds/$buildname/$revision/$name-$suffix.zip" $stripRoot)"
-    replace_sha "$playwright_dir/$name.nix" "aarch64-$platform" \
-        "$(prefetch_browser "https://playwright.azureedge.net/builds/$buildname/$revision/$name-$aarch64_suffix.zip" $stripRoot)"
 }
 
 curl -fsSl \
@@ -97,14 +60,71 @@ curl -fsSl \
       )
     ' > "$playwright_dir/browsers.json"
 
-update_browser "chromium" "linux"
-update_browser "chromium-headless-shell" "linux"
+cdn_base="https://cdn.playwright.dev/dbazure/download/playwright"
+cft_base="https://cdn.playwright.dev/chrome-for-testing-public"
+
+# Chromium and chromium-headless-shell use Chrome for Testing (CfT)
+# URLs for x86_64 and darwin, but the Playwright CDN for aarch64-linux.
+update_chromium_browsers() {
+    chromium_revision="$(jq -r '.browsers["chromium"].revision' "$playwright_dir/browsers.json")"
+    browser_version="$(jq -r '.browsers["chromium"].browserVersion' "$playwright_dir/browsers.json")"
+
+    # chromium
+    replace_sha "$playwright_dir/chromium.nix" "x86_64-linux" \
+        "$(prefetch_browser "${cft_base}/${browser_version}/linux64/chrome-linux64.zip" true)"
+    replace_sha "$playwright_dir/chromium.nix" "aarch64-linux" \
+        "$(prefetch_browser "${cdn_base}/builds/chromium/${chromium_revision}/chromium-linux-arm64.zip" true)"
+    replace_sha "$playwright_dir/chromium.nix" "x86_64-darwin" \
+        "$(prefetch_browser "${cft_base}/${browser_version}/mac-x64/chrome-mac-x64.zip" false)"
+    replace_sha "$playwright_dir/chromium.nix" "aarch64-darwin" \
+        "$(prefetch_browser "${cft_base}/${browser_version}/mac-arm64/chrome-mac-arm64.zip" false)"
+
+    # chromium-headless-shell
+    replace_sha "$playwright_dir/chromium-headless-shell.nix" "x86_64-linux" \
+        "$(prefetch_browser "${cft_base}/${browser_version}/linux64/chrome-headless-shell-linux64.zip" false)"
+    replace_sha "$playwright_dir/chromium-headless-shell.nix" "aarch64-linux" \
+        "$(prefetch_browser "${cdn_base}/builds/chromium/${chromium_revision}/chromium-headless-shell-linux-arm64.zip" false)"
+    replace_sha "$playwright_dir/chromium-headless-shell.nix" "x86_64-darwin" \
+        "$(prefetch_browser "${cft_base}/${browser_version}/mac-x64/chrome-headless-shell-mac-x64.zip" false)"
+    replace_sha "$playwright_dir/chromium-headless-shell.nix" "aarch64-darwin" \
+        "$(prefetch_browser "${cft_base}/${browser_version}/mac-arm64/chrome-headless-shell-mac-arm64.zip" false)"
+}
+
+update_browser() {
+    name="$1"
+    platform="$2"
+    stripRoot="false"
+    if [ "$platform" = "darwin" ]; then
+        if [ "$name" = "webkit" ]; then
+            suffix="mac-14"
+        else
+            suffix="mac"
+        fi
+    else
+        if [ "$name" = "ffmpeg" ]; then
+            suffix="linux"
+        elif [ "$name" = "firefox" ]; then
+            stripRoot="true"
+            suffix="ubuntu-22.04"
+        else
+            suffix="ubuntu-22.04"
+        fi
+    fi
+    aarch64_suffix="$suffix-arm64"
+
+    revision="$(jq -r ".browsers[\"$name\"].revision" "$playwright_dir/browsers.json")"
+    replace_sha "$playwright_dir/$name.nix" "x86_64-$platform" \
+        "$(prefetch_browser "${cdn_base}/builds/$name/$revision/$name-$suffix.zip" $stripRoot)"
+    replace_sha "$playwright_dir/$name.nix" "aarch64-$platform" \
+        "$(prefetch_browser "${cdn_base}/builds/$name/$revision/$name-$aarch64_suffix.zip" $stripRoot)"
+}
+
+update_chromium_browsers
+
 update_browser "firefox" "linux"
 update_browser "webkit" "linux"
 update_browser "ffmpeg" "linux"
 
-update_browser "chromium" "darwin"
-update_browser "chromium-headless-shell" "darwin"
 update_browser "firefox" "darwin"
 update_browser "webkit" "darwin"
 update_browser "ffmpeg" "darwin"

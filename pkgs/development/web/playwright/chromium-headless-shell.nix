@@ -1,6 +1,7 @@
 {
   fetchzip,
   revision,
+  browserVersion,
   suffix,
   system,
   throwSystem,
@@ -24,15 +25,21 @@
   ...
 }:
 let
+  cftBase = "https://cdn.playwright.dev/chrome-for-testing-public/${browserVersion}";
+  cdnBase = "https://cdn.playwright.dev/dbazure/download/playwright/builds/chromium/${revision}";
+
   linux = stdenv.mkDerivation {
     name = "playwright-chromium-headless-shell";
     src = fetchzip {
-      url = "https://playwright.azureedge.net/builds/chromium/${revision}/chromium-headless-shell-${suffix}.zip";
+      url =
+        if system == "aarch64-linux"
+        then "${cdnBase}/chromium-headless-shell-linux-arm64.zip"
+        else "${cftBase}/linux64/chrome-headless-shell-linux64.zip";
       stripRoot = false;
       hash =
         {
-          x86_64-linux = "sha256-4xPtmjRSbkWLmV2LzVClwjeQcmktZCvDS3gYo+FlkJc=";
-          aarch64-linux = "sha256-rnurwOiST8fdAC5kGC9uR+MRidGtIZCPQLrg+xZbuZQ=";
+          x86_64-linux = "";
+          aarch64-linux = "";
         }
         .${system} or throwSystem;
     };
@@ -64,12 +71,15 @@ let
   };
 
   darwin = fetchzip {
-    url = "https://playwright.azureedge.net/builds/chromium/${revision}/chromium-headless-shell-${suffix}.zip";
+    url =
+      if system == "aarch64-darwin"
+      then "${cftBase}/mac-arm64/chrome-headless-shell-mac-arm64.zip"
+      else "${cftBase}/mac-x64/chrome-headless-shell-mac-x64.zip";
     stripRoot = false;
     hash =
       {
-        x86_64-darwin = "sha256-9MsBmUuaHq3P/eWxGcihzk09e1zuEr4dIMo6ZjSM8ZQ=";
-        aarch64-darwin = "sha256-i8L+C4p8DCcqb5C5B5q+JuX/fTPxhBva2dlFVDkdfQ0=";
+        x86_64-darwin = "";
+        aarch64-darwin = "";
       }
       .${system} or throwSystem;
   };

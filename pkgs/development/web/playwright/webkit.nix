@@ -133,7 +133,7 @@ let
   webkit-linux = stdenv.mkDerivation {
     name = "playwright-webkit";
     src = fetchzip {
-      url = "https://playwright.azureedge.net/builds/webkit/${revision}/webkit-${suffix'}.zip";
+      url = "https://cdn.playwright.dev/dbazure/download/playwright/builds/webkit/${revision}/webkit-${suffix'}.zip";
       stripRoot = false;
       hash =
         {
@@ -214,7 +214,7 @@ let
     '';
   };
   webkit-darwin = fetchzip {
-    url = "https://playwright.azureedge.net/builds/webkit/${revision}/webkit-${suffix'}.zip";
+    url = "https://cdn.playwright.dev/dbazure/download/playwright/builds/webkit/${revision}/webkit-${suffix'}.zip";
     stripRoot = false;
     hash =
       {

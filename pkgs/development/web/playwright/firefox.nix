@@ -12,7 +12,7 @@ let
   firefox-linux = stdenv.mkDerivation {
     name = "playwright-firefox";
     src = fetchzip {
-      url = "https://playwright.azureedge.net/builds/firefox/${revision}/firefox-${
+      url = "https://cdn.playwright.dev/dbazure/download/playwright/builds/firefox/${revision}/firefox-${
         "ubuntu-22.04" + (lib.removePrefix "linux" suffix)
       }.zip";
       hash =
@@ -37,7 +37,7 @@ let
     '';
   };
   firefox-darwin = fetchzip {
-    url = "https://playwright.azureedge.net/builds/firefox/${revision}/firefox-${suffix}.zip";
+    url = "https://cdn.playwright.dev/dbazure/download/playwright/builds/firefox/${revision}/firefox-${suffix}.zip";
     stripRoot = false;
     hash =
       {

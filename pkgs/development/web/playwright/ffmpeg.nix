@@ -6,7 +6,7 @@
   throwSystem,
 }:
 fetchzip {
-  url = "https://playwright.azureedge.net/builds/ffmpeg/${revision}/ffmpeg-${suffix}.zip";
+  url = "https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/${revision}/ffmpeg-${suffix}.zip";
   stripRoot = false;
   hash =
     {
