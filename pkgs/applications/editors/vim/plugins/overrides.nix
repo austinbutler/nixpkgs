@@ -1127,6 +1127,12 @@ assertNoAdditions {
     dependencies = [ self.image-nvim ];
   };
 
+  diffs-nvim = super.diffs-nvim.overrideAttrs {
+    nvimSkipModules = [
+      "minimal_init"
+    ];
+  };
+
   diffview-nvim = super.diffview-nvim.overrideAttrs {
     dependencies = [ self.plenary-nvim ];
 
@@ -1402,6 +1408,7 @@ assertNoAdditions {
     nvimSkipModules = [
       "init"
       # _GO_NVIM_CFG
+      "go.ai.init"
       "go.comment"
       "go.format"
       "go.ginkgo"
@@ -1698,6 +1705,8 @@ assertNoAdditions {
       "lazyvim.plugins.extras.lang.python"
       "lazyvim.plugins.extras.lang.svelte"
       "lazyvim.plugins.extras.lang.typescript"
+      "lazyvim.plugins.extras.lang.typescript.init"
+      "lazyvim.plugins.extras.lang.typescript.vtsls"
       "lazyvim.plugins.init"
       "lazyvim.plugins.ui"
       "lazyvim.plugins.xtras"
@@ -4362,7 +4371,6 @@ assertNoAdditions {
       homepage = "https://github.com/Valloric/YouCompleteMe";
       license = lib.licenses.gpl3;
       maintainers = with lib.maintainers; [
-        marcweber
         mel
       ];
       platforms = lib.platforms.unix;

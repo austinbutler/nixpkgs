@@ -12,13 +12,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "prmers";
-  version = "4.16.07-alpha";
+  version = "4.18.02-alpha";
 
   src = fetchFromGitHub {
     owner = "cherubrock-seb";
     repo = "PrMers";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-PbIC2fpTsTFEqxYgG9AWaa2Y2sNbb+bljtR5dE958pY=";
+    hash = "sha256-0vzJDt/c21m+QvKbgP3LWYGopJAqz6zfD6+JakwYGwA=";
   };
 
   enableParallelBuilding = true;

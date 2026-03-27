@@ -291,13 +291,20 @@ let
         sectionVLAN = checkUnitConfig "VLAN" [
           (assertOnlyFields [
             "Id"
+            "Protocol"
             "GVRP"
             "MVRP"
             "LooseBinding"
             "ReorderHeader"
+            "EgressQOSMaps"
+            "IngressQOSMaps"
           ])
           (assertInt "Id")
           (assertRange "Id" 0 4094)
+          (assertValueOneOf "Protocol" [
+            "802.1q"
+            "802.1ad"
+          ])
           (assertValueOneOf "GVRP" boolValues)
           (assertValueOneOf "MVRP" boolValues)
           (assertValueOneOf "LooseBinding" boolValues)
@@ -3033,6 +3040,15 @@ let
       type = types.listOf types.str;
       description = ''
         A list of macvlan interfaces to be added to the network section of the
+        unit.  See {manpage}`systemd.network(5)` for details.
+      '';
+    };
+
+    ipvlan = mkOption {
+      default = [ ];
+      type = types.listOf types.str;
+      description = ''
+        A list of ipvlan interfaces to be added to the network section of the
         unit.  See {manpage}`systemd.network(5)` for details.
       '';
     };

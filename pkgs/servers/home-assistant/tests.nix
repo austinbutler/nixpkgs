@@ -100,6 +100,7 @@ let
       av
     ];
     number = getComponentDeps "conversation";
+    ntfy = getComponentDeps "camera" ++ getComponentDeps "tts";
     octoprint = getComponentDeps "camera";
     ollama = getComponentDeps "ai_task";
     onboarding = getComponentDeps "tts" ++ [
@@ -132,6 +133,7 @@ let
     songpal = [
       isal
     ];
+    sonos = getComponentDeps "frontend";
     swiss_public_transport = getComponentDeps "cookidoo";
     switch = getComponentDeps "camera" ++ getComponentDeps "conversation";
     switch_as_x = getComponentDeps "camera" ++ getComponentDeps "conversation";
@@ -160,6 +162,7 @@ let
     yolink = getComponentDeps "cloud";
     zeroconf = getComponentDeps "shelly";
     zha = getComponentDeps "deconz" ++ getComponentDeps "frontend";
+    zoneminder = getComponentDeps "camera";
     zwave_js = getComponentDeps "frontend";
   };
 
@@ -195,6 +198,10 @@ let
     systemmonitor = [
       # sandbox doesn't grant access to /sys/class/power_supply
       "tests/components/systemmonitor/test_config_flow.py::test_add_and_remove_processes"
+    ];
+    trane = [
+      # TraneConfigFlow doesn't support step reauth
+      "tests/components/trane/test_init.py::test_setup_auth_error"
     ];
     youtube = [
       # outdated snapshot

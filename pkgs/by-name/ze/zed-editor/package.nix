@@ -15,6 +15,7 @@
   sqlite,
   zlib,
   zstd,
+  glib,
   alsa-lib,
   libxkbcommon,
   wayland,
@@ -107,7 +108,7 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "zed-editor";
-  version = "0.226.4";
+  version = "0.229.0";
 
   outputs = [
     "out"
@@ -120,18 +121,24 @@ rustPlatform.buildRustPackage (finalAttrs: {
     owner = "zed-industries";
     repo = "zed";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-vF/vvEJKl1mUcF6TMif5G9rQPjt+2RWImWy1f7RxgfE=";
+    hash = "sha256-ZO4HzzzTb5rlBbzVCpE14DEzLkE3a7v2IKdyzlCTpaA=";
   };
 
   postPatch = ''
     # Dynamically link WebRTC instead of static
-    substituteInPlace $cargoDepsCopy/webrtc-sys-*/build.rs \
+    substituteInPlace $cargoDepsCopy/*/webrtc-sys-*/build.rs \
       --replace-fail "cargo:rustc-link-lib=static=webrtc" "cargo:rustc-link-lib=dylib=webrtc"
 
     # The generate-licenses script wants a specific version of cargo-about eventhough
     # newer versions work just as well.
     substituteInPlace script/generate-licenses \
       --replace-fail '$CARGO_ABOUT_VERSION' '${cargo-about.version}'
+  ''
+  + lib.optionalString stdenv.hostPlatform.isLinux ''
+    # webrtc-sys expects glib headers to be in the sysroot, so we have to point it in the right direction
+    substituteInPlace $cargoDepsCopy/*/webrtc-sys-*/build.rs \
+      --replace-fail 'builder.include(&glib_path);' 'builder.include("${lib.getInclude glib}/include/glib-2.0");' \
+      --replace-fail 'builder.include(&glib_path_config);' 'builder.include("${lib.getLib glib}/lib/glib-2.0/include");'
   '';
 
   # remove package that has a broken Cargo.toml
@@ -140,7 +147,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     rm -r $out/git/*/candle-book/
   '';
 
-  cargoHash = "sha256-IH/FEC52VudtXsSHiju6T7H9E2kblJ0RyiUoQR391cc=";
+  cargoHash = "sha256-Q7sjd5u1jPIK6WogCByaXAVU7D6jcev1oRmfQ7y39i4=";
 
   nativeBuildInputs = [
     cmake
@@ -168,6 +175,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     zstd
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
+    glib
     alsa-lib
     libxkbcommon
     wayland
