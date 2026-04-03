@@ -14,16 +14,16 @@
 
 buildGoModule (finalAttrs: {
   pname = "fence";
-  version = "0.1.32";
+  version = "0.1.41-unstable-2026-04-03";
 
   src = fetchFromGitHub {
-    owner = "Use-Tusk";
+    owner = "austinbutler";
     repo = "fence";
-    tag = "v${finalAttrs.version}";
-    hash = "sha256-D+mAwmeOGSuKqO72atjvlhg2ez4MXtrjlnHEXPX34jI=";
+    rev = "045e7766f7f5c89b7ffc8c37fb6992dc1593f531";
+    hash = "sha256-FOADsqjleKOG1RRn+8KSN30Ab5V0h4wSzS/9BeunZDI=";
   };
 
-  vendorHash = "sha256-8v6B39TCwzu6DgFr1nuaGBEQ9s06rbBCENiGUIVw9Rk=";
+  vendorHash = "sha256-P30NCXYX27R7F/dNhWSwiLg8T2f6J0/hlu6G3wlENFI=";
 
   ldflags = [
     "-s"
