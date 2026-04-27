@@ -12,6 +12,8 @@
   gdb,
   glib,
   kdePackages,
+  # Used on Qt6
+  ktactilefeedback ? null,
   libevdev,
   lttng-ust,
   mesa,
@@ -21,6 +23,7 @@
   qmake,
   qtbase,
   qtdeclarative,
+  # Used on Qt5
   qtfeedback ? null,
   qtgraphicaleffects ? null,
   qtpim ? null,
@@ -53,11 +56,18 @@ let
     [
       qtdeclarative
     ]
+    ++ lib.optionals withQt6 [
+      # Qt5Compat.GraphicalEffects
+      qt5compat
+
+      # Tactile feedback on Qt6
+      ktactilefeedback
+    ]
     ++ lib.optionals (!withQt6) [
       # Deprecated in Qt6
       qtgraphicaleffects
 
-      # Will prolly want this in the future, but needs porting to Qt6
+      # Tactile feedback on Qt5
       qtfeedback
     ]
   );
@@ -118,16 +128,35 @@ stdenv.mkDerivation (finalAttrs: {
       tests/unit/visual/tst_imageprovider.11.qml \
       --replace-fail '/usr/share' '${suru-icon-theme}/share'
   ''
+  # Adjust to Qt 6.11, TODO report & submit upstream
+  + lib.optionalString withQt6 ''
+    substituteInPlace apicheck/apicheck.cpp \
+      --replace-fail \
+        'attachedPropertiesType(QQmlEnginePrivate::get(currentEngine))' \
+        'attachedPropertiesType(QQmlTypeLoader::get(currentEngine))'
+
+    substituteInPlace src/LomiriToolkit/ucstylehints.cpp \
+      --replace-fail \
+        'QQmlEnginePrivate::getV4Engine(qmlEngine(this))' \
+        'qmlEngine(this)->handle()'
+  ''
   + lib.optionalString (!withQt6) ''
     for subproject in po app-launch-profiler lomiri-ui-toolkit-launcher; do
       substituteInPlace $subproject/$subproject.pro \
-        --replace-fail "\''$\''$[QT_INSTALL_PREFIX]" "$out" \
-        --replace-warn "\''$\''$[QT_INSTALL_LIBS]" "$out/lib"
+        --replace-fail '$$[QT_INSTALL_PREFIX]' "$out"
     done
 
     # Install apicheck tool into bin
     substituteInPlace apicheck/apicheck.pro \
-      --replace-fail "\''$\''$[QT_INSTALL_LIBS]/lomiri-ui-toolkit" "$out/bin"
+      --replace-fail '$$[QT_INSTALL_LIBS]/lomiri-ui-toolkit' "$out/bin"
+
+    substituteInPlace \
+      src/LomiriMetrics/LomiriMetrics.pro \
+      src/LomiriMetrics/lttng/lttng.pro \
+      --replace-fail '$$[QT_INSTALL_PLUGINS]' "$out/${qtbase.qtPluginPrefix}"
+
+    substituteInPlace features/lomiri_qml_plugin.prf \
+      --replace-fail '$$[QT_INSTALL_QML]' "$out/${qtbase.qtQmlPrefix}"
 
     substituteInPlace documentation/documentation.pro \
       --replace-fail '/usr/share/doc' '$$PREFIX/share/doc' \
@@ -189,12 +218,15 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optionals withQt6 [
     # Qt5Compat.GraphicalEffects
     qt5compat
+
+    # Tactile feedback on Qt6
+    ktactilefeedback
   ]
   ++ lib.optionals (!withQt6) [
     # Deprecated in Qt6
     qtgraphicaleffects
 
-    # Will prolly want this in the future, but needs porting to Qt6
+    # Tactile feedback on Qt5
     qtfeedback
   ];
 

@@ -30,16 +30,16 @@
 
 rustPlatform.buildRustPackage.override { stdenv = clangStdenv; } (finalAttrs: {
   pname = "neovide";
-  version = "0.16.0";
+  version = "0.16.2";
 
   src = fetchFromGitHub {
     owner = "neovide";
     repo = "neovide";
     tag = finalAttrs.version;
-    hash = "sha256-i3HEdYZ1fTK8kHRMhGVY80kE6Sp/HhNV4vG2cVroDWo=";
+    hash = "sha256-mzlyw9NIBb35QJ5L7+ZxgJ5IUoHznAUQOLA0SglJ3bw=";
   };
 
-  cargoHash = "sha256-ybPKRgUZ2MRbzSFyevxSDtsNyU4iQwL4b7JIqBpbwk4=";
+  cargoHash = "sha256-WVNmG+KJK93yLrL2/KPc2czAxwt5brKxRkrPB7Bv46M=";
 
   env = {
     SKIA_SOURCE_DIR =
@@ -136,6 +136,7 @@ rustPlatform.buildRustPackage.override { stdenv = clangStdenv; } (finalAttrs: {
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [
       ck3d
+      caverav
     ];
     platforms = lib.platforms.unix;
   };

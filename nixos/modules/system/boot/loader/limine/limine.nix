@@ -9,6 +9,7 @@ let
   efi = config.boot.loader.efi;
   limineInstallConfig = pkgs.writeText "limine-install.json" (
     builtins.toJSON {
+      inherit (config.system.nixos) distroName;
       nixPath = config.nix.package;
       efiBootMgrPath = pkgs.efibootmgr;
       liminePath = cfg.package;

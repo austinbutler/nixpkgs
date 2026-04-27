@@ -3,38 +3,53 @@
   buildHomeAssistantComponent,
   fetchFromGitHub,
   beautifulsoup4,
-  cloudscraper,
+  curl-cffi,
+  homeassistant,
   icalendar,
   icalevents,
+  jinja2,
   lxml,
+  pdfminer-six,
   pycryptodome,
   pypdf,
+  pytestCheckHook,
+  pyyaml,
+  requests,
 }:
 
 buildHomeAssistantComponent rec {
   owner = "mampfes";
   domain = "waste_collection_schedule";
-  version = "2.12.1";
+  version = "2.20.0";
 
   src = fetchFromGitHub {
     inherit owner;
     repo = "hacs_waste_collection_schedule";
-    tag = version;
-    hash = "sha256-mR8UCDQDQBMYCxIA8DKLhD+u9utfMx+woS5L2E7mxXM=";
+    tag = "v${version}";
+    hash = "sha256-Dt1Ey2vIk5f6AEC9qepUb3S8+1rBwG5o6/6/pEoglcw=";
   };
 
   dependencies = [
     beautifulsoup4
-    cloudscraper
+    curl-cffi
     icalendar
     icalevents
     lxml
+    pdfminer-six
     pycryptodome
     pypdf
   ];
 
+  nativeCheckInputs = [
+    homeassistant
+    jinja2
+    pytestCheckHook
+    pyyaml
+    requests
+  ];
+
   meta = {
-    changelog = "https://github.com/mampfes/hacs_waste_collection_schedule/releases/tag/${version}";
+    changelog = "https://github.com/mampfes/hacs_waste_collection_schedule/releases/tag/${src.tag}";
     description = "Home Assistant integration framework for (garbage collection) schedules";
     homepage = "https://github.com/mampfes/hacs_waste_collection_schedule";
     maintainers = with lib.maintainers; [ jamiemagee ];

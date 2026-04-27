@@ -20,6 +20,9 @@
   "cmake-ctest-variables": [
     "index.html#cmake-ctest-variables"
   ],
+  "compiling-wasm32-wasip1-package": [
+    "index.html#compiling-wasm32-wasip1-package"
+  ],
   "coq-withPackages": [
     "index.html#coq-withPackages"
   ],
@@ -134,17 +137,20 @@
   "inkscape-plugins": [
     "index.html#inkscape-plugins"
   ],
+  "installfonts": [
+    "index.html#installfonts"
+  ],
+  "installfonts-installfont": [
+    "index.html#installfonts-installfont"
+  ],
+  "installfonts-installfont-exampleusage": [
+    "index.html#installfonts-installfont-exampleusage"
+  ],
   "javascript-buildNpmPackage-npmFlags": [
     "index.html#javascript-buildNpmPackage-npmFlags"
   ],
   "javascript-buildNpmPackage-npmWorkspace": [
     "index.html#javascript-buildNpmPackage-npmWorkspace"
-  ],
-  "libcxxhardeningextensive": [
-    "index.html#libcxxhardeningextensive"
-  ],
-  "libcxxhardeningfast": [
-    "index.html#libcxxhardeningfast"
   ],
   "julec-hook": [
     "index.html#julec-hook"
@@ -181,6 +187,12 @@
   ],
   "julec-hook-variables": [
     "index.html#julec-hook-variables"
+  ],
+  "libcxxhardeningextensive": [
+    "index.html#libcxxhardeningextensive"
+  ],
+  "libcxxhardeningfast": [
+    "index.html#libcxxhardeningfast"
   ],
   "major-ghc-deprecation": [
     "index.html#major-ghc-deprecation"
@@ -366,6 +378,9 @@
   ],
   "sec-build-helper-extendMkDerivation": [
     "index.html#sec-build-helper-extendMkDerivation"
+  ],
+  "sec-buildEnv-exceptions": [
+    "index.html#sec-buildEnv-exceptions"
   ],
   "sec-building-packages-with-llvm": [
     "index.html#sec-building-packages-with-llvm"
@@ -758,6 +773,12 @@
   "sec-treefmt-options-reference": [
     "index.html#sec-treefmt-options-reference"
   ],
+  "ssec-buildEnv-collisions": [
+    "index.html#ssec-buildEnv-collisions"
+  ],
+  "ssec-buildEnv-singleFileOutputs": [
+    "index.html#ssec-buildEnv-singleFileOutputs"
+  ],
   "ssec-cosmic-common-issues": [
     "index.html#ssec-cosmic-common-issues"
   ],
@@ -866,6 +887,9 @@
   "typst-package-scope-and-usage": [
     "index.html#typst-package-scope-and-usage"
   ],
+  "using-tclrequirescheck": [
+    "index.html#using-tclrequirescheck"
+  ],
   "var-go-buildTestBinaries": [
     "index.html#var-go-buildTestBinaries"
   ],
@@ -940,6 +964,9 @@
   ],
   "var-stdenv-enableParallelBuilding": [
     "index.html#var-stdenv-enableParallelBuilding"
+  ],
+  "var-stdenv-__structuredAttrs": [
+    "index.html#var-stdenv-__structuredAttrs"
   ],
   "mkderivation-recursive-attributes": [
     "index.html#mkderivation-recursive-attributes"
@@ -2166,6 +2193,12 @@
   ],
   "chap-special": [
     "index.html#chap-special"
+  ],
+  "sec-buildEnv": [
+    "index.html#sec-buildEnv"
+  ],
+  "sec-buildEnv-arguments": [
+    "index.html#sec-buildEnv-arguments"
   ],
   "sec-fakeNss": [
     "index.html#sec-fakeNss"

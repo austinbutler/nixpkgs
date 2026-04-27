@@ -185,6 +185,8 @@ in
 
   nixosOptionsDoc = recurseIntoAttrs (callPackage ../../nixos/lib/make-options-doc/tests.nix { });
 
+  buildenv = callPackage ./buildenv.nix { };
+
   overriding = callPackage ./overriding.nix { };
 
   texlive = recurseIntoAttrs (callPackage ./texlive { });
@@ -266,5 +268,5 @@ in
     callPackages ../build-support/prefer-remote-fetch/tests.nix { }
   );
 
-  home-assistant-component-tests = recurseIntoAttrs pkgs.home-assistant.tests.components;
+  home-assistant-components = recurseIntoAttrs pkgs.home-assistant.tests.components;
 }

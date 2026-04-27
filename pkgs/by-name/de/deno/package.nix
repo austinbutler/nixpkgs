@@ -9,13 +9,12 @@
   protobuf,
   installShellFiles,
   makeBinaryWrapper,
-  librusty_v8 ? callPackage ./librusty_v8.nix {
-    inherit (callPackage ./fetchers.nix { }) fetchLibrustyV8;
-  },
+  librusty_v8 ? callPackage ./librusty_v8.nix { },
   libffi,
   sqlite,
   lld,
   writableTmpDirAsHomeHook,
+  fetchpatch,
 
   # Test deps
   curl,
@@ -30,17 +29,17 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "deno";
-  version = "2.7.9";
+  version = "2.7.12";
 
   src = fetchFromGitHub {
     owner = "denoland";
     repo = "deno";
     tag = "v${finalAttrs.version}";
     fetchSubmodules = true; # required for tests
-    hash = "sha256-asRSIDpVN8sZgck5cocqfjcFNnP3CekR0lwBi0jr6GM=";
+    hash = "sha256-e1G1y9aGWhFDhsvzmLFD6VIfxU8BseWOa8bBcCC255Y=";
   };
 
-  cargoHash = "sha256-lL9ZeMUi5cwrqikg+GiR5hQNgWPKlpAN7yQIXSsr93k=";
+  cargoHash = "sha256-YahHLz4ykAcFNrh/GFVJ0fZtCNHKG9RzdCUprQDfOUo=";
 
   patches = [
     ./patches/0002-tests-replace-hardcoded-paths.patch
@@ -243,7 +242,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   '';
 
   passthru = {
-    updateScript = ./update/update.ts;
+    updateScript = ./update.sh;
     tests = callPackage ./tests { };
     inherit librusty_v8;
   };
@@ -266,6 +265,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     maintainers = with lib.maintainers; [
       jk
       ofalvai
+      mynacol
     ];
     platforms = [
       "x86_64-linux"

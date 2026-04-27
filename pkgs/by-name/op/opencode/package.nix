@@ -16,13 +16,13 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "opencode";
-  version = "1.3.13";
+  version = "1.14.20";
 
   src = fetchFromGitHub {
     owner = "anomalyco";
     repo = "opencode";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-P6Md0WzHK2/oAZ6VbpYnabVJyVcqwuYizoOqbxaf+lU=";
+    hash = "sha256-9nxxvCkeTW3MasXaOhWaQqxqJeq9Q1+5TGULITjhV2Q=";
   };
 
   node_modules = stdenvNoCC.mkDerivation {
@@ -44,12 +44,15 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     buildPhase = ''
       runHook preBuild
 
+      export BUN_INSTALL_CACHE_DIR=$(mktemp -d)
       bun install \
         --cpu="*" \
         --frozen-lockfile \
+        --filter ./ \
         --filter ./packages/app \
         --filter ./packages/desktop \
         --filter ./packages/opencode \
+        --filter ./packages/shared \
         --ignore-scripts \
         --no-progress \
         --os="*"
@@ -72,7 +75,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     # NOTE: Required else we get errors that our fixed-output derivation references store paths
     dontFixup = true;
 
-    outputHash = "sha256-fWc9xVn6HbNxnJ9S8Q+hdlYQYkdGk+4RWWbYaB+L09Q=";
+    outputHash = "sha256-70F15j+YokvQGzvtniUSeIrdl6/tgpcEzDXrbCnZd6E=";
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
   };
@@ -104,6 +107,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   '';
 
   env.MODELS_DEV_API_JSON = "${models-dev}/dist/_api.json";
+  env.OPENCODE_DISABLE_MODELS_FETCH = true;
   env.OPENCODE_VERSION = finalAttrs.version;
   env.OPENCODE_CHANNEL = "stable";
 
@@ -112,7 +116,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
     cd ./packages/opencode
     bun --bun ./script/build.ts --single --skip-install
-    bun --bun ./script/schema.ts schema.json
+    bun --bun ./script/schema.ts config.json tui.json
 
     runHook postBuild
   '';
@@ -133,7 +137,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
        )
      }
 
-    install -Dm644 schema.json $out/share/opencode/schema.json
+    install -Dm644 config.json $out/share/opencode/config.json
+    install -Dm644 tui.json $out/share/opencode/tui.json
 
     runHook postInstall
   '';
@@ -149,11 +154,17 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     writableTmpDirAsHomeHook
   ];
   doInstallCheck = true;
-  versionCheckKeepEnvironment = [ "HOME" ];
+  versionCheckKeepEnvironment = [
+    "HOME"
+    "OPENCODE_DISABLE_MODELS_FETCH"
+  ];
   versionCheckProgramArg = "--version";
 
   passthru = {
-    jsonschema = "${placeholder "out"}/share/opencode/schema.json";
+    jsonschema = {
+      config = "${placeholder "out"}/share/opencode/config.json";
+      tui = "${placeholder "out"}/share/opencode/tui.json";
+    };
     updateScript = nix-update-script {
       extraArgs = [
         "--subpackage"

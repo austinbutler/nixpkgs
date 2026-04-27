@@ -25,6 +25,7 @@
   magma-cuda-static,
   # Use the system NCCL as long as we're targeting CUDA on a supported platform.
   useSystemNccl ? (cudaSupport && cudaPackages.nccl.meta.available || rocmSupport),
+  withNvshmem ? (cudaSupport && cudaPackages.libnvshmem.meta.available),
   MPISupport ? false,
   mpi,
   buildDocs ? false,
@@ -317,6 +318,17 @@ buildPythonPackage.override { inherit stdenv; } (finalAttrs: {
       url = "https://github.com/pytorch/pytorch/commit/39565a7dcf8f93ea22cedeaa20088b24ff6d2634.patch";
       hash = "sha256-Au5fVbs7i33d9c4Xj8koiBP7lGnsTGTaX4VlE2gAfy8=";
     })
+
+    # pybind11 3.0.3 changes led to ambiguous deduction in some return types
+    # that used `py::make_tuple`, so the type is explicitly specified where
+    # needed.
+    # Merged pull request: https://github.com/pytorch/pytorch/pull/179277
+    # TODO: remove at the next release
+    (fetchpatch {
+      name = "pybind11-3.0.3-ambiguous-return-type.patch";
+      url = "https://github.com/pytorch/pytorch/commit/b248ebc17075c0c3ad2b2532970d2ada32b2cf94.patch";
+      hash = "sha256-HY5JFGNoroFsfuUOO5j6WNP6gMHWUcIJFmWLqV8PV94=";
+    })
   ]
   ++ lib.optionals cudaSupport [
     ./fix-cmake-cuda-toolkit.patch
@@ -469,6 +481,8 @@ buildPythonPackage.override { inherit stdenv; } (finalAttrs: {
     USE_SYSTEM_NCCL = finalAttrs.env.USE_NCCL;
     USE_STATIC_NCCL = finalAttrs.env.USE_NCCL;
 
+    USE_NVSHMEM = setBool withNvshmem;
+
     # Set the correct Python library path, broken since
     # https://github.com/pytorch/pytorch/commit/3d617333e
     PYTHON_LIB_REL_PATH = "${placeholder "out"}/${python.sitePackages}";
@@ -577,6 +591,9 @@ buildPythonPackage.override { inherit stdenv; } (finalAttrs: {
       # Some platforms do not support NCCL (i.e., Jetson)
       (lib.getDev nccl) # Provides nccl.h
       (lib.getOutput "static" nccl) # Provides static library
+    ]
+    ++ lists.optionals withNvshmem [
+      cudaPackages.libnvshmem
     ]
     ++ [
       cuda_profiler_api # <cuda_profiler_api.h>

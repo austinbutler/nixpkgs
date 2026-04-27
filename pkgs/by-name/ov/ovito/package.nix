@@ -18,17 +18,18 @@
   imagemagick,
   copyDesktopItems,
   nix-update-script,
+  wrapGAppsHook3,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "ovito";
-  version = "3.15.0";
+  version = "3.15.2";
 
   src = fetchFromGitLab {
     owner = "stuko";
     repo = "ovito";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-017GjyHPHqrZt03lRFJn9yxFhD6HHyhX5vxsRX06PdA=";
+    hash = "sha256-A7TE84B63JG2X4iBUxQiahLSYTlu7y+x92NTii26pmg=";
     fetchSubmodules = true;
   };
 
@@ -40,6 +41,7 @@ stdenv.mkDerivation (finalAttrs: {
   nativeBuildInputs = [
     cmake
     qt6Packages.wrapQtAppsHook
+    wrapGAppsHook3
     imagemagick
     copyDesktopItems
   ];
@@ -61,6 +63,12 @@ stdenv.mkDerivation (finalAttrs: {
     # needed to run natively on wayland
     qt6Packages.qtwayland
   ];
+
+  dontWrapGApps = true;
+
+  preFixup = ''
+    qtWrapperArgs+=("''${gappsWrapperArgs[@]}")
+  '';
 
   # manually create a desktop file
   desktopItems = [
