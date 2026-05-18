@@ -13,19 +13,22 @@
   openssh,
   fetchPnpmDeps,
   pnpmConfigHook,
-  pnpm,
+  pnpm_10,
   stdenv,
   sqliteSupport ? true,
   nixosTests,
 }:
 
 let
+  pnpm = pnpm_10;
+
   frontend = stdenv.mkDerivation (finalAttrs: {
     pname = "gitea-frontend";
     inherit (gitea) src version;
 
     pnpmDeps = fetchPnpmDeps {
       inherit (finalAttrs) pname version src;
+      inherit pnpm;
       fetcherVersion = 3;
       hash = "sha256-dewYYPO2wmNyYiQadoEKWJ10cghm6Lv7UE1iVlyNiEY=";
     };
@@ -48,13 +51,13 @@ let
 in
 buildGoModule rec {
   pname = "gitea";
-  version = "1.26.0";
+  version = "1.26.1";
 
   src = fetchFromGitHub {
     owner = "go-gitea";
     repo = "gitea";
     tag = "v${gitea.version}";
-    hash = "sha256-BzO4VHyOShU8QB8re/2MzP+4vNGebY874aB9NQD8KVA=";
+    hash = "sha256-UlPS+gcSEzKY+g5y+k3NsL3b8FRVHnlqkiuJTz5ijFM=";
   };
 
   proxyVendor = true;

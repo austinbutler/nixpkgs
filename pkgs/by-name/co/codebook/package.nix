@@ -8,17 +8,17 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "codebook";
-  version = "0.3.37";
+  version = "0.3.39";
 
   src = fetchFromGitHub {
     owner = "blopker";
     repo = "codebook";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-1eZ9HzGK/Zyjb0ffGZc08DKqwMtUh6Ei04vAtgCOQoc=";
+    hash = "sha256-u0BFbG7Vq2dIIJIlXe2rlNPD6iUVnb3uM95bLBg9CEU=";
   };
 
   buildAndTestSubdir = "crates/codebook-lsp";
-  cargoHash = "sha256-lWl2E5I/1Qj5TvQfxBfNsMYIIpL+yGlrA7YVokKwtqQ=";
+  cargoHash = "sha256-Tx2KxtUjQpJa2WDUlFQoNZItKowGv09ZTGytFuxL0yc=";
 
   env = {
     CARGO_PROFILE_RELEASE_LTO = "fat";

@@ -209,6 +209,12 @@ assertNoAdditions {
     dependencies = [ self.middleclass ];
   };
 
+  argtextobj-vim = super.argtextobj-vim.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.mit;
+    };
+  });
+
   arrow-nvim = super.arrow-nvim.overrideAttrs (old: {
     meta = old.meta // {
       license = lib.licenses.gpl3Plus;
@@ -308,7 +314,7 @@ assertNoAdditions {
     };
   });
 
-  barbar-nvim = super.barbar-nvim.overrideAttrs {
+  barbar-nvim = super.barbar-nvim.overrideAttrs (old: {
     # Optional integrations
     checkInputs = with self; [
       bufferline-nvim
@@ -316,7 +322,11 @@ assertNoAdditions {
     ];
     # E5108: Error executing lua ...implugin-barbar.nvim-2025-04-28/lua/bufferline/utils.lua:10: module 'barbar.utils.hl' not found:
     nvimSkipModules = [ "bufferline.utils" ];
-  };
+
+    meta = old.meta // {
+      license = lib.licenses.json;
+    };
+  });
 
   barbecue-nvim = super.barbecue-nvim.overrideAttrs (old: {
     dependencies = with self; [
@@ -444,6 +454,12 @@ assertNoAdditions {
   bullets-vim = super.bullets-vim.overrideAttrs (old: {
     meta = old.meta // {
       license = lib.licenses.mit;
+    };
+  });
+
+  camelcasemotion = super.camelcasemotion.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.vim;
     };
   });
 
@@ -1336,6 +1352,7 @@ assertNoAdditions {
       # Pickers, can use telescope, fzf-lua, or snacks
       fzf-lua
       telescope-nvim
+      neotest
     ];
   };
 
@@ -2219,6 +2236,12 @@ assertNoAdditions {
     dependencies = [ self.plenary-nvim ];
   };
 
+  lsp-format-nvim = super.lsp-format-nvim.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.mit;
+    };
+  });
+
   lsp_extensions-nvim = super.lsp_extensions-nvim.overrideAttrs {
     dependencies = [ self.plenary-nvim ];
   };
@@ -2395,13 +2418,6 @@ assertNoAdditions {
   mediawiki-vim = super.mediawiki-vim.overrideAttrs (old: {
     meta = old.meta // {
       license = lib.licenses.publicDomain;
-    };
-  });
-
-  mind-nvim = super.mind-nvim.overrideAttrs (old: {
-    dependencies = [ self.plenary-nvim ];
-    meta = old.meta // {
-      license = lib.licenses.bsd3;
     };
   });
 
@@ -3881,6 +3897,22 @@ assertNoAdditions {
     };
   });
 
+  run-nvim = super.run-nvim.overrideAttrs (old: {
+    dependencies = [
+      self.telescope-nvim
+    ];
+
+    checkInputs = [
+      # Transitive dependency of telescope.nvim
+      # Issue: https://github.com/NixOS/nixpkgs/issues/394939
+      self.plenary-nvim
+    ];
+
+    meta = old.meta // {
+      license = lib.licenses.gpl3Only;
+    };
+  });
+
   rust-tools-nvim = super.rust-tools-nvim.overrideAttrs {
     dependencies = [ self.nvim-lspconfig ];
   };
@@ -4477,6 +4509,12 @@ assertNoAdditions {
     nvimSkipModules = "tsc.better-messages-test";
   };
 
+  tslime-vim = super.tslime-vim.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.wtfpl;
+    };
+  });
+
   tsuquyomi = super.tsuquyomi.overrideAttrs (old: {
     meta = old.meta // {
       license = lib.licenses.mit;
@@ -4709,9 +4747,12 @@ assertNoAdditions {
     };
   });
 
-  vim-beancount = super.vim-beancount.overrideAttrs {
+  vim-beancount = super.vim-beancount.overrideAttrs (old: {
     passthru.python3Dependencies = ps: with ps; [ beancount ];
-  };
+    meta = old.meta // {
+      license = lib.licenses.vim;
+    };
+  });
 
   vim-bepoptimist = super.vim-bepoptimist.overrideAttrs (old: {
     meta = old.meta // {
@@ -4852,6 +4893,12 @@ assertNoAdditions {
     };
   });
 
+  vim-easymotion = super.vim-easymotion.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.mit;
+    };
+  });
+
   vim-easytags = super.vim-easytags.overrideAttrs (old: {
     dependencies = [ self.vim-misc ];
     patches = [
@@ -4908,10 +4955,13 @@ assertNoAdditions {
     };
   });
 
-  vim-flog = super.vim-flog.overrideAttrs {
+  vim-flog = super.vim-flog.overrideAttrs (old: {
     # Not intended to be required, used by vim plugin
     nvimSkipModules = "flog.graph_bin";
-  };
+    meta = old.meta // {
+      license = lib.licenses.vim;
+    };
+  });
 
   vim-fugitive = super.vim-fugitive.overrideAttrs (old: {
     meta = old.meta // {
@@ -5038,6 +5088,12 @@ assertNoAdditions {
   vim-hypr-nav = super.vim-hypr-nav.overrideAttrs {
     runtimeDeps = [ jq ];
   };
+
+  vim-indentwise = super.vim-indentwise.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.gpl3Plus;
+    };
+  });
 
   vim-isort = super.vim-isort.overrideAttrs {
     postPatch = ''
@@ -5328,6 +5384,12 @@ assertNoAdditions {
     };
   });
 
+  vim-textobj-user = super.vim-textobj-user.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.mit;
+    };
+  });
+
   vim-tpipeline = super.vim-tpipeline.overrideAttrs {
     # Requires global variable
     nvimSkipModules = "tpipeline.main";
@@ -5506,6 +5568,12 @@ assertNoAdditions {
     nvimSkipModules = "virt-column.config.types";
   };
 
+  vis = super.vis.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.vim;
+    };
+  });
+
   vs-tasks-nvim = super.vs-tasks-nvim.overrideAttrs {
     checkInputs = [
       # Optional telescope integration
@@ -5665,6 +5733,18 @@ assertNoAdditions {
       "randombones_dark"
     ];
   };
+
+  zenburn = super.zenburn.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.gpl3Only;
+    };
+  });
+
+  zig-vim = super.zig-vim.overrideAttrs (old: {
+    meta = old.meta // {
+      license = lib.licenses.mit;
+    };
+  });
 
   zk-nvim = super.zk-nvim.overrideAttrs {
     checkInputs = with self; [

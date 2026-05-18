@@ -1495,6 +1495,17 @@ class NspawnMachine(BaseMachine):
         self.logger.info(f"kill NspawnMachine (pid {self.pid})")
         assert self.process is not None
         self.process.terminate()
+        # Wait for the wrapper to finish its context-manager cleanups
+        # (veth/bridge/netns teardown) before returning, so the driver's
+        # subsequent vlan teardown does not race against it.
+        try:
+            self.process.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            self.logger.error(
+                f"NspawnMachine {self.name} (pid {self.pid}) did not exit after SIGTERM; sending SIGKILL"
+            )
+            self.process.kill()
+            self.process.wait()
         self.process = None
 
     def is_up(self) -> bool:
@@ -1710,3 +1721,18 @@ class NspawnMachine(BaseMachine):
         with self.nested("waiting for the container to power off"):
             self.process.wait()
             self.process = None
+
+
+class MachineDeprecationWrapper:
+    def __init__(self, msg: str, machine: QemuMachine | NspawnMachine):
+        self.msg = msg
+        self.machine = machine
+
+    def __getattribute__(self, name: str):
+        if name in ("msg", "machine"):
+            return object.__getattribute__(self, name)
+        typename = self.machine.__class__.__name__
+        warnings.warn(
+            f"invoking '{typename}.{name}' is deprecated: {self.msg}",
+        )
+        return self.machine.__getattribute__(name)

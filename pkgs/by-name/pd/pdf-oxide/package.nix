@@ -9,16 +9,16 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "pdf-oxide";
-  version = "0.3.32";
+  version = "0.3.43";
 
   src = fetchFromGitHub {
     owner = "yfedoseev";
     repo = "pdf_oxide";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-z6dc+GWOovF31yhZIJsg/0FWmSHizk+BpipdrJmoxwI=";
+    hash = "sha256-pIB6x50yIBLsOlKdU9zjeS/71KR0vNc7tmu2QTEn4JA=";
   };
 
-  cargoHash = "sha256-0GCBraW4m7/3xUbt8wLrEle/9vn1nOtyNqIwfn19vN8=";
+  cargoHash = "sha256-3Wk5TYZDoCkzR+S186t39oMT9SfubmGXcDuucwIiaac=";
   __structuredAttrs = true;
 
   cargoBuildFlags = [

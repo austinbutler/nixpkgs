@@ -1758,6 +1758,9 @@
   "ssec-cross-cookbook": [
     "index.html#ssec-cross-cookbook"
   ],
+  "cross-qa-emulation": [
+    "index.html#cross-qa-emulation"
+  ],
   "cross-qa-fails-to-find-binutils": [
     "index.html#cross-qa-fails-to-find-binutils"
   ],
@@ -4058,6 +4061,9 @@
   ],
   "buildpythonpackage-parameters": [
     "index.html#buildpythonpackage-parameters"
+  ],
+  "buildpythonpackage-fixed-point-arguments": [
+    "index.html#buildpythonpackage-fixed-point-arguments"
   ],
   "overriding-python-build-helpers": [
     "index.html#overriding-python-build-helpers"

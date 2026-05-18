@@ -141,13 +141,13 @@ let
 in
 goBuild (finalAttrs: {
   pname = "ollama";
-  version = "0.21.1";
+  version = "0.23.4";
 
   src = fetchFromGitHub {
     owner = "ollama";
     repo = "ollama";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-t/c2oba/y1IUh460+P3MQHGLnExrKcOcQpiMg0mFLBs=";
+    hash = "sha256-uwdhGT2ZG7c3Qe4QVcuKfAsUyPdlkHcwh1Dvh/oH07M=";
   };
 
   vendorHash = "sha256-Lc1Ktdqtv2VhJQssk8K1UOimeEjVNvDWePE9WkamCos=";
@@ -168,10 +168,12 @@ goBuild (finalAttrs: {
     cmake
     gitMinimal
   ]
-  ++ lib.optionals enableRocm [
-    rocmPackages.llvm.bintools
+  ++ lib.optionals enableRocm (
     rocmLibs
-  ]
+    ++ [
+      rocmPackages.llvm.bintools
+    ]
+  )
   ++ lib.optionals enableCuda [ cudaPackages.cuda_nvcc ]
   ++ lib.optionals (enableRocm || enableCuda) [
     makeBinaryWrapper
@@ -194,7 +196,10 @@ goBuild (finalAttrs: {
       --replace-fail 0.0.0 '${finalAttrs.version}'
     substituteInPlace cmd/launch/openclaw_test.go \
       --replace-fail '/bin/mkdir' '${coreutils}/bin/mkdir' \
-      --replace-fail '/bin/cat' '${coreutils}/bin/cat'
+      --replace-fail '/bin/cat' '${coreutils}/bin/cat' \
+      --replace-fail '/usr/bin/env' '${coreutils}/bin/env' \
+      --replace-fail '/usr/bin/sort' '${coreutils}/bin/sort' \
+      --replace-fail '/bin/chmod' '${coreutils}/bin/chmod'
     substituteInPlace cmd/launch/hermes_test.go \
       --replace-fail '/bin/mkdir' '${coreutils}/bin/mkdir' \
       --replace-fail '/bin/cat' '${coreutils}/bin/cat' \
@@ -209,6 +214,7 @@ goBuild (finalAttrs: {
   + lib.optionalString stdenv.hostPlatform.isDarwin ''
     rm ml/backend/ggml/ggml_test.go
     rm ml/nn/pooling/pooling_test.go
+    rm model/models/nemotronh/model_omni_test.go
   '';
 
   overrideModAttrs = (
@@ -314,7 +320,6 @@ goBuild (finalAttrs: {
       if (rocmRequested || cudaRequested || vulkanRequested) then platforms.linux else platforms.unix;
     mainProgram = "ollama";
     maintainers = with maintainers; [
-      dit7ya
       prusnak
     ];
   };
