@@ -1,0 +1,27 @@
+diff --git a/crates/prek/src/cli/install.rs b/crates/prek/src/cli/install.rs
+--- a/crates/prek/src/cli/install.rs
++++ b/crates/prek/src/cli/install.rs
+@@ -319,9 +319,8 @@ pub(crate) async fn install(
+         args.push("--skip-on-missing-config".to_string());
+     }
+
+-    let prek = std::env::current_exe()?;
+-    let prek = prek.simplified_display().to_string();
++    let prek = "@out@/bin/prek".to_string();
+     let mut prek_global_args = render_global_args(quiet, verbose, no_progress);
+     if !prek_global_args.is_empty() {
+         prek_global_args.push(' ');
+     }
+@@ -388,12 +387,6 @@ static HOOK_TMPL: &str = r#"#!/bin/sh
+
+ HERE="$(cd "$(dirname "$0")" && pwd)"
+ PREK=[PREK_PATH]
+-
+-# Check if the full path to prek is executable, otherwise fallback to PATH
+-if [ ! -x "$PREK" ]; then
+-    PREK="prek"
+-fi
+-
+ exec "$PREK" [PREK_GLOBAL_ARGS]hook-impl --hook-dir "$HERE" --script-version [CUR_SCRIPT_VERSION] [PREK_ARGS] -- "$@"
+
+ "#;

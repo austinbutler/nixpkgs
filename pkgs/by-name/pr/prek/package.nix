@@ -4,13 +4,27 @@
   fetchFromGitHub,
   rustPlatform,
   installShellFiles,
+  makeWrapper,
   git,
   uv,
   python312,
   versionCheckHook,
   nix-update-script,
+  callPackage,
+  prek,
+  withPythonSupport ? false,
 }:
 
+let
+  pythonRuntimeDeps = [
+    python312
+    uv
+  ];
+
+  runtimeDeps = [
+    git
+  ] ++ lib.optionals withPythonSupport pythonRuntimeDeps;
+in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "prek";
   version = "0.3.11";
@@ -24,8 +38,16 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   cargoHash = "sha256-AggCANaSMeKftOlan8TpgLgpYgaLCpYBBbBOeLKCCVo=";
 
+  patches = [ ./hardcode-hook-path.patch ];
+
+  postPatch = ''
+    substituteInPlace crates/prek/src/cli/install.rs \
+      --subst-var-by out "$out"
+  '';
+
   nativeBuildInputs = [
     installShellFiles
+    makeWrapper
   ];
 
   nativeCheckInputs = [
@@ -38,7 +60,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # best to disable all, as the upstream already tests everything
   doCheck = false;
 
-  postInstall = lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
+  postInstall = ''
+    wrapProgram "$out/bin/prek" \
+      --prefix PATH : ${lib.makeBinPath runtimeDeps}
+  '' + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
     installShellCompletion --cmd prek \
       --bash <(COMPLETE=bash $out/bin/prek) \
       --fish <(COMPLETE=fish $out/bin/prek) \
@@ -48,7 +73,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
   doInstallCheck = true;
   nativeInstallCheckInputs = [ versionCheckHook ];
 
-  passthru.updateScript = nix-update-script { };
+  passthru = {
+    updateScript = nix-update-script { };
+    tests = callPackage ./tests.nix { inherit prek; };
+  };
 
   meta = {
     homepage = "https://github.com/j178/prek";
