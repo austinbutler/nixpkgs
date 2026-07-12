@@ -3,8 +3,7 @@
   stdenvNoCC,
   buildGoModule,
   fetchFromGitHub,
-  pnpm_10,
-  pnpm ? pnpm_10,
+  pnpm,
   fetchPnpmDeps,
   pnpmConfigHook,
   nodejs,
@@ -42,20 +41,20 @@ in
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "sparkle";
-  version = "1.26.2";
+  version = "1.26.6";
 
   src = fetchFromGitHub {
     owner = "xishang0128";
     repo = "sparkle";
     tag = finalAttrs.version;
-    hash = "sha256-6/VdWVobiBjjggC215g/zZmVAx1EzGbPE6+xp6ekcJw=";
+    hash = "sha256-IFK7rhT3i+Qct0FIEYFbgQpJ5cjS7JMKd2tmOq5ZSNg=";
   };
 
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname version src;
     inherit pnpm;
-    fetcherVersion = 3;
-    hash = "sha256-P0KwmLwj1FIWBduT2DzOaRCYrbQ+kvcCdCgabAhmMm8=";
+    fetcherVersion = 4;
+    hash = "sha256-+OHO0Rvp33QUDRFjKwDpaIzdciwbsjEwoQxmqd4TouA=";
   };
 
   nativeBuildInputs = [
@@ -136,7 +135,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     })
   ];
 
-  passthru.updateScript = nix-update-script { };
+  passthru.updateScript = nix-update-script { extraArgs = [ "--use-github-releases" ]; };
 
   meta = {
     description = "Another Mihomo GUI";

@@ -21,13 +21,14 @@
   ruby,
   perl,
   tk,
-  jdk,
+  jre_headless,
   bash,
   snobol4,
   coreutils,
   findutils,
   gawk,
   getopt,
+  gettext,
   gnugrep,
   gnumake,
   gnupg,
@@ -44,7 +45,10 @@
   extraMirrors ? [ ],
   nixfmt,
   luajit,
+  texinfo,
   # for bin.nix
+  gnum4,
+  jdk_headless,
   perlPackages,
   python3Packages,
   pkg-config,
@@ -65,8 +69,8 @@
   clisp,
   biber,
   woff2,
-  xxHash,
-  fetchzip,
+  xxhash,
+  unzip,
   fetchFromGitHub,
   buildPackages,
   texlive,
@@ -108,6 +112,7 @@ let
           findutils
           gawk
           getopt
+          gettext
           ghostscript_headless
           git-latexdiff
           gnugrep
@@ -122,6 +127,7 @@ let
           ruby
           zip
           luajit
+          texinfo
           ;
       };
     in
@@ -129,13 +135,13 @@ let
 
   version = {
     # day of the snapshot being taken
-    year = "2025";
-    month = "07";
-    day = "03";
+    year = "2026";
+    month = "03";
+    day = "01";
     # TeX Live version
     texliveYear = 2025;
     # final (historic) release or snapshot
-    final = false;
+    final = true;
   };
 
   # The tarballs on CTAN mirrors for the current release are constantly
@@ -150,8 +156,7 @@ let
         [
           # tlnet-final snapshot; used when texlive.tlpdb is frozen
           # the TeX Live yearly freeze typically happens in mid-March
-          "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/${toString version.texliveYear}/tlnet-final"
-          "ftp://tug.org/texlive/historic/${toString version.texliveYear}/tlnet-final"
+          "mirror://texhistoric/systems/texlive/${toString version.texliveYear}/tlnet-final"
         ]
       else
         [
@@ -173,7 +178,7 @@ let
         # use last mirror for daily snapshots as texlive.tlpdb.xz changes every day
         # TODO make this less hacky
         (if version.final then mirrors else [ (lib.last mirrors) ]);
-    hash = "sha256-hTWTs5meP6X7+bBGEHP9pDv8eJTfvBZFKX0WeK8+aZg=";
+    hash = "sha256-Vt8DjpBwo9WH7s613vPxVLLKzM7zbUKVu0ngYYl3w0o=";
   };
 
   tlpdbNix =
@@ -181,9 +186,10 @@ let
       {
         inherit tlpdbxz;
         tl2nix = ./tl2nix.sed;
+        nativeBuildInputs = [ nixfmt ];
       }
       ''
-        xzcat "$tlpdbxz" | sed -rn -f "$tl2nix" | uniq | ${lib.getExe nixfmt} > "$out"
+        xzcat "$tlpdbxz" | sed -rn -f "$tl2nix" | uniq | nixfmt > "$out"
       '';
 
   # map: name -> fixed-output hash
@@ -196,7 +202,7 @@ let
       runCommand
       writeShellScript
       bash
-      jdk
+      jre_headless
       perl
       python3
       ruby
@@ -220,13 +226,13 @@ let
         inherit mirrors pname;
         fixedHashes = fixedHashes."${pname}-${toString revision}${extraRevision}" or { };
       }
-      // lib.optionalAttrs (args ? deps) { deps = map (n: tl.${n}) (args.deps or [ ]); }
+      // lib.optionalAttrs (args ? deps) { deps = map (n: tl.${n} or bin.${n}) (args.deps or [ ]); }
     )
   ) overriddenTlpdb;
 
   # function for creating a working environment
   buildTeXEnv = import ./build-tex-env.nix {
-    inherit bin tl;
+    inherit tl;
     inherit tlpdbVersion;
     ghostscript = ghostscript_headless;
     inherit
@@ -236,10 +242,7 @@ let
       makeFontsConf
       makeWrapper
       runCommand
-      writeShellScript
-      writeText
       toTLPkgSets
-      bash
       perl
       coreutils
       gawk
@@ -253,19 +256,31 @@ let
   # respecting specified outputs
   toTLPkgList =
     drv:
+    let
+      drvWithoutDeps = removeAttrs drv [ "tlDeps" ];
+      drvWithDeps =
+        if (drv ? tlDeps) then
+          drv // { tlDeps = if builtins.isFunction drv.tlDeps then drv.tlDeps tl else drv.tlDeps; }
+        else
+          drv;
+    in
     if drv.outputSpecified or false then
       let
         tlType = drv.tlType or tlOutToType.${drv.tlOutputName or drv.outputName} or null;
       in
-      lib.optional (tlType != null) (drv // { inherit tlType; })
+      lib.optional (tlType != null) (drvWithDeps // { inherit tlType; })
     else
-      [ (drv.tex // { tlType = "run"; }) ]
+      lib.optional (drv ? tex) (drvWithDeps.tex // { tlType = "run"; })
       ++ lib.optional (drv ? texdoc) (
-        drv.texdoc // { tlType = "doc"; } // lib.optionalAttrs (drv ? man) { hasManpages = true; }
+        drvWithoutDeps.texdoc
+        // {
+          tlType = "doc";
+        }
+        // lib.optionalAttrs (drv ? man) { hasManpages = true; }
       )
-      ++ lib.optional (drv ? texsource) (drv.texsource // { tlType = "source"; })
-      ++ lib.optional (drv ? tlpkg) (drv.tlpkg // { tlType = "tlpkg"; })
-      ++ lib.optional (drv ? out) (drv.out // { tlType = "bin"; });
+      ++ lib.optional (drv ? texsource) (drvWithoutDeps.texsource // { tlType = "source"; })
+      ++ lib.optional (drv ? tlpkg) (drvWithDeps.tlpkg // { tlType = "tlpkg"; })
+      ++ lib.optional (drv ? out) (drvWithDeps.out // { tlType = "bin"; });
   tlOutToType = {
     out = "bin";
     tex = "run";
@@ -308,8 +323,8 @@ let
     inherit
       buildTeXEnv
       lib
+      tl
       toTLPkgList
-      toTLPkgSets
       ;
   };
 
@@ -387,9 +402,11 @@ let
       x11
     ];
     scheme-full = [
+      agpl3Only
       artistic1-cl8
       artistic2
       asl20
+      bsd0
       bsd2
       bsd3
       bsdOriginal
@@ -462,6 +479,7 @@ let
     scheme-medium = [
       artistic1-cl8
       asl20
+      bsd0
       bsd2
       bsd3
       cc-by-40
@@ -531,6 +549,7 @@ let
       x11
     ];
     scheme-tetex = [
+      agpl3Only
       artistic1-cl8
       asl20
       bsd2
@@ -570,7 +589,10 @@ let
   meta = {
     description = "TeX Live environment";
     platforms = lib.platforms.all;
-    maintainers = with lib.maintainers; [ veprbl ];
+    maintainers = with lib.maintainers; [
+      veprbl
+      xworld21
+    ];
     license = licenses.scheme-infraonly;
   };
 
@@ -602,6 +624,7 @@ let
             meta = meta // {
               description = "TeX Live environment for ${pname}";
               license = licenses.${pname};
+              problems.removal.message = "texlive.combined schemes are deprecated and will be removed from Nixpkgs 27.05. Please switch to texliveSmall or another top level scheme.";
             };
           }
       )

@@ -6,22 +6,23 @@
   sqlite,
   installShellFiles,
   makeWrapper,
+  xandikos,
   versionCheckHook,
   nix-update-script,
 }:
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "pimsync";
-  version = "0.5.7";
+  version = "0.5.9";
 
   src = fetchFromSourcehut {
     owner = "~whynothugo";
     repo = "pimsync";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-6glyZZ79tMaR0VckKNMew1+x7/SU4V93/to6PWaiIHU=";
+    hash = "sha256-bNE0YY7bws8lEGoVg/sXuepBU1/oJPWBdn1wBGzF8s8=";
   };
 
-  cargoHash = "sha256-TiywSVcNqnshkmDovQDY03tM6v8AMOfwzI/SLOlEXHw=";
+  cargoHash = "sha256-w3o3qxe/EADeH6LDwBxm0kvdYuwEcuj8GcoVPtBqylA=";
 
   env.PIMSYNC_VERSION = finalAttrs.version;
 
@@ -35,8 +36,13 @@ rustPlatform.buildRustPackage (finalAttrs: {
     sqlite
   ];
 
+  nativeCheckInputs = [
+    xandikos
+  ];
+
   postInstall = ''
     installManPage pimsync.1 pimsync.conf.5 pimsync-migration.7
+    installShellCompletion --zsh contrib/_pimsync
   '';
 
   nativeInstallCheckInputs = [

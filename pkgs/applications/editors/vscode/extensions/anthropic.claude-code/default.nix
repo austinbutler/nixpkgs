@@ -1,22 +1,54 @@
 {
   lib,
-  claude-code,
+  stdenv,
+  stdenvNoCC,
+  autoPatchelfHook,
+  alsa-lib,
+  testers,
   vscode-utils,
 }:
 
-vscode-utils.buildVscodeMarketplaceExtension {
-  mktplcRef = {
-    name = "claude-code";
-    publisher = "anthropic";
-    version = "2.1.77";
-    hash = "sha256-fK1Exshw1mRV1S2DXjza01YaExGVeY371aXNTNlhhfE=";
-  };
+vscode-utils.buildVscodeMarketplaceExtension (finalAttrs: {
+  nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [ autoPatchelfHook ];
 
-  postInstall = ''
-    mkdir -p "$out/$installPrefix/resources/native-binary"
-    rm -f "$out/$installPrefix/resources/native-binary/claude"*
-    ln -s "${claude-code}/bin/claude" "$out/$installPrefix/resources/native-binary/claude"
-  '';
+  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
+    (lib.getLib stdenv.cc.cc)
+    alsa-lib
+  ];
+
+  mktplcRef =
+    let
+      sources = {
+        "x86_64-linux" = {
+          arch = "linux-x64";
+          hash = "sha256-xg4iAUwPeEiHU4C+Iz0foAUlxmPVNZI27mdZXJZwe00=";
+        };
+        "aarch64-linux" = {
+          arch = "linux-arm64";
+          hash = "sha256-Z8WXyItCJmYfMacZQwMMfWwZEDxxhFu8lu6PM14ysmE=";
+        };
+        "x86_64-darwin" = {
+          arch = "darwin-x64";
+          hash = "sha256-bo9p5pNB9ZDh7SGIwOnI754cW9z1rLJYz9VcnmLINV8=";
+        };
+        "aarch64-darwin" = {
+          arch = "darwin-arm64";
+          hash = "sha256-phewYuZ0LcMxzdH/iIIs/ea5ygojlwHyItSR5Njdexw=";
+        };
+      };
+    in
+    {
+      name = "claude-code";
+      publisher = "anthropic";
+      version = "2.1.204";
+    }
+    // sources.${stdenvNoCC.hostPlatform.system}
+      or (throw "Unsupported system ${stdenvNoCC.hostPlatform.system}");
+
+  passthru.tests.bundled-claude-runs = testers.testVersion {
+    package = finalAttrs.finalPackage;
+    command = "${finalAttrs.finalPackage}/share/vscode/extensions/anthropic.claude-code/resources/native-binary/claude --version";
+  };
 
   meta = {
     description = "Harness the power of Claude Code without leaving your IDE";
@@ -25,5 +57,11 @@ vscode-utils.buildVscodeMarketplaceExtension {
     license = lib.licenses.unfree;
     sourceProvenance = with lib.sourceTypes; [ binaryBytecode ];
     maintainers = with lib.maintainers; [ xiaoxiangmoe ];
+    platforms = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
   };
-}
+})

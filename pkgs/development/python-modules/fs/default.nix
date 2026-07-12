@@ -12,7 +12,7 @@
   pytestCheckHook,
   pythonAtLeast,
   pytz,
-  setuptools,
+  setuptools_80,
   six,
 }:
 
@@ -35,10 +35,10 @@ buildPythonPackage rec {
       --replace ThreadedTestFTPd FtpdThreadWrapper
   '';
 
-  build-system = [ setuptools ];
+  build-system = [ setuptools_80 ];
 
   dependencies = [
-    setuptools
+    setuptools_80
     six
     appdirs
     pytz
@@ -68,6 +68,7 @@ buildPythonPackage rec {
     # pyftpdlib removed tests from installation in 2.1.0, resulting in
     #     ModuleNotFoundError: No module named 'pyftpdlib.test'
     "tests/test_ftpfs.py"
+    "tests/test_encoding.py" # fails under zfs normalization=formD
   ];
 
   disabledTests = [

@@ -23,13 +23,13 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "opentrack";
-  version = "2026.1.0-unstable-2026-03-05";
+  version = "2026.1.0-unstable-2026-06-18";
 
   src = fetchFromGitHub {
     owner = "opentrack";
     repo = "opentrack";
-    rev = "0c6cb21e2eb59739791e9e6f59f9eabc64085181";
-    hash = "sha256-U2kCZl7jpg2srsp82nNGhdeVA6sfwU5jZS9TPG5wE/U=";
+    rev = "3661aa28bb9489a798d9c42eb1c0ccf30876c848";
+    hash = "sha256-CClUz8g/fSL+NZzikKZuZx4pZsGhIdH70ax6clSG2xk=";
   };
 
   aruco = callPackage ./aruco.nix { };

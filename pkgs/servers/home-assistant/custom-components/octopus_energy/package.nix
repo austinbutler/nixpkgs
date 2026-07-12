@@ -11,13 +11,13 @@
 buildHomeAssistantComponent rec {
   owner = "BottlecapDave";
   domain = "octopus_energy";
-  version = "18.1.1";
+  version = "18.3.2";
 
   src = fetchFromGitHub {
     inherit owner;
     repo = "HomeAssistant-OctopusEnergy";
     tag = "v${version}";
-    hash = "sha256-wqhll0K5WKZDGWftaYLVd6uDS4w8mKU4yO4a4FLqseA=";
+    hash = "sha256-KSnpebEUzp25PsBMFqCajdnTINk51hdswmV9rGtG+3Q=";
   };
 
   dependencies = [ pydantic ];
@@ -26,6 +26,10 @@ buildHomeAssistantComponent rec {
     pytestCheckHook
     pytest-homeassistant-custom-component
     mock
+  ];
+
+  pytestFlags = [
+    "-Wignore::pytest.PytestRemovedIn9Warning"
   ];
 
   disabledTestPaths = [

@@ -6,17 +6,19 @@
   ninja,
   perl,
   gitUpdater,
+
+  withShared ? !stdenv.hostPlatform.isStatic,
 }:
 
 # reference: https://boringssl.googlesource.com/boringssl/+/refs/tags/0.20250818.0/BUILDING.md
 stdenv.mkDerivation (finalAttrs: {
   pname = "boringssl";
-  version = "0.20260211.0";
+  version = "0.20260526.0";
 
   src = fetchgit {
     url = "https://boringssl.googlesource.com/boringssl";
     tag = finalAttrs.version;
-    hash = "sha256-sN0tqnS19ltXeAd3xUiLMc6kLtTYPh2xT1F1U1mPi/M=";
+    hash = "sha256-SmyImyzGn7v2b5qGJbMmQZX5bODA9i6+8jy3uGwOawA=";
   };
 
   patches = [
@@ -28,6 +30,10 @@ stdenv.mkDerivation (finalAttrs: {
     cmake
     ninja
     perl
+  ];
+
+  cmakeFlags = [
+    (lib.cmakeBool "BUILD_SHARED_LIBS" withShared)
   ];
 
   env.NIX_CFLAGS_COMPILE = toString (
@@ -47,7 +53,10 @@ stdenv.mkDerivation (finalAttrs: {
     "dev"
   ];
 
-  passthru.updateScript = gitUpdater { };
+  passthru = {
+    updateScript = gitUpdater { };
+    isShared = withShared;
+  };
 
   meta = {
     description = "Free TLS/SSL implementation";

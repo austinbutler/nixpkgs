@@ -11,18 +11,19 @@
   mashumaro,
   pytest-asyncio,
   pytestCheckHook,
+  syrupy,
 }:
 
 buildPythonPackage rec {
   pname = "pysmlight";
-  version = "0.2.16";
+  version = "0.5.2";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "smlight-tech";
     repo = "pysmlight";
     tag = "v${version}";
-    hash = "sha256-SYMblXe0fkhLTzs42qrB+MwivYXhpgjLaO9c0zcCwmo=";
+    hash = "sha256-zqb2rfY3JDnIhlaevqX+/ppX5YhB8xUeIrrM4OQKEq0=";
   };
 
   build-system = [
@@ -43,6 +44,7 @@ buildPythonPackage rec {
     aresponses
     pytest-asyncio
     pytestCheckHook
+    syrupy
   ];
 
   __darwinAllowLocalNetworking = true;

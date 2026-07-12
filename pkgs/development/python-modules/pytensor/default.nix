@@ -33,8 +33,9 @@
 
 buildPythonPackage (finalAttrs: {
   pname = "pytensor";
-  version = "2.38.2";
+  version = "3.1.2";
   pyproject = true;
+  __structuredAttrs = true;
 
   src = fetchFromGitHub {
     owner = "pymc-devs";
@@ -43,7 +44,7 @@ buildPythonPackage (finalAttrs: {
     postFetch = ''
       sed -i 's/git_refnames = "[^"]*"/git_refnames = " (tag: ${finalAttrs.src.tag})"/' $out/pytensor/_version.py
     '';
-    hash = "sha256-BKyaApIijxuJ0gNNXqahDOMW3rpF6+qgoCEpWj6Uz5g=";
+    hash = "sha256-kKfbVSWsaA9ytii4GXeEmE+Oq8Qi7QNUOozgemqJI+k=";
   };
 
   build-system = [
@@ -84,14 +85,7 @@ buildPythonPackage (finalAttrs: {
     rm -rf pytensor
   '';
 
-  disabledTests = [
-    # TypeError: jax_funcified_fgraph() takes 2 positional arguments but 3 were given
-    "test_jax_Reshape_shape_graph_input"
-
-    # AssertionError: equal_computations failed
-    "test_infer_shape_db_handles_xtensor_lowering"
-  ]
-  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+  disabledTests = lib.optionals stdenv.hostPlatform.isDarwin [
     # Numerical assertion error
     # tests.unittest_tools.WrongValue: WrongValue
     "test_op_sd"
@@ -171,6 +165,13 @@ buildPythonPackage (finalAttrs: {
     # Don't run the most compute-intense tests
     "tests/scan/"
     "tests/tensor/"
+
+    # The IndexedElemwise fusion is intentionally disabled on the 3.0.x line
+    # (it can trigger a RecursionError, see the comment in
+    # pytensor/tensor/rewriting/indexed_elemwise.py), but these tests still
+    # assert that the fusion produces an IndexedElemwise node. Upstream test bug.
+    "tests/link/numba/test_indexed_elemwise.py"
+    "tests/benchmarks/test_gather_fusion.py"
   ];
 
   passthru.updateScript = nix-update-script {

@@ -8,6 +8,7 @@
   mkdocs,
   python3,
   python3Packages,
+  runtimeShell,
 }:
 
 buildGoModule (
@@ -17,7 +18,7 @@ buildGoModule (
     ui = buildNpmPackage {
       inherit (finalAttrs) src version;
       pname = "ntfy-sh-ui";
-      npmDepsHash = "sha256-eBGtw3R0mm26kQcxs7ODNpdAQGaBlRxn9ERn48zwuag=";
+      npmDepsHash = "sha256-d+/p9ytSqZyYDBBFgnK7skM17GJbHesJsVk4sZxTcBA=";
 
       prePatch = ''
         cd web/
@@ -37,16 +38,16 @@ buildGoModule (
   in
   {
     pname = "ntfy-sh";
-    version = "2.18.0";
+    version = "2.25.0";
 
     src = fetchFromGitHub {
       owner = "binwiederhier";
       repo = "ntfy";
       tag = "v${finalAttrs.version}";
-      hash = "sha256-QyApZObrCVcTD2ZFKJdv7Ghr0lYote4L6VELnL13KAc=";
+      hash = "sha256-R0trtATgI+AWXlN2UWEeChMhgX9pLdcNuRLkF4P4opM=";
     };
 
-    vendorHash = "sha256-mX7o1nXKhzzbSwJ4xmhg9ZQn4l5fIJDgIszxrgxPUKc=";
+    vendorHash = "sha256-sfMKr5IprwjVo7GwIYojcaixlRlkHOhoqec2PcK8UUU=";
 
     doCheck = false;
 
@@ -71,6 +72,12 @@ buildGoModule (
 
     postPatch = ''
       sed -i 's# /bin/echo# echo#' Makefile
+      substituteInPlace \
+          cmd/subscribe_unix.go \
+          cmd/subscribe_darwin.go \
+        --replace \
+          'scriptLauncher = []string{"sh", "-c"}' \
+          'scriptLauncher = []string{"${runtimeShell}", "-c"}'
     '';
 
     preBuild = ''
