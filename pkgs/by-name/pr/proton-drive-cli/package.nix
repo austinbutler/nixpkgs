@@ -31,7 +31,7 @@ in
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "proton-drive-cli";
-  version = "0.6.0-unstable-2026-07-17";
+  version = "0.8.0";
 
   strictDeps = true;
   __structuredAttrs = true;
@@ -39,8 +39,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   src = fetchFromGitHub {
     owner = "ProtonDriveApps";
     repo = "sdk";
-    rev = "29d359e0ff562dfc3756de10f286a1b6b336aa1d";
-    hash = "sha256-LH9owwudwQI3gH8r240LJZuABormUcv0xnyWgdGA1p4=";
+    rev = "5491f2eea473acaaa86b5969774b84610a37bd46";
+    hash = "sha256-JLyl5I3t5297LEB7ka8RUNwU0BnYy5jeLp3mywoV/YE=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/cli";
@@ -70,6 +70,18 @@ stdenvNoCC.mkDerivation (finalAttrs: {
         --no-progress \
         --os="*"
 
+      # Bun does not install optional dependencies from local file dependencies.
+      chmod -R u+w ../client/js
+      pushd ../client/js
+      bun install \
+        --cpu="*" \
+        --frozen-lockfile \
+        --ignore-scripts \
+        --no-progress \
+        --os="*" \
+        --production
+      popd
+
       runHook postBuild
     '';
 
@@ -78,13 +90,16 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
       mkdir -p $out
       cp -R node_modules $out/
+      mkdir $out/client
+      cp -R ../client/js/node_modules/@xmldom $out/client/
+      cp -R ../client/js/node_modules/exifreader $out/client/
 
       runHook postInstall
     '';
 
     dontFixup = true;
 
-    outputHash = "sha256-NfEqcp+Mr3K7BQAS2dcJKBdp9auxEJQmoZ4p8MrLkEA=";
+    outputHash = "sha256-tjW9ojoPhiU3uYt3T0aQCnyz4rYyUQhSSmrh+pqfmbo=";
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
   };
@@ -103,6 +118,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     cp -R ${finalAttrs.node_modules}/node_modules .
     cp -R ${finalAttrs.node_modules}/node_modules ../client/js/
     cp -R ${finalAttrs.node_modules}/node_modules ../incubating/account/js/
+    chmod u+w ../client/js/node_modules
+    cp -R ${finalAttrs.node_modules}/client/. ../client/js/node_modules/
 
     substituteInPlace ../client/js/node_modules/.bin/tsc \
       --replace-fail '#!/usr/bin/env node' '#!${lib.getExe nodejs}'
@@ -112,9 +129,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   # Proton validates the embedded CLI version during auth; nixpkgs-style
   # unstable versions trigger a 400 on /auth/v4/sessions/forks, so keep the
-  # upstream runtime version format here even though the package version differs.
-  env.CLI_VERSION = "0.6.0+29d359e";
-  env.JS_VERSION = "0.19.2+29d359e";
+  # upstream runtime version format here.
+  env.CLI_VERSION = "0.8.0+5491f2e";
+  env.JS_VERSION = "0.21.0+5491f2e";
   env.CLI_APP_VERSION_NAME = "cli-drive-nixos";
 
   buildPhase = ''
