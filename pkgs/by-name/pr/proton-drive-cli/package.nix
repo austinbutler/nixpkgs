@@ -99,7 +99,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
     dontFixup = true;
 
-    outputHash = "sha256-tjW9ojoPhiU3uYt3T0aQCnyz4rYyUQhSSmrh+pqfmbo=";
+    outputHash = "sha256-AchOb9dNcnyZvrYcQDY3ZlMnMg1AfIX8aKWYrcDnxtY=";
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
   };
@@ -130,9 +130,11 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   # Proton validates the embedded CLI version during auth; nixpkgs-style
   # unstable versions trigger a 400 on /auth/v4/sessions/forks, so keep the
   # upstream runtime version format here.
-  env.CLI_VERSION = "0.8.0+5491f2e";
-  env.JS_VERSION = "0.21.0+5491f2e";
-  env.CLI_APP_VERSION_NAME = "cli-drive-nixos";
+  env = {
+    CLI_VERSION = "0.8.0+5491f2e";
+    JS_VERSION = "0.21.0+5491f2e";
+    CLI_APP_VERSION_NAME = "cli-drive-nixos";
+  };
 
   buildPhase = ''
     runHook preBuild
